@@ -19,13 +19,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="flex-1 flex flex-col">
         <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-medium">Top Bar</h2>
+          <div></div>
           <div className="flex items-center gap-4">
-            <button className="hover:text-gray-500">Help</button>
-            <div className="flex items-center gap-2">
-              <span>Max Happiness</span>
-              <div className="w-8 h-8 rounded-full bg-gray-300"></div>
-            </div>
+            <span>Username</span>
+            <div className="w-8 h-8 rounded-full bg-gray-300"></div>
           </div>
         </header>
         <main className="flex-1 bg-gray-50 p-6 overflow-auto">{children}</main>
