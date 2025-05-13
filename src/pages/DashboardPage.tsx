@@ -3,6 +3,7 @@
 import { Filter, Trash2 } from "lucide-react";
 import AppLayout from "../layout/AppLayout";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   SearchBar,
   SelectFilter,
@@ -190,8 +191,13 @@ const SubmissionRow = ({
   onDelete: (id: number) => void;
 }) => (
   <tr key={submission.id} className="hover:bg-gray-50">
-    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-      {submission.fiscalCode}
+    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+      <Link
+        to={`/submissions/${submission.id}`}
+        className="text-blue-600 hover:text-blue-800"
+      >
+        {submission.fiscalCode}
+      </Link>
     </td>
     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
       {submission.template}

@@ -13,7 +13,7 @@ export default function TemplatesListPage() {
     <AppLayout>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Template questionari</h2>
-        <Link to="/editor">
+        <Link to="/templates/editor">
           <button className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
             Crea nuovo questionario
           </button>

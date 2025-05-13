@@ -1,0 +1,73 @@
+// src/components/questionnaire/SubmissionSectionView.tsx
+
+import React from "react";
+import { MessageSquare } from "lucide-react";
+import { Section, Answer, Language } from "../../types/questionnaire";
+import SubmissionQuestionView from "./SubmissionQuestionView";
+
+interface Note {
+  note_id: string;
+  question_identifier?: string;
+  note_text: string;
+  created_at: string;
+  operator: {
+    full_name: string;
+  };
+}
+
+interface SubmissionSectionViewProps {
+  section: Section;
+  sectionIndex: number;
+  selectedLanguage: Language;
+  answers: Answer[];
+  notes: Note[];
+  onAddNote: (questionId: string, noteText: string) => void;
+}
+
+const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
+  section,
+  sectionIndex,
+  selectedLanguage,
+  answers,
+  notes,
+  onAddNote,
+}) => {
+  const getAnswer = (questionId: string) => {
+    return answers.find((a) => a.question_identifier === questionId);
+  };
+
+  const getNotes = (questionId: string) => {
+    return notes.filter((n) => n.question_identifier === questionId);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="p-6 border-b">
+        <h3 className="text-lg font-semibold mb-2">
+          Sezione {sectionIndex + 1}: {section.title[selectedLanguage]}
+        </h3>
+        {section.description?.[selectedLanguage] && (
+          <p className="text-gray-600">
+            {section.description[selectedLanguage]}
+          </p>
+        )}
+      </div>
+
+      <div className="px-6 pb-6 space-y-6">
+        {section.questions.map((question, index) => (
+          <SubmissionQuestionView
+            key={question.questionId}
+            question={question}
+            questionIndex={index}
+            selectedLanguage={selectedLanguage}
+            answer={getAnswer(question.questionId)}
+            notes={getNotes(question.questionId)}
+            onAddNote={(noteText) => onAddNote(question.questionId, noteText)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default SubmissionSectionView;

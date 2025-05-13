@@ -149,20 +149,22 @@ export const StatsCard = ({
 );
 
 // Reusable Button component
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  variant?: "primary" | "secondary" | "danger";
+  className?: string;
+  icon?: React.ReactNode;
+}
+
 export const Button = ({
   children,
   onClick,
   variant = "primary",
   className = "",
   icon,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  variant?: "primary" | "secondary" | "danger";
-  className?: string;
-  icon?: React.ReactNode;
-}) => {
-  const getVariantClasses = () => {
+}: ButtonProps) => {
+  const getVariantClasses = (): string => {
     switch (variant) {
       case "primary":
         return "bg-gray-800 text-white hover:bg-gray-700";

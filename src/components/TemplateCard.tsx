@@ -1,5 +1,6 @@
 import { Edit, Share2, Copy, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 // Import the image directly - this is the recommended way in most React frameworks
 import qrCodeImage from "../assets/Rickrolling_QR_code.png";
 
@@ -24,16 +25,17 @@ export function TemplateCard({
       <div className="flex items-center justify-between mb-2"></div>
       <h3 className="font-semibold text-lg mb-1">{name}</h3>
       <p className="text-sm text-gray-500 mb-4">Modificato: {modified}</p>
-      <div className="flex justify-between mt-auto">
-        <div className="flex gap-2">
-          <button>
-            <Edit size={18} />
-          </button>
-          <button>
+      <div className="flex justify-between">
+        <div className="flex gap-2 ">
+          <Link to={`/templates/editor/${encodeURIComponent(name)}`}>
+            <button className="text-gray-600 hover:text-gray-800 mt-1 ">
+              <Edit size={18} />
+            </button>
+          </Link>
+          <button className="text-gray-600 hover:text-gray-800 mb-1">
             <Trash2 size={18} />
           </button>
         </div>
-        {/* Replaced the LinkIcon with a Share button */}
         <button
           className="bg-gray-800 hover:bg-gray-700 transition text-white px-3 py-1 rounded flex items-center text-sm"
           onClick={() => setShowQrModal(true)}
