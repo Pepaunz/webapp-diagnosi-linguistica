@@ -17,6 +17,7 @@ interface SectionEditorProps {
   sectionIndex: number;
   selectedLanguage: Language;
   isPreviewMode: boolean;
+  startingQuestionNumber: number; // Nuovo prop
   onUpdate: (section: Section) => void;
   onDelete: () => void;
 }
@@ -26,6 +27,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
   sectionIndex,
   selectedLanguage,
   isPreviewMode,
+  startingQuestionNumber,
   onUpdate,
   onDelete,
 }) => {
@@ -196,7 +198,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
           <QuestionEditor
             key={question.questionId}
             question={question}
-            questionIndex={index}
+            questionIndex={startingQuestionNumber + index - 1} // Numerazione continua
             selectedLanguage={selectedLanguage}
             isPreviewMode={isPreviewMode}
             onUpdate={(updatedQuestion) =>

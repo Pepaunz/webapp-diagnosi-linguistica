@@ -5,11 +5,11 @@ export type QuestionType = "text" | "multiple-choice" | "rating" | "date";
 export type Language = "it" | "en" | "es" | "ar";
 
 export interface LocalizedText {
-  it: string;
-  en: string;
-  es: string;
-  ar: string;
-  [key: string]: string; // Index signature per permettere l'accesso dinamico
+  it?: string;
+  en?: string;
+  es?: string;
+  ar?: string;
+  [key: string]: string | undefined; // Index signature per permettere l'accesso dinamico
 }
 
 export interface Option {

@@ -19,6 +19,7 @@ interface SubmissionSectionViewProps {
   section: Section;
   sectionIndex: number;
   selectedLanguage: Language;
+  startingQuestionNumber: number; // Nuovo prop
   answers: Answer[];
   notes: Note[];
   onAddNote: (questionId: string, noteText: string) => void;
@@ -28,6 +29,7 @@ const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
   section,
   sectionIndex,
   selectedLanguage,
+  startingQuestionNumber,
   answers,
   notes,
   onAddNote,
@@ -58,7 +60,7 @@ const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
           <SubmissionQuestionView
             key={question.questionId}
             question={question}
-            questionIndex={index}
+            questionIndex={startingQuestionNumber + index - 1} // Numerazione continua
             selectedLanguage={selectedLanguage}
             answer={getAnswer(question.questionId)}
             notes={getNotes(question.questionId)}

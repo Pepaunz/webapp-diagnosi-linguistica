@@ -189,16 +189,6 @@ const SubmissionViewPage = () => {
     );
   }
 
-  const getLanguageName = (lang: Language): string => {
-    const languageNames = {
-      it: "Italiano",
-      en: "English",
-      es: "Español",
-      ar: "العربية",
-    };
-    return languageNames[lang];
-  };
-
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto">
@@ -251,8 +241,22 @@ const SubmissionViewPage = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">Lingua utilizzata</p>
-              <p className="font-medium">
-                {getLanguageName(submission.language_used)}
+              <p className="font-medium flex items-center gap-2">
+                {(() => {
+                  const langMap = {
+                    it: { name: "Italiano", flag: "🇮🇹" },
+                    en: { name: "English", flag: "🇬🇧" },
+                    es: { name: "Español", flag: "🇪🇸" },
+                    ar: { name: "العربية", flag: "🇸🇦" },
+                  };
+                  const lang = langMap[submission.language_used];
+                  return (
+                    <>
+                      <span>{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </>
+                  );
+                })()}
               </p>
             </div>
             <div>
@@ -282,20 +286,28 @@ const SubmissionViewPage = () => {
 
         {/* Sections with Answers */}
         <div className="space-y-6">
-          {submission.questionnaire.sections.map((section, index) => (
-            <SubmissionSectionView
-              key={section.sectionId}
-              section={section}
-              sectionIndex={index}
-              selectedLanguage={submission.language_used}
-              answers={submission.answers}
-              notes={submission.notes}
-              onAddNote={(questionId, noteText) => {
-                // Handle add note
-                console.log("Add note:", questionId, noteText);
-              }}
-            />
-          ))}
+          {submission.questionnaire.sections.map((section, index) => {
+            // Calcola il numero di domande nelle sezioni precedenti
+            const previousQuestionsCount = submission.questionnaire.sections
+              .slice(0, index)
+              .reduce((count, sect) => count + sect.questions.length, 0);
+
+            return (
+              <SubmissionSectionView
+                key={section.sectionId}
+                section={section}
+                sectionIndex={index}
+                selectedLanguage={submission.language_used}
+                startingQuestionNumber={previousQuestionsCount + 1}
+                answers={submission.answers}
+                notes={submission.notes}
+                onAddNote={(questionId, noteText) => {
+                  // Handle add note
+                  console.log("Add note:", questionId, noteText);
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     </AppLayout>

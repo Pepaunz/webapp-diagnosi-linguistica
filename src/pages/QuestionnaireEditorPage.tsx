@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import { Plus, Save, Eye } from "lucide-react";
 import { Button } from "../components/shared/Filters";
@@ -11,7 +12,10 @@ import {
 } from "../types/questionnaire";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
+
 const QuestionnaireEditorPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState<Language>("it");
   const [questionnaire, setQuestionnaire] = useState<QuestionnaireData>({
     questionnaireTitle: { it: "", en: "", es: "", ar: "" },
@@ -20,8 +24,112 @@ const QuestionnaireEditorPage = () => {
     defaultLanguage: "it",
     sections: [],
   });
-
+  const [loading, setLoading] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      loadQuestionnaire();
+    }
+  }, [id]);
+
+  const loadQuestionnaire = async () => {
+    setLoading(true);
+    try {
+      // Mock data - esempio con alcune lingue non disponibili
+      const mockData: QuestionnaireData = {
+        questionnaireTitle: {
+          it: "Standard Bilinguismo",
+          en: "Standard Bilingualism",
+          // es e ar non sono ancora disponibili
+        },
+        description: {
+          it: "Questionario standard per la valutazione del bilinguismo",
+          en: "Standard questionnaire for bilingualism assessment",
+          // es e ar non sono ancora disponibili
+        },
+        version: "1.0",
+        defaultLanguage: "it",
+        sections: [
+          {
+            sectionId: "s1",
+            title: {
+              it: "Informazioni di Base",
+              en: "Basic Information",
+              // es e ar non sono ancora disponibili
+            },
+            description: {
+              it: "Informazioni generali sul bambino",
+              en: "General information about the child",
+            },
+            questions: [
+              {
+                questionId: "s1_q1",
+                text: {
+                  it: "Nome del bambino/a:",
+                  en: "Child's name:",
+                  // es e ar non sono ancora disponibili
+                },
+                type: "text",
+                required: true,
+              },
+              {
+                questionId: "s1_q2",
+                text: {
+                  it: "Data di nascita:",
+                  en: "Date of birth:",
+                },
+                type: "date",
+                required: true,
+              },
+            ],
+          },
+        ],
+      };
+
+      // Simula il caricamento del questionario basato sull'id
+      // L'id arriva già decodificato da React Router
+      if (id === "Standard Bilinguismo") {
+        setQuestionnaire(mockData);
+      } else if (id === "Follow-up") {
+        setQuestionnaire({
+          ...mockData,
+          questionnaireTitle: {
+            it: "Follow-up",
+            en: "Follow-up",
+            es: "Seguimiento",
+            ar: "متابعة",
+          },
+          description: {
+            it: "Questionario di follow-up",
+            en: "Follow-up questionnaire",
+            es: "Cuestionario de seguimiento",
+            ar: "استبيان المتابعة",
+          },
+        });
+      } else if (id === "Terzo Form") {
+        setQuestionnaire({
+          ...mockData,
+          questionnaireTitle: {
+            it: "Terzo Form",
+            en: "Third Form",
+            es: "Tercer Formulario",
+            ar: "النموذج الثالث",
+          },
+          description: {
+            it: "Terzo questionario di valutazione",
+            en: "Third assessment questionnaire",
+            es: "Tercer cuestionario de evaluación",
+            ar: "الاستبيان التقييمي الثالث",
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error loading questionnaire:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddSection = () => {
     const newSection: Section = {
@@ -58,15 +166,57 @@ const QuestionnaireEditorPage = () => {
     }
   };
 
-  const handleSave = () => {
-    // Implement save logic
-    console.log("Saving questionnaire:", questionnaire);
-    alert("Questionario salvato con successo!");
+  const handleSave = async () => {
+    try {
+      // Implementa la logica di salvataggio
+      console.log("Saving questionnaire:", questionnaire);
+
+      // In un'app reale, faresti una chiamata API qui
+      // const response = await api.saveQuestionnaire(id || 'new', questionnaire);
+
+      alert("Questionario salvato con successo!");
+
+      // Se è un nuovo questionario, naviga alla lista dopo il salvataggio
+      if (!id) {
+        navigate("/templates");
+      }
+    } catch (error) {
+      console.error("Error saving questionnaire:", error);
+      alert("Errore nel salvataggio del questionario");
+    }
   };
 
   const handlePreview = () => {
     setIsPreviewMode(!isPreviewMode);
   };
+
+  // Funzione per determinare quali lingue sono disponibili nel questionario
+  const getAvailableLanguages = (): Language[] => {
+    const languages: Language[] = ["it", "en", "es", "ar"];
+    const available: Language[] = [];
+
+    languages.forEach((lang) => {
+      // Controlla se almeno il titolo del questionario è presente per questa lingua
+      if (questionnaire.questionnaireTitle[lang]) {
+        available.push(lang);
+      }
+    });
+
+    // Se nessuna lingua è disponibile, ritorna almeno quella di default
+    return available.length > 0
+      ? available
+      : [questionnaire.defaultLanguage as Language];
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <p>Caricamento questionario...</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -74,7 +224,7 @@ const QuestionnaireEditorPage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">
-            {isPreviewMode ? "Anteprima Questionario" : "Editor Questionario"}
+            {id ? "Modifica Questionario" : "Crea Nuovo Questionario"}
           </h2>
           <div className="flex gap-2">
             <Button
@@ -99,7 +249,20 @@ const QuestionnaireEditorPage = () => {
           <LanguageSelector
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
+            availableLanguages={getAvailableLanguages()}
+            isEditMode={!isPreviewMode}
           />
+          {!getAvailableLanguages().includes(selectedLanguage) &&
+            !isPreviewMode && (
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  Stai aggiungendo contenuti per la lingua{" "}
+                  <strong>{selectedLanguage.toUpperCase()}</strong>. Completa
+                  almeno il titolo del questionario per rendere disponibile
+                  questa lingua.
+                </p>
+              </div>
+            )}
         </div>
 
         {/* Title and Description */}
@@ -151,19 +314,27 @@ const QuestionnaireEditorPage = () => {
 
         {/* Sections */}
         <div className="space-y-6">
-          {questionnaire.sections.map((section, index) => (
-            <SectionEditor
-              key={section.sectionId}
-              section={section}
-              sectionIndex={index}
-              selectedLanguage={selectedLanguage}
-              isPreviewMode={isPreviewMode}
-              onUpdate={(updatedSection) =>
-                handleUpdateSection(index, updatedSection)
-              }
-              onDelete={() => handleDeleteSection(index)}
-            />
-          ))}
+          {questionnaire.sections.map((section, index) => {
+            // Calcola il numero di domande nelle sezioni precedenti
+            const previousQuestionsCount = questionnaire.sections
+              .slice(0, index)
+              .reduce((count, sect) => count + sect.questions.length, 0);
+
+            return (
+              <SectionEditor
+                key={section.sectionId}
+                section={section}
+                sectionIndex={index}
+                selectedLanguage={selectedLanguage}
+                isPreviewMode={isPreviewMode}
+                startingQuestionNumber={previousQuestionsCount + 1}
+                onUpdate={(updatedSection) =>
+                  handleUpdateSection(index, updatedSection)
+                }
+                onDelete={() => handleDeleteSection(index)}
+              />
+            );
+          })}
         </div>
 
         {/* Add Section Button */}
