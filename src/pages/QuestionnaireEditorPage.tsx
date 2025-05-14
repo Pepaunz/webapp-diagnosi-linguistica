@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import { Plus, Save, Eye } from "lucide-react";
@@ -27,6 +27,33 @@ const QuestionnaireEditorPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const sectionsEndRef = useRef<HTMLDivElement>(null);
+  const isEditMode = !!id; // Se c'è un ID, stiamo editando
+  const [hasUserAddedSection, setHasUserAddedSection] = useState(false);
+
+  // Scroll intelligente per mantenere la nuova sezione al centro della viewport
+  useEffect(() => {
+    if (hasUserAddedSection && sectionsEndRef.current) {
+      const element = sectionsEndRef.current;
+      const elementRect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const elementTop = elementRect.top;
+      const elementMiddle = elementTop + elementRect.height / 2;
+      const viewportMiddle = viewportHeight / 2;
+
+      // Se l'elemento è sotto la metà della viewport, scrolla per metterlo al centro
+      if (elementMiddle > viewportMiddle) {
+        const scrollTop =
+          window.scrollY + elementTop - viewportMiddle + elementRect.height / 2;
+        window.scrollTo({
+          top: scrollTop,
+          behavior: "smooth",
+        });
+      }
+
+      setHasUserAddedSection(false);
+    }
+  }, [hasUserAddedSection]);
 
   useEffect(() => {
     if (id) {
@@ -37,15 +64,16 @@ const QuestionnaireEditorPage = () => {
   const loadQuestionnaire = async () => {
     setLoading(true);
     try {
+      // Cerca il questionario nei template predefiniti
       const templateName = decodeURIComponent(id || "");
-      const template =
-        questionnaireTemplates[
-          templateName as keyof typeof questionnaireTemplates
-        ];
+      const template = questionnaireTemplates[templateName];
+
       if (template) {
         setQuestionnaire(template);
       } else {
-        console.log("template non trovato");
+        // Se non è un template predefinito, potresti caricarlo dal backend
+        console.log("Template non trovato:", templateName);
+        // Qui potresti fare una chiamata API per caricare un questionario personalizzato
       }
     } catch (error) {
       console.error("Error loading questionnaire:", error);
@@ -66,6 +94,9 @@ const QuestionnaireEditorPage = () => {
       ...questionnaire,
       sections: [...questionnaire.sections, newSection],
     });
+
+    // Attiva lo scroll
+    setHasUserAddedSection(true);
   };
 
   const handleUpdateSection = (index: number, updatedSection: Section) => {
@@ -258,6 +289,7 @@ const QuestionnaireEditorPage = () => {
               />
             );
           })}
+          <div ref={sectionsEndRef} />
         </div>
 
         {/* Add Section Button */}

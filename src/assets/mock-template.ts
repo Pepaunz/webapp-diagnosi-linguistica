@@ -641,7 +641,7 @@ export const followUpQuestionnaire: QuestionnaireData = {
 };
 
 // Export di tutti i template
-export const questionnaireTemplates = {
+export const questionnaireTemplates: Record<string, QuestionnaireData> = {
   "Standard Bilinguismo": bilingualismQuestionnaire,
   "Follow-up": followUpQuestionnaire,
   // Aggiungi altri template qui

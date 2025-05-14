@@ -1,6 +1,6 @@
 // src/components/questionnaire/SectionEditor.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import {
   Section,
@@ -34,6 +34,39 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
   const [showQuestionTypeSelector, setShowQuestionTypeSelector] =
     useState(false);
   const [editMode, setEditMode] = useState(false);
+  const questionsEndRef = useRef<HTMLDivElement>(null);
+  const [hasUserAddedQuestion, setHasUserAddedQuestion] = useState(false);
+
+  // Scroll intelligente per mantenere la nuova domanda al centro della viewport
+  useEffect(() => {
+    if (hasUserAddedQuestion && questionsEndRef.current) {
+      setTimeout(() => {
+        const element = questionsEndRef.current;
+        if (!element) return;
+
+        const elementRect = element.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const elementTop = elementRect.top;
+        const elementMiddle = elementTop + elementRect.height / 2;
+        const viewportMiddle = viewportHeight / 2;
+
+        // Se l'elemento è sotto la metà della viewport, scrolla per metterlo al centro
+        if (elementMiddle > viewportMiddle) {
+          const scrollTop =
+            window.scrollY +
+            elementTop -
+            viewportMiddle +
+            elementRect.height / 2;
+          window.scrollTo({
+            top: scrollTop,
+            behavior: "smooth",
+          });
+        }
+
+        setHasUserAddedQuestion(false);
+      }, 100); // Piccolo delay per assicurarsi che il DOM sia aggiornato
+    }
+  }, [hasUserAddedQuestion]);
 
   const handleAddQuestion = (type: QuestionType) => {
     const newQuestion: Question = {
@@ -55,6 +88,9 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
       questions: [...section.questions, newQuestion],
     });
     setShowQuestionTypeSelector(false);
+
+    // Attiva lo scroll
+    setHasUserAddedQuestion(true);
   };
 
   const handleUpdateQuestion = (index: number, updatedQuestion: Question) => {
@@ -230,6 +266,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
             )}
           </>
         )}
+        <div ref={questionsEndRef} />
       </div>
     </div>
   );
