@@ -5,30 +5,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "../components/shared/Filters";
-import { QuestionnaireData, Answer, Language } from "../types/questionnaire";
+import { Submission, Language } from "../types/questionnaire";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
-
-interface Submission {
-  submission_id: string;
-  fiscal_code: string;
-  status: string;
-  created_at: string;
-  completed_at?: string;
-  language_used: Language;
-  questionnaire: QuestionnaireData;
-  answers: Answer[];
-  notes: Note[];
-}
-
-interface Note {
-  note_id: string;
-  question_identifier?: string;
-  note_text: string;
-  created_at: string;
-  operator: {
-    full_name: string;
-  };
-}
+import { submissionTemplates } from "../assets/mock-submission";
+import { bilingualismQuestionnaire } from "../assets/mock-template";
 
 const SubmissionViewPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,125 +20,73 @@ const SubmissionViewPage = () => {
     // Simulate API call to fetch submission data
     const fetchSubmission = async () => {
       try {
-        // Mock data - in una submission reale, il questionario contiene solo la lingua utilizzata
-        const mockSubmission: Submission = {
-          submission_id: id || "",
-          fiscal_code: "ABCDEF12G34H567I",
-          status: "Completed",
-          created_at: "2025-04-22T14:30:00",
-          completed_at: "2025-04-22T15:45:00",
-          language_used: "it",
-          questionnaire: {
-            questionnaireTitle: {
-              it: "Questionario Bilinguismo Base v1.0",
-              en: "",
-              es: "",
-              ar: "",
-            },
-            description: {
-              it: "Questionario iniziale per la valutazione del bilinguismo",
-              en: "",
-              es: "",
-              ar: "",
-            },
-            version: "1.0",
-            defaultLanguage: "it",
-            sections: [
-              {
-                sectionId: "s1",
-                title: {
-                  it: "Informazioni di Base",
-                  en: "",
-                  es: "",
-                  ar: "",
-                },
-                questions: [
-                  {
-                    questionId: "s1_q1",
-                    text: {
-                      it: "Nome del bambino/a:",
-                      en: "",
-                      es: "",
-                      ar: "",
-                    },
-                    type: "text",
-                    required: true,
-                  },
-                  {
-                    questionId: "s1_q2",
-                    text: {
-                      it: "Da chi principalmente sente parlare italiano in casa?",
-                      en: "",
-                      es: "",
-                      ar: "",
-                    },
-                    type: "multiple-choice",
-                    required: true,
-                    options: [
-                      {
-                        value: "mamma",
-                        text: {
-                          it: "Mamma",
-                          en: "",
-                          es: "",
-                          ar: "",
-                        },
-                      },
-                      {
-                        value: "papa",
-                        text: {
-                          it: "Papà",
-                          en: "",
-                          es: "",
-                          ar: "",
-                        },
-                      },
-                      {
-                        value: "entrambi",
-                        text: {
-                          it: "Entrambi",
-                          en: "",
-                          es: "",
-                          ar: "",
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          answers: [
-            {
-              answer_id: "1",
-              submission_id: id || "",
-              question_identifier: "s1_q1",
-              answer_value: { value: "Mario Rossi" },
-              saved_at: "2025-04-22T14:35:00",
-            },
-            {
-              answer_id: "2",
-              submission_id: id || "",
-              question_identifier: "s1_q2",
-              answer_value: { value: "mamma" },
-              saved_at: "2025-04-22T14:36:00",
-            },
-          ],
-          notes: [
-            {
-              note_id: "1",
-              question_identifier: "s1_q2",
-              note_text:
-                "La famiglia ha specificato che anche il papà parla occasionalmente italiano con il bambino",
-              created_at: "2025-04-22T16:00:00",
-              operator: {
-                full_name: "Dr. Giovanni Bianchi",
-              },
-            },
-          ],
-        };
+        // Qui usiamo i dati importati
+        const submissionData = submissionTemplates["sub_001"];
+        console.log("Submission data:", submissionData);
+        if (submissionData) {
+          // Usa il questionario completo da questionnaireTemplates
+          // ma mantieni solo la lingua selezionata nella submission
+          const fullQuestionnaire = bilingualismQuestionnaire;
 
-        setSubmission(mockSubmission);
+          setSubmission({
+            ...submissionData,
+            questionnaire: {
+              ...fullQuestionnaire,
+              // Sovrascrivi con solo i dati nella lingua utilizzata
+              sections: fullQuestionnaire.sections.map((section) => ({
+                ...section,
+                questions: section.questions.map((question) => ({
+                  ...question,
+                  text: {
+                    [submissionData.language_used]:
+                      question.text[submissionData.language_used] || "",
+                    it:
+                      submissionData.language_used === "it"
+                        ? question.text.it || ""
+                        : "",
+                    en:
+                      submissionData.language_used === "en"
+                        ? question.text.en || ""
+                        : "",
+                    es:
+                      submissionData.language_used === "es"
+                        ? question.text.es || ""
+                        : "",
+                    ar:
+                      submissionData.language_used === "ar"
+                        ? question.text.ar || ""
+                        : "",
+                  },
+                  options: question.options?.map((option) => ({
+                    ...option,
+                    text: {
+                      [submissionData.language_used]:
+                        option.text[submissionData.language_used] || "",
+                      it:
+                        submissionData.language_used === "it"
+                          ? option.text.it || ""
+                          : "",
+                      en:
+                        submissionData.language_used === "en"
+                          ? option.text.en || ""
+                          : "",
+                      es:
+                        submissionData.language_used === "es"
+                          ? option.text.es || ""
+                          : "",
+                      ar:
+                        submissionData.language_used === "ar"
+                          ? option.text.ar || ""
+                          : "",
+                    },
+                  })),
+                })),
+              })),
+            },
+          });
+        } else {
+          console.error("Submission not found:", id);
+        }
       } catch (error) {
         console.error("Error fetching submission:", error);
       } finally {

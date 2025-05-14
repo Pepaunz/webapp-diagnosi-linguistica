@@ -52,3 +52,24 @@ export interface Answer {
   };
   saved_at: string;
 }
+export interface Note {
+  note_id: string;
+  question_identifier?: string;
+  note_text: string;
+  created_at: string;
+  operator: {
+    full_name: string;
+  };
+}
+
+export interface Submission {
+  submission_id: string;
+  fiscal_code: string;
+  status: string;
+  created_at: string;
+  completed_at?: string;
+  language_used: Language;
+  questionnaire: QuestionnaireData;
+  answers: Answer[];
+  notes: Note[];
+}

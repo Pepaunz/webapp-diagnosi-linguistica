@@ -12,6 +12,7 @@ import {
 } from "../types/questionnaire";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
+import { questionnaireTemplates } from "../assets/mock-template";
 
 const QuestionnaireEditorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,93 +37,15 @@ const QuestionnaireEditorPage = () => {
   const loadQuestionnaire = async () => {
     setLoading(true);
     try {
-      // Mock data - esempio con alcune lingue non disponibili
-      const mockData: QuestionnaireData = {
-        questionnaireTitle: {
-          it: "Standard Bilinguismo",
-          en: "Standard Bilingualism",
-          // es e ar non sono ancora disponibili
-        },
-        description: {
-          it: "Questionario standard per la valutazione del bilinguismo",
-          en: "Standard questionnaire for bilingualism assessment",
-          // es e ar non sono ancora disponibili
-        },
-        version: "1.0",
-        defaultLanguage: "it",
-        sections: [
-          {
-            sectionId: "s1",
-            title: {
-              it: "Informazioni di Base",
-              en: "Basic Information",
-              // es e ar non sono ancora disponibili
-            },
-            description: {
-              it: "Informazioni generali sul bambino",
-              en: "General information about the child",
-            },
-            questions: [
-              {
-                questionId: "s1_q1",
-                text: {
-                  it: "Nome del bambino/a:",
-                  en: "Child's name:",
-                  // es e ar non sono ancora disponibili
-                },
-                type: "text",
-                required: true,
-              },
-              {
-                questionId: "s1_q2",
-                text: {
-                  it: "Data di nascita:",
-                  en: "Date of birth:",
-                },
-                type: "date",
-                required: true,
-              },
-            ],
-          },
-        ],
-      };
-
-      // Simula il caricamento del questionario basato sull'id
-      // L'id arriva già decodificato da React Router
-      if (id === "Standard Bilinguismo") {
-        setQuestionnaire(mockData);
-      } else if (id === "Follow-up") {
-        setQuestionnaire({
-          ...mockData,
-          questionnaireTitle: {
-            it: "Follow-up",
-            en: "Follow-up",
-            es: "Seguimiento",
-            ar: "متابعة",
-          },
-          description: {
-            it: "Questionario di follow-up",
-            en: "Follow-up questionnaire",
-            es: "Cuestionario de seguimiento",
-            ar: "استبيان المتابعة",
-          },
-        });
-      } else if (id === "Terzo Form") {
-        setQuestionnaire({
-          ...mockData,
-          questionnaireTitle: {
-            it: "Terzo Form",
-            en: "Third Form",
-            es: "Tercer Formulario",
-            ar: "النموذج الثالث",
-          },
-          description: {
-            it: "Terzo questionario di valutazione",
-            en: "Third assessment questionnaire",
-            es: "Tercer cuestionario de evaluación",
-            ar: "الاستبيان التقييمي الثالث",
-          },
-        });
+      const templateName = decodeURIComponent(id || "");
+      const template =
+        questionnaireTemplates[
+          templateName as keyof typeof questionnaireTemplates
+        ];
+      if (template) {
+        setQuestionnaire(template);
+      } else {
+        console.log("template non trovato");
       }
     } catch (error) {
       console.error("Error loading questionnaire:", error);

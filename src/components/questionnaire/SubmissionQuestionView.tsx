@@ -48,18 +48,35 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
     }
 
     if (question.type === "multiple-choice" && question.options) {
-      const selectedOption = question.options.find(
-        (opt) => opt.value === answer.answer_value.value
-      );
       return (
-        <div className="ml-4">
-          <div className="flex items-center gap-2">
-            <input type="radio" checked={true} readOnly className="w-4 h-4" />
-            <span className="text-gray-700">
-              {selectedOption?.text[selectedLanguage] ||
-                answer.answer_value.value}
-            </span>
-          </div>
+        <div className="ml-4 space-y-2">
+          {question.options.map((option) => {
+            const isSelected = option.value === answer.answer_value.value;
+            return (
+              <div
+                key={option.value}
+                className={`flex items-center gap-2 p-2 rounded ${
+                  isSelected
+                    ? "bg-blue-50 border border-blue-200"
+                    : "opacity-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  checked={isSelected}
+                  readOnly
+                  className={`w-4 h-4 ${isSelected ? "text-blue-600" : ""}`}
+                />
+                <span
+                  className={`${
+                    isSelected ? "text-gray-900 font-medium" : "text-gray-500"
+                  }`}
+                >
+                  {option.text[selectedLanguage] || option.value}
+                </span>
+              </div>
+            );
+          })}
         </div>
       );
     } else if (question.type === "text") {
