@@ -7,6 +7,7 @@ import {
   ChevronDown,
   GripVertical,
   Plus,
+  Star,
 } from "lucide-react";
 import { Question, Option, Language } from "../../types/questionnaire";
 
@@ -73,7 +74,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
             <div key={index} className="flex items-center gap-2">
               <input
                 type="radio"
-                disabled={!isPreviewMode}
+                disabled={true} // Sempre disabilitato nell'editor
                 className="w-4 h-4"
               />
               {editMode && !isPreviewMode ? (
@@ -125,9 +126,39 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <div className="mt-4">
           <input
             type="text"
-            disabled={!isPreviewMode}
+            disabled={true} // Sempre disabilitato nell'editor
             className="w-full px-3 py-2 border rounded-lg"
             placeholder="Risposta breve"
+          />
+        </div>
+      );
+    } else if (question.type === "rating") {
+      const maxValue = 10;
+      const stars = Array.from({ length: maxValue }, (_, i) => i + 1);
+
+      return (
+        <div className="mt-4">
+          <div className="flex gap-2 items-center">
+            {stars.map((value) => (
+              <button
+                key={value}
+                type="button"
+                disabled={true} // Sempre disabilitato nell'editor
+                className="transition-colors cursor-default"
+              >
+                <Star size={28} className="text-gray-300" fill="currentColor" />
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    } else if (question.type === "date") {
+      return (
+        <div className="mt-4">
+          <input
+            type="date"
+            disabled={true} // Sempre disabilitato nell'editor
+            className="px-3 py-2 border rounded-lg"
           />
         </div>
       );

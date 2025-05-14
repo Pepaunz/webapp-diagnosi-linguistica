@@ -27,16 +27,16 @@ const questionTypes = [
   {
     type: "rating" as QuestionType,
     title: "Valutazione",
-    description: "Scala di valutazione numerica",
+    description: "Scala di valutazione con stelle",
     icon: Star,
-    available: false,
+    available: true,
   },
   {
     type: "date" as QuestionType,
     title: "Data",
     description: "Seleziona una data",
     icon: Calendar,
-    available: false,
+    available: true,
   },
 ];
 

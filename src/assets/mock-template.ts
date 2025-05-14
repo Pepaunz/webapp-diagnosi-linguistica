@@ -41,7 +41,7 @@ export const bilingualismQuestionnaire: QuestionnaireData = {
             es: "¿Cuándo nació tu hijo/a?",
             ar: "",
           },
-          type: "text",
+          type: "date",
           required: true,
         },
         {

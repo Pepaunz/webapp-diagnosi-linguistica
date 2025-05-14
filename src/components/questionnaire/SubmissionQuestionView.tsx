@@ -1,7 +1,7 @@
 // src/components/questionnaire/SubmissionQuestionView.tsx
 
 import React, { useState } from "react";
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus, Star } from "lucide-react";
 import { Question, Answer, Language } from "../../types/questionnaire";
 
 interface Note {
@@ -84,6 +84,42 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
         <div className="ml-4">
           <p className="text-gray-700 bg-gray-50 p-3 rounded">
             {answer.answer_value.value}
+          </p>
+        </div>
+      );
+    } else if (question.type === "rating") {
+      const maxValue = 10;
+      const selectedValue = parseInt(answer.answer_value.value) || 0;
+      const stars = Array.from({ length: maxValue }, (_, i) => i + 1);
+
+      return (
+        <div className="ml-4">
+          <div className="flex gap-1 items-center">
+            {stars.map((value) => (
+              <Star
+                key={value}
+                size={24}
+                className={
+                  value <= selectedValue ? "text-yellow-500" : "text-gray-300"
+                }
+                fill={value <= selectedValue ? "currentColor" : "none"}
+              />
+            ))}
+            <span className="ml-2 text-gray-600">
+              ({selectedValue}/{maxValue})
+            </span>
+          </div>
+        </div>
+      );
+    } else if (question.type === "date") {
+      return (
+        <div className="ml-4">
+          <p className="text-gray-700 bg-gray-50 p-3 rounded">
+            {new Date(answer.answer_value.value).toLocaleDateString("it-IT", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
         </div>
       );

@@ -46,7 +46,7 @@ export const bilingualismSubmission: Submission = {
               es: "",
               ar: "",
             },
-            type: "text",
+            type: "date",
             required: true,
           },
           {
@@ -375,7 +375,7 @@ export const bilingualismSubmission: Submission = {
       answer_id: "1",
       submission_id: "sub_001",
       question_identifier: "s1_q1",
-      answer_value: { value: "15/03/2020" },
+      answer_value: { value: "2020-03-15" },
       saved_at: "2025-04-22T14:32:00",
     },
     {

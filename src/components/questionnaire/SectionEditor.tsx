@@ -81,6 +81,8 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
               { value: "option2", text: { it: "", en: "", es: "", ar: "" } },
             ]
           : undefined,
+      minValue: type === "rating" ? 1 : undefined,
+      maxValue: type === "rating" ? 10 : undefined,
     };
 
     onUpdate({
