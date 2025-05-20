@@ -1,13 +1,15 @@
 import React from "react";
 import { LogOut } from "lucide-react";
 import Sidebar from "../components/Sidebar";
+import logo from "../assets/logo-negativo.png";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-bold">Bilinguismo</h1>
+        <div className="p-4 border-b border-gray-700 flex items-center gap-2">
+          <img src={logo} alt="Logo" className="h-14 auto"></img>
+          <h1 className="text-3xl font-bold">WebApp</h1>
         </div>
         <Sidebar />
         <div className="p-4 border-t border-gray-700">
