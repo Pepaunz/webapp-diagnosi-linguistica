@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Operator {
+  operator_id String   @id @default(uuid()) @map("operator_id")
+  email       String   @unique // Prisma crea un indice per @unique
+  password_hash String @map("password_hash")
+  role        String   @default("operator")
+  full_name   String?  @map("full_name")
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at") 
+
+  notes OperatorNote[]
+
+  @@map("Operators")
+}
+
+model Template {
+  template_id        String   @id @default(uuid()) @map("template_id")
+  name               String
+  description        String?
+  structure_definition Json     @map("structure_definition")
+  is_active          Boolean  @default(true) @map("is_active")
+  available_languages String[] @map("available_languages")
+  created_at         DateTime @default(now()) @map("created_at")
+  updated_at         DateTime @updatedAt @map("updated_at") // Gestito da Prisma
+
+  submissions Submission[]
+
+  @@index([is_active]) // Indice esplicito
+  @@map("Templates")
+}
+
+model Submission {
+  submission_id           String    @id @default(uuid()) @map("submission_id")
+  fiscal_code             String    @map("fiscal_code")
+  template_id String    @map("template_id")
+  status                  String    @default("InProgress")
+  current_step_identifier String?   @map("current_step_identifier")
+  metadata                Json?
+  created_at              DateTime  @default(now()) @map("created_at")
+  last_updated_at         DateTime  @default(now()) @map("last_updated_at") // Gestito dall'app
+  completed_at            DateTime? @map("completed_at")
+
+  template Template @relation(fields: [template_id], references: [template_id], onDelete: Restrict)
+  answers  Answer[]
+  notes    OperatorNote[]
+  feedback FeedbackReport[]
+
+  @@index([fiscal_code, template_id, status, last_updated_at(sort: Desc)])
+  @@index([status])
+  @@index([fiscal_code])
+  @@map("Submissions")
+}
+
+model Answer {
+  answer_id           BigInt    @id @default(autoincrement()) @map("answer_id")
+  submission_id       String    @map("submission_id")
+  question_identifier String    @map("question_identifier")
+  answer_value        Json      @map("answer_value")
+  saved_at            DateTime  @default(now()) @map("saved_at") // Gestito dall'app
+
+  submission Submission @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
+
+  @@unique([submission_id, question_identifier])
+  @@index([submission_id]) // Indice esplicito
+  @@map("Answers")
+}
+
+model OperatorNote {
+  note_id             String    @id @default(uuid()) @map("note_id")
+  submission_id       String    @map("submission_id")
+  question_identifier String?   @map("question_identifier")
+  operator_id         String    @map("operator_id")
+  note_text           String    @map("note_text") @db.Text
+  created_at          DateTime  @default(now()) @map("created_at")
+  updated_at          DateTime  @updatedAt @map("updated_at") // Gestito da Prisma
+
+  submission Submission @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
+  operator   Operator                @relation(fields: [operator_id], references: [operator_id], onDelete: SetNull)
+
+  @@index([submission_id]) // Indice esplicito
+  @@index([operator_id])   // Indice esplicito
+  @@map("OperatorNotes")
+}
+
+model FeedbackReport {
+  feedback_id       String    @id @default(uuid()) @map("feedback_id")
+  submission_id     String?   @map("submission_id")
+  question_identifier String?   @map("question_identifier")
+  feedback_text     String    @map("feedback_text") @db.Text
+  reporter_metadata Json?     @map("reporter_metadata")
+  submitted_at      DateTime  @default(now()) @map("submitted_at")
+  status            String    @default("New")
+
+  submission Submission? @relation(fields: [submission_id], references: [submission_id], onDelete: SetNull)
+
+  @@index([status]) // Indice esplicito
+  @@map("FeedbackReports")
+}
