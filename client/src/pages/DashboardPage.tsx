@@ -11,13 +11,14 @@ import {
   Pagination,
   Button,
 } from "../components/shared/Filters";
+import { SubmissionStatus } from "@shared/types/submission.types";
 
 // Define TypeScript interfaces
 interface Submission {
   id: number;
   fiscalCode: string;
   template: string;
-  status: "Completed" | "In Progress" | "Abandoned";
+  status: SubmissionStatus;
   progress: number;
   lastUpdated: string;
   completedOn: string | null;
@@ -57,7 +58,7 @@ const FilterBar = ({
           options={[
             { value: "All", label: "All Status" },
             { value: "Completed", label: "Completato" },
-            { value: "In Progress", label: "In Progress" },
+            { value: "InProgress", label: "In Progress" },
             { value: "Abandoned", label: "Abbandonato" },
           ]}
           placeholder="Stato: tutti"
@@ -111,7 +112,7 @@ const StatusBadge = ({ status }: { status: Submission["status"] }) => {
     switch (status) {
       case "Completed":
         return "bg-green-100 text-green-800";
-      case "In Progress":
+      case "InProgress":
         return "bg-yellow-100 text-yellow-800";
       case "Abandoned":
         return "bg-red-100 text-red-800";
@@ -130,7 +131,7 @@ const StatusBadge = ({ status }: { status: Submission["status"] }) => {
         switch (status) {
           case "Completed":
             return "Completato";
-          case "In Progress":
+          case "InProgress":
             return "In Progress";
           case "Abandoned":
             return "Abbandonato";
@@ -268,7 +269,7 @@ function QuestionnaireDashboard() {
       id: 2,
       fiscalCode: "LMNOPQ78R90S123T",
       template: "Follow-up",
-      status: "In Progress",
+      status: "InProgress",
       progress: 40,
       lastUpdated: "2025-04-23T09:15:00",
       completedOn: null,
@@ -278,7 +279,7 @@ function QuestionnaireDashboard() {
       id: 3,
       fiscalCode: "UVWXYZ45A67B890C",
       template: "Standard Bilinguismo",
-      status: "In Progress",
+      status: "InProgress",
       progress: 70,
       lastUpdated: "2025-04-23T16:45:00",
       completedOn: null,

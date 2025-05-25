@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Type, List, Star, Calendar } from "lucide-react";
-import { QuestionType } from "../../types/questionnaire";
+import { QuestionType } from "@shared/types/questionnaire.types";
 
 interface QuestionTypeSelectorProps {
   onSelectType: (type: QuestionType) => void;

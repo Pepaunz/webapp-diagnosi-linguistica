@@ -8,8 +8,8 @@ import {
   Section,
   Question,
   QuestionType,
-  Language,
-} from "../types/questionnaire";
+} from "@shared/types/questionnaire.types";
+import { Language } from "@shared/types/common.types";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
 import { questionnaireTemplates } from "../assets/mock-template";

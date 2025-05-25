@@ -6,8 +6,8 @@ import {
   Section,
   Question,
   QuestionType,
-  Language,
-} from "../../types/questionnaire";
+} from "@shared/types/questionnaire.types";
+import { Language } from "@shared/types/common.types";
 import QuestionEditor from "./QuestionEditor";
 import QuestionTypeSelector from "./QuestionTypeSelector";
 import { Button } from "../shared/Filters";

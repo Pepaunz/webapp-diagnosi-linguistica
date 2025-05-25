@@ -1,7 +1,7 @@
-import { Language, Submission, Note } from "../types/questionnaire";
+import { Submission } from "@shared/types/submission.types";
 
 export const bilingualismSubmission: Submission = {
-  submission_id: "sub_001",
+  id: "sub_001",
   fiscal_code: "RSSMRA85L01H501R",
   status: "Completed",
   created_at: "2025-04-22T14:30:00",

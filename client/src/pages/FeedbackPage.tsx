@@ -12,15 +12,7 @@ import {
   Button,
 } from "../components/shared/Filters";
 
-// Define TypeScript interfaces
-interface Feedback {
-  id: number;
-  template: string;
-  question_identifier?: string;
-  feedback_text: string;
-  status: "New" | "Investigating" | "Resolved";
-  submitted_at: string;
-}
+import { Feedback } from "@shared/types/feedback.types";
 
 interface FilterState {
   search: string;
@@ -206,7 +198,7 @@ const FeedbackRow = ({
       onClick={() => onViewFullFeedback(feedback)}
       className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 cursor-pointer"
     >
-      {feedback.template}
+      {feedback.template_name}
     </td>
     <td
       onClick={() => onViewFullFeedback(feedback)}
@@ -289,7 +281,7 @@ function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([
     {
       id: 1,
-      template: "Standard Bilinguismo",
+      template_name: "Standard Bilinguismo",
       question_identifier: "s1_q1",
       feedback_text:
         "The options for language preference should include more regional dialects. It would be beneficial to add options for variations like Sicilian, Venetian, Calabrian, etc. Many users have expressed interest in more granular language options rather than just standard Italian. This would help us collect more specific data about language preferences across different regions of Italy.",
@@ -298,7 +290,7 @@ function FeedbackPage() {
     },
     {
       id: 2,
-      template: "Follow-up",
+      template_name: "Follow-up",
       question_identifier: "s1_q3",
       feedback_text:
         "The satisfaction scale is confusing. Is 1 the best or 5 the best?",
@@ -307,14 +299,14 @@ function FeedbackPage() {
     },
     {
       id: 3,
-      template: "Standard Bilinguismo",
+      template_name: "Standard Bilinguismo",
       feedback_text: "Overall, the questionnaire is too long and repetitive.",
       status: "Resolved",
       submitted_at: "2025-04-21T11:20:00",
     },
     {
       id: 4,
-      template: "Follow-up",
+      template_name: "Follow-up",
       question_identifier: "s2_q10",
       feedback_text:
         "The text field for additional comments is too small and doesn't allow enough characters. When trying to give detailed feedback about multiple aspects of the service, I hit the character limit very quickly. Please consider expanding this to at least 500 characters to allow for more comprehensive responses.",
@@ -323,7 +315,7 @@ function FeedbackPage() {
     },
     {
       id: 5,
-      template: "Standard Bilinguismo",
+      template_name: "Standard Bilinguismo",
       question_identifier: "s4_q2",
       feedback_text:
         "There should be an option for vocational training in the education level question.",
@@ -332,7 +324,7 @@ function FeedbackPage() {
     },
     {
       id: 6,
-      template: "Standard Bilinguismo",
+      template_name: "Standard Bilinguismo",
       question_identifier: "s4_q2",
       feedback_text:
         "There should be an option for vocational training in the education level question.",
@@ -373,7 +365,7 @@ function FeedbackPage() {
       filters.status === "All" || feedback.status === filters.status;
     const matchesTemplate =
       filters.template === "All Templates" ||
-      feedback.template === filters.template;
+      feedback.template_name === filters.template;
 
     return matchesSearch && matchesStatus && matchesTemplate;
   });
@@ -474,7 +466,7 @@ function FeedbackPage() {
                     Template
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
-                    {selectedFeedback.template}
+                    {selectedFeedback.template_name}
                   </dd>
                 </div>
                 <div>

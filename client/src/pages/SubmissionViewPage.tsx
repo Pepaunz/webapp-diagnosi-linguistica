@@ -5,11 +5,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "../components/shared/Filters";
-import { Submission, Language } from "../types/questionnaire";
+import { Language } from "@shared/types/common.types";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
 import { submissionTemplates } from "../assets/mock-submission";
 import { bilingualismQuestionnaire } from "../assets/mock-template";
-
+import { SubmissionStatus } from "@shared/types/submission.types";
+import { Submission } from "@shared/types/submission.types";
 const SubmissionViewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

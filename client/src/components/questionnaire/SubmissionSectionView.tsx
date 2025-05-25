@@ -1,8 +1,9 @@
 // src/components/questionnaire/SubmissionSectionView.tsx
 
 import React from "react";
-import { MessageSquare } from "lucide-react";
-import { Section, Answer, Language } from "../../types/questionnaire";
+import { Section } from "@shared/types/questionnaire.types";
+import { Language } from "@shared/types/common.types";
+import { Answer } from "@shared/types/submission.types";
 import SubmissionQuestionView from "./SubmissionQuestionView";
 
 interface Note {

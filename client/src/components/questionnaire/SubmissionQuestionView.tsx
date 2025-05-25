@@ -2,17 +2,9 @@
 
 import React, { useState } from "react";
 import { MessageSquare, Plus, Star } from "lucide-react";
-import { Question, Answer, Language } from "../../types/questionnaire";
-
-interface Note {
-  note_id: string;
-  question_identifier?: string;
-  note_text: string;
-  created_at: string;
-  operator: {
-    full_name: string;
-  };
-}
+import { Question } from "@shared/types/questionnaire.types";
+import { Answer, Note } from "@shared/types/submission.types";
+import { Language } from "@shared/types/common.types";
 
 interface SubmissionQuestionViewProps {
   question: Question;
