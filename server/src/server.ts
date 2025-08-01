@@ -1,16 +1,20 @@
-import express, { Request, Response } from "express";
-import cors from "cors";
+import app from "./app";
+import dotenv from "dotenv";
 
-const app = express();
-const PORT = process.env.PORT || 3001; // Usa una porta diversa se il client React è su 3000
+//Carica le variabili d'ambiente dal file .env
+dotenv.config();
 
-app.use(cors()); // Configurazione CORS base
-app.use(express.json()); // Per parsare JSON body
+const PORT = process.env.PORT || 3001;
 
-app.get("/api/health", (req: Request, res: Response) => {
-  res.status(200).json({ status: "UP", timestamp: new Date().toISOString() });
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log("Press CTRL-C to stop");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Gestione della chiusura pulita del server (opzionale ma buona pratica)
+process.on("SIGTERM", () => {
+  console.log("SIGTERM signal received: closing HTTP server");
+  server.close(() => {
+    console.log("HTTP server closed");
+  });
 });
