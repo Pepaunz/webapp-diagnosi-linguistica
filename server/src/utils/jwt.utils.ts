@@ -1,51 +1,103 @@
 // src/utils/jwt.utils.ts
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-// Assicuriamoci che il segreto JWT sia definito, altrimenti l'app non deve partire
-if (!process.env.JWT_SECRET) {
-  console.error("FATAL ERROR: JWT_SECRET is not defined.");
-  process.exit(1);
-}
+// Carica le variabili d'ambiente
+dotenv.config();
 
-const jwtSecret = process.env.JWT_SECRET;
-const expiresIn = process.env.JWT_EXPIRES_IN || "1h";
-
-// Definiamo un'interfaccia per il payload del nostro token per avere type safety
+// Interfaccia per il payload JWT
 export interface JwtPayload {
   operator_id: string;
   role: string;
 }
 
-/**
- * Firma un payload per creare un token JWT.
- * @param payload L'oggetto da includere nel token (deve corrispondere a JwtPayload).
- * @returns Il token JWT come stringa.
- */
-export const signJwt = (payload: JwtPayload): string => {
-  return jwt.sign(payload, jwtSecret, { expiresIn });
-};
+// Funzione per ottenere il JWT secret in modo sicuro
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    console.error(
+      "FATAL ERROR: JWT_SECRET environment variable is not defined."
+    );
+    process.exit(1);
+  }
+
+  return secret;
+}
+
+// Funzione per ottenere l'expiration time
+function getJwtExpiresIn(): string {
+  return process.env.JWT_EXPIRES_IN || "1d";
+}
 
 /**
- * Verifica un token JWT e ne restituisce il payload decodificato.
- * Lancia un errore se il token non è valido o è scaduto.
- * @param token Il token JWT da verificare.
- * @returns Il payload decodificato (corrisponde a JwtPayload).
+ * Crea e firma un nuovo JSON Web Token.
+ * @param payload - Dati da includere nel token
+ * @returns Token JWT firmato
  */
-export const verifyJwt = (token: string): JwtPayload => {
+export function signJwt(payload: JwtPayload): string {
   try {
-    const decoded = jwt.verify(token, jwtSecret);
-    // Facciamo un type guard per assicurarci che il payload abbia la forma che ci aspettiamo
+    const secret = getJwtSecret();
+    const expiresIn = getJwtExpiresIn();
+
+    // Crea una copia pulita del payload
+    const tokenPayload = {
+      operator_id: payload.operator_id,
+      role: payload.role,
+    };
+
+    // Cast delle opzioni per bypassare il problema TypeScript
+    const options = {
+      expiresIn: expiresIn,
+    } as jwt.SignOptions;
+
+    // Firma il token con cast esplicito
+    return jwt.sign(tokenPayload, secret, options);
+  } catch (error) {
+    console.error("Error signing JWT:", error);
+    throw new Error("Failed to sign JWT token");
+  }
+}
+
+/**
+ * Verifica un token JWT e restituisce il suo payload.
+ * @param token - Token JWT da verificare
+ * @returns Payload decodificato
+ */
+export function verifyJwt(token: string): JwtPayload {
+  try {
+    const secret = getJwtSecret();
+
+    // Verifica il token
+    const decoded = jwt.verify(token, secret);
+
+    // Type guard per verificare la struttura
     if (
       typeof decoded === "object" &&
       decoded !== null &&
-      "operator_id" in decoded &&
-      "role" in decoded
+      !Buffer.isBuffer(decoded) &&
+      typeof (decoded as any).operator_id === "string" &&
+      typeof (decoded as any).role === "string"
     ) {
-      return decoded as JwtPayload;
+      return {
+        operator_id: (decoded as any).operator_id,
+        role: (decoded as any).role,
+      };
     }
-    throw new Error("Invalid token payload");
+
+    throw new Error("Invalid token payload structure");
   } catch (error) {
-    // Rilanciamo l'errore per essere gestito a un livello superiore (nel middleware di autenticazione)
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error(`Invalid token: ${error.message}`);
+    }
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new Error("Token has expired");
+    }
+    if (error instanceof jwt.NotBeforeError) {
+      throw new Error("Token is not active yet");
+    }
+
+    // Re-throw altri errori
     throw error;
   }
-};
+}
