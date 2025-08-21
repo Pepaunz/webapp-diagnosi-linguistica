@@ -44,7 +44,9 @@ app.get("/api/health", (req, res) => {
 // Qui verranno importate e usate le rotte definite in seguito (es. auth, templates, submissions)
 // Esempio:
 import authRoutes from "./api/routes/auth.routes";
+import submissionRoutes from "./api/routes/submission.routes";
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/submissions", submissionRoutes);
 // test err 404
 
 app.use((req, res, next) => {

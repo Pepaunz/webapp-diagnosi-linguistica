@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 
 // UUID parameter schema
 export const uuidParamSchema = z.object({
-  id: z.string().uuid("ID must be a valid UUID"),
+  id: z.uuid("ID must be a valid UUID"),
 });
 
 // Fiscal code validation (migliorato per Zod v4)

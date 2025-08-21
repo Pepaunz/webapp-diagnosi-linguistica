@@ -49,6 +49,7 @@ model Submission {
   fiscal_code             String    @map("fiscal_code")
   template_id String    @map("template_id")
   status                  String    @default("InProgress")
+  language_used           String    @map("language_used")
   current_step_identifier String?   @map("current_step_identifier")
   metadata                Json?
   created_at              DateTime  @default(now()) @map("created_at")
