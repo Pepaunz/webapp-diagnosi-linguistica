@@ -59,6 +59,13 @@ export const languageCodeSchema = z
     "Invalid language code format (expected: 'it', 'en', 'es-ES', etc.)"
   );
 
+  export const localizedTextSchema = z.object({
+    it: z.string().optional(),
+    en: z.string().optional(),
+    es: z.string().optional(),
+    ar: z.string().optional(),
+  })
+  
 // Tipi comuni
 export type UuidParam = z.infer<typeof uuidParamSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

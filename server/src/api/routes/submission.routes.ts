@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validate } from "../middlewares/validator.middleware";
-import { startOrResumeRequestSchema } from "../validators/submission.validator";
+import { completeSubmissionBodySchema, startOrResumeRequestSchema } from "../validators/submission.validator";
 import { uuidParamSchema } from "../validators";
 import { saveProgressRequestSchema } from "../validators/submission.validator";
 import * as submissionController from "../controllers/submission.controller";
@@ -20,12 +20,12 @@ router.put(
   submissionController.saveProgress
 );
 
-/* router.post(
+ router.post(
     '/:id/complete',
-    validate(uuidParamsSchema, 'params'), // <-- RIUTILIZZATO DI NUOVO!
+    validate(uuidParamSchema, 'params'),
+    validate(completeSubmissionBodySchema,'body'),
     submissionController.complete
   );
-  */
 
 // Le altre rotte per submission verranno aggiunte qui...
 

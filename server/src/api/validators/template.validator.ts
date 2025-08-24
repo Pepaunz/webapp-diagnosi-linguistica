@@ -1,12 +1,13 @@
 import { z } from "zod/v4";
 import { languageCodeSchema, paginationQuerySchema } from "./common.schemas";
+import { structureDefinitionSchema } from "./questionnaire.schemas";
 
 // ====================================================================
 // SCHEMI TEMPLATE QUESTIONARIO
 // ====================================================================
 
 // Base template schema (per POST/PUT)
-export const questionnaireTemplateBaseSchema = z.object({
+export const createTemplateBodySchema = z.object({
   name: z
     .string({
       error: "Name is required",
@@ -20,10 +21,7 @@ export const questionnaireTemplateBaseSchema = z.object({
     .nullable()
     .optional(),
 
-  structure_definition: z.record(z.string(), z.unknown(), {
-    error: "Structure definition must be a valid JSON object",
-  }),
-
+  structure_definition: structureDefinitionSchema, 
   is_active: z.boolean().default(true),
 
   available_languages: z
@@ -32,8 +30,8 @@ export const questionnaireTemplateBaseSchema = z.object({
 });
 
 // Full template schema (per responses)
-export const questionnaireTemplateSchema =
-  questionnaireTemplateBaseSchema.extend({
+export const TemplateSchema =
+  createTemplateBodySchema.extend({
     template_id: z.uuid(),
     created_at: z.date(),
     updated_at: z.date(),
@@ -55,9 +53,9 @@ export const deleteTemplateQuerySchema = z.object({
   permanent_delete: z.coerce.boolean().default(false),
 });
 
-export type QuestionnaireTemplateBase = z.infer<
-  typeof questionnaireTemplateBaseSchema
+export type CreateTemplateInput = z.infer<
+  typeof createTemplateBodySchema
 >;
-export type QuestionnaireTemplate = z.infer<typeof questionnaireTemplateSchema>;
+export type Template = z.infer<typeof TemplateSchema>;
 export type ListTemplatesQuery = z.infer<typeof listTemplatesQuerySchema>;
 export type TemplateParams = z.infer<typeof templateParamsSchema>;

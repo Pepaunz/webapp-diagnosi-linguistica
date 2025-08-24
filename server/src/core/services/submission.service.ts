@@ -3,10 +3,11 @@ import * as templateRepo from "../repositories/template.repository";
 import { StartOrResumeRequest } from "../../api/validators/submission.validator";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
-import { Prisma } from "@prisma/client";
+import { Prisma, Submission as PrismaSubmission } from "@prisma/client";
 import { SaveProgressRequest } from "../../api/validators/submission.validator";
-import { Submission } from "../../api/validators/submission.validator";
+import { Submission, SubmissionSchema, CompleteSubmissionBody } from "../../api/validators/submission.validator";
 
+//POST /submissions/start_or_resume.
 export const startOrResume = async (
   input: StartOrResumeRequest
 ): Promise<StartOrResumeResponse> => {
@@ -54,6 +55,7 @@ export const startOrResume = async (
   };
 };
 
+//PUT /submissions/{id}/save_progress
 export const saveProgress = async (
   submission_id: string,
   body: SaveProgressRequest
@@ -89,13 +91,10 @@ export const saveProgress = async (
     current_step_identifier
   );
 
-  // Restituiamo il timestamp per la risposta del controller
   return { last_updated_at: new Date() };
 };
 
-// ... (import e funzioni esistenti) ...
-import { CompleteSubmissionBody } from '../../api/validators/submission.validator';
-
+//POST /submissions/{id}/complete
 export const complete = async (
   submission_id: string,
   body: CompleteSubmissionBody
@@ -119,9 +118,20 @@ export const complete = async (
   }
 
   // 3. Chiama il repository per eseguire la transazione e restituire la submission completata
-  return submissionRepo.saveAndCompleteSubmission(
+  const completedSubmissionFromPrisma: PrismaSubmission = await submissionRepo.saveAndCompleteSubmission(
     submission_id,
     answersToUpsert,
     current_step_identifier
   );
+
+  // Usiamo .parse() per validare l'oggetto ricevuto dal DB e
+  // contemporaneamente fare il cast al nostro tipo di dominio Zod.
+ 
+  try {
+    return SubmissionSchema.parse(completedSubmissionFromPrisma);
+  } catch (error) {
+    // Se la validazione fallisce, significa che c'è un'incoerenza tra DB e dominio.
+    console.error("Data integrity error: Database object does not match domain schema", error);
+    throw new ApiError(500, "Internal data consistency error.");
+  }
 };
