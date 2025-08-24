@@ -85,50 +85,56 @@ export const upsertAnswersAndUpdateSubmission = async (
 };
 
 export const saveAndCompleteSubmission = async (
-    submission_id: string,
-    answers: Prisma.AnswerCreateManyInput[] | undefined, // Accetta un array o undefined
-    current_step_identifier: string
-  ): Promise<Submission> => {
-    const operations: any[] = []; // Array per contenere le operazioni della transazione
-  
-    // 1. Aggiungi le operazioni di upsert solo se l'array di risposte è stato fornito
-    if (answers && answers.length > 0) {
-      const upsertOperations = answers.map(answer =>
-        prisma.answer.upsert({
-          where: {
-            submission_id_question_identifier: {
-              submission_id: submission_id,
-              question_identifier: answer.question_identifier,
-            },
-          },
-          update: { answer_value: answer.answer_value, saved_at: new Date() },
-          create: {
+  submission_id: string,
+  answers: Prisma.AnswerCreateManyInput[] | undefined,
+  current_step_identifier: string
+): Promise<Submission> => {
+  const operations: any[] = [];
+
+  // 1. Operazioni di upsert risposte
+  if (answers && answers.length > 0) {
+    const upsertOperations = answers.map(answer =>
+      prisma.answer.upsert({
+        where: {
+          submission_id_question_identifier: {
             submission_id: submission_id,
             question_identifier: answer.question_identifier,
-            answer_value: answer.answer_value,
           },
-        })
-      );
-      operations.push(...upsertOperations);
-    }
+        },
+        update: { answer_value: answer.answer_value, saved_at: new Date() },
+        create: {
+          submission_id: submission_id,
+          question_identifier: answer.question_identifier,
+          answer_value: answer.answer_value,
+        },
+      })
+    );
+    operations.push(...upsertOperations);
+  }
+
+  // 2. Operazione di completamento
+  const completeOperation = prisma.submission.update({
+    where: { submission_id },
+    data: {
+      status: 'Completed',
+      completed_at: new Date(),
+      last_updated_at: new Date(),
+      current_step_identifier: current_step_identifier,
+    },
+  });
+  operations.push(completeOperation);
+
+  // 3. Esegui transazione e restituisci esplicitamente la submission
+  await prisma.$transaction(operations);
   
-    // 2. Aggiungi sempre l'operazione di aggiornamento per completare la submission
-    const completeOperation = prisma.submission.update({
-      where: { submission_id },
-      data: {
-        status: 'Completed',
-        completed_at: new Date(),
-        last_updated_at: new Date(),
-        current_step_identifier: current_step_identifier,
-      },
-    });
-    operations.push(completeOperation);
+  // 4. SOLUZIONE: Recupera esplicitamente la submission aggiornata
+  const updatedSubmission = await prisma.submission.findUnique({
+    where: { submission_id }
+  });
   
-    // 3. Esegui la transazione
-    // Prisma.$transaction restituirà i risultati di ogni operazione in un array.
-    // L'ultimo risultato sarà quello dell'operazione di 'update', che è quello che ci interessa.
-    const transactionResult = await prisma.$transaction(operations);
+  if (!updatedSubmission) {
+    throw new Error("Submission not found after completion");
+  }
   
-    // Restituisce il risultato dell'ultima operazione (l'oggetto Submission aggiornato)
-    return transactionResult[transactionResult.length - 1];
-  };
+  return updatedSubmission;
+};

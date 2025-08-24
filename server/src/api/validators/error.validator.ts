@@ -15,7 +15,7 @@ export const errorResponseSchema = z.object({
   status_code: z.number().int(),
   error: z.string(),
   message: z.string(),
-  timestamp: z.date(),
+  timestamp: z.string().datetime(),
   details: z.array(errorDetailSchema).optional(),
 });
 

@@ -68,7 +68,7 @@ model Submission {
 }
 
 model Answer {
-  answer_id           BigInt    @id @default(autoincrement()) @map("answer_id")
+  answer_id           Int    @id @default(autoincrement()) @map("answer_id")
   submission_id       String    @map("submission_id")
   question_identifier String    @map("question_identifier")
   answer_value        Json      @map("answer_value")

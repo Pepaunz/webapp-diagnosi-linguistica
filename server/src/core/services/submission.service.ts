@@ -98,7 +98,7 @@ export const saveProgress = async (
 export const complete = async (
   submission_id: string,
   body: CompleteSubmissionBody
-): Promise<Submission> => {
+): Promise<PrismaSubmission> => {
   const { answers, current_step_identifier } = body;
 
   // 1. Verifica che la submission esista e sia ancora in corso
@@ -127,11 +127,12 @@ export const complete = async (
   // Usiamo .parse() per validare l'oggetto ricevuto dal DB e
   // contemporaneamente fare il cast al nostro tipo di dominio Zod.
  
-  try {
-    return SubmissionSchema.parse(completedSubmissionFromPrisma);
-  } catch (error) {
-    // Se la validazione fallisce, significa che c'è un'incoerenza tra DB e dominio.
-    console.error("Data integrity error: Database object does not match domain schema", error);
-    throw new ApiError(500, "Internal data consistency error.");
-  }
+  return completedSubmissionFromPrisma;
+  // try {
+  //   return SubmissionSchema.parse(completedSubmissionFromPrisma);
+  // } catch (error) {
+  //   // Se la validazione fallisce, significa che c'è un'incoerenza tra DB e dominio.
+  //   console.error("Data integrity error: Database object does not match domain schema", error);
+  //   throw new ApiError(500, "Internal data consistency error.");
+  // }
 };
