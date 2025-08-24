@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 // ====================================================================
 // SCHEMI NOTE OPERATORI
@@ -7,9 +7,7 @@ import { z } from "zod/v4";
 // Add note request
 export const addNoteRequestSchema = z.object({
   note_text: z
-    .string({
-      error: "Note text is required",
-    })
+    .string()
     .min(1, "Note text cannot be empty")
     .max(2000, "Note text cannot exceed 2000 characters"),
 
@@ -23,19 +21,17 @@ export const addNoteRequestSchema = z.object({
 // Update note request
 export const updateNoteRequestSchema = z.object({
   note_text: z
-    .string({
-      error: "Note text is required",
-    })
+    .string()
     .min(1, "Note text cannot be empty")
     .max(2000, "Note text cannot exceed 2000 characters"),
 });
 
 // Full operator note schema
 export const operatorNoteSchema = z.object({
-  note_id: z.uuid(),
-  submission_id: z.uuid(),
+  note_id: z.string().uuid(),
+  submission_id: z.string().uuid(),
   question_identifier: z.string().nullable(),
-  operator_id: z.uuid(),
+  operator_id: z.string().uuid(),
   operator_full_name: z.string(),
   note_text: z.string(),
   created_at: z.date(),
@@ -44,8 +40,8 @@ export const operatorNoteSchema = z.object({
 
 // Note params
 export const noteParamsSchema = z.object({
-  submission_id: z.uuid(),
-  note_id: z.uuid(),
+  submission_id: z.string().uuid(),
+  note_id: z.string().uuid(),
 });
 
 export type AddNoteRequest = z.infer<typeof addNoteRequestSchema>;

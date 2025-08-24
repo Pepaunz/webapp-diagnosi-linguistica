@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
   fiscalCodeSchema,
   paginationQuerySchema,
@@ -12,22 +12,17 @@ import {
 // Start or resume request
 export const startOrResumeRequestSchema = z.object({
   fiscal_code: fiscalCodeSchema,
-  questionnaire_template_id: z
-    .uuid("Invalid template ID format")
-    .nonempty("template ID is required"),
+  questionnaire_template_id: z.
+    string().uuid("Invalid template ID format"),
   language_used: z
     .string()
-    .nonempty("Language is required")
     .max(10, "Language code too long"),
 });
 
 // Answer input schema
 export const answerInputSchema = z.object({
   question_identifier: z
-    .string({
-      error: "Question identifier is required",
-    })
-    .nonempty()
+    .string()
     .min(1, "Question identifier cannot be empty")
     .max(100, "Question identifier too long"),
 
@@ -37,9 +32,7 @@ export const answerInputSchema = z.object({
 // Save progress request
 export const saveProgressRequestSchema = z.object({
   current_step_identifier: z
-    .string({
-      error: "Current step identifier is required",
-    })
+    .string()
     .max(100, "Step identifier too long"),
 
   answers: z
@@ -50,7 +43,7 @@ export const saveProgressRequestSchema = z.object({
 // Answer schema (full object)
 export const answerSchema = z.object({
   answer_id: z.number().int(),
-  submission_id: z.uuid(),
+  submission_id: z.string().uuid(),
   question_identifier: z.string(),
   answer_value: z.record(z.string(), z.unknown()),
   saved_at: z.date(),
@@ -65,9 +58,9 @@ export const submissionStatusSchema = z.enum([
 
 // Full submission schema
 export const SubmissionSchema = z.object({
-  submission_id: z.uuid(),
+  submission_id: z.string().uuid(),
   fiscal_code: fiscalCodeSchema,
-  template_id: z.uuid(),
+  template_id: z.string().uuid(),
   status: submissionStatusSchema,
   current_step_identifier: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
@@ -78,7 +71,7 @@ export const SubmissionSchema = z.object({
 
 // Start/Resume response
 export const startOrResumeResponseSchema = z.object({
-  submission_id: z.uuid(),
+  submission_id: z.string().uuid(),
   status: z.literal("InProgress"),
   current_step_identifier: z.string().nullable(),
   answers: z.array(answerSchema),
@@ -89,34 +82,29 @@ export const startOrResumeResponseSchema = z.object({
 export const listSubmissionsQuerySchema = z.object({
   status: submissionStatusSchema.optional(),
   fiscal_code: fiscalCodeSchema.optional(),
-  template_id: z.uuid().optional(),
-  ...dateFilterSchema.shape,
-  ...paginationQuerySchema.shape,
+  template_id: z.string().uuid().optional(),
 });
 
 // Submission params
 export const submissionParamsSchema = z.object({
-  submission_id: z.uuid("Submission ID must be a valid UUID"),
+  submission_id: z.string().uuid("Submission ID must be a valid UUID"),
 });
 
 // Modify answer request (per operatori)
 export const modifyAnswerRequestSchema = z.object({
-  new_answer_value: z.record(z.string(), z.unknown(), {
-    error: "New answer value must be a valid JSON object",
-  }),
+  new_answer_value: z.record(z.string(), z.unknown(),),
 });
 
 // Answer params
 export const answerParamsSchema = z.object({
-  submission_id: z.uuid(),
+  submission_id: z.string().uuid(),
   question_identifier: z.string().min(1, "Question identifier is required"),
 });
 
 export const completeSubmissionBodySchema = z.object({
   // Lo step identifier è ancora utile per sapere qual è l'ultima pagina vista
   current_step_identifier: z
-    .string()
-    .nonempty("Current step identifier is required"),
+    .string(),
 
   answers: z.array(answerInputSchema).optional(), // <-- .optional() è la chiave qui
 });

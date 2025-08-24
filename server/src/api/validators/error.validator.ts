@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 // ====================================================================
 // SCHEMI ERRORE
@@ -15,7 +15,7 @@ export const errorResponseSchema = z.object({
   status_code: z.number().int(),
   error: z.string(),
   message: z.string(),
-  timestamp: z.string().date(),
+  timestamp: z.date(),
   details: z.array(errorDetailSchema).optional(),
 });
 

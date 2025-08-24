@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { languageCodeSchema, paginationQuerySchema } from "./common.schemas";
 import { structureDefinitionSchema } from "./questionnaire.schemas";
 
@@ -9,9 +9,7 @@ import { structureDefinitionSchema } from "./questionnaire.schemas";
 // Base template schema (per POST/PUT)
 export const createTemplateBodySchema = z.object({
   name: z
-    .string({
-      error: "Name is required",
-    })
+    .string()
     .min(1, "Name cannot be empty")
     .max(255, "Name must not exceed 255 characters"),
 
@@ -32,7 +30,7 @@ export const createTemplateBodySchema = z.object({
 // Full template schema (per responses)
 export const TemplateSchema =
   createTemplateBodySchema.extend({
-    template_id: z.uuid(),
+    template_id: z.string().uuid(),
     created_at: z.date(),
     updated_at: z.date(),
   });
@@ -45,7 +43,7 @@ export const listTemplatesQuerySchema = z.object({
 
 // Params per template operations
 export const templateParamsSchema = z.object({
-  template_id: z.uuid("Template ID must be a valid UUID"),
+  template_id: z.string().uuid("Template ID must be a valid UUID"),
 });
 
 // Delete template query

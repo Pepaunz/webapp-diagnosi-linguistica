@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 // ====================================================================
 // SCHEMI COMUNI RIUTILIZZABILI
@@ -6,14 +6,12 @@ import { z } from "zod/v4";
 
 // UUID parameter schema
 export const uuidParamSchema = z.object({
-  id: z.uuid("ID must be a valid UUID"),
+  id: z.string().uuid("Invalid UUID format"),
 });
 
 // Fiscal code validation (migliorato per Zod v4)
 export const fiscalCodeSchema = z
-  .string({
-    error: "Fiscal code is required",
-  })
+  .string()
   .regex(
     /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1}$/,
     "Invalid fiscal code format"
@@ -32,14 +30,10 @@ export const paginationQuerySchema = z.object({
 export const dateFilterSchema = z
   .object({
     date_from: z.coerce
-      .date({
-        error: "Invalid date format for date_from",
-      })
+      .date()
       .optional(),
     date_to: z.coerce
-      .date({
-        error: "Invalid date format for date_to",
-      })
+      .date()
       .optional(),
   })
   .refine(
