@@ -30,7 +30,7 @@ model Operator {
 
 model Template {
   template_id        String   @id @default(uuid()) @map("template_id")
-  name               String
+  name               String   @unique
   description        String?
   structure_definition Json     @map("structure_definition")
   is_active          Boolean  @default(true) @map("is_active")

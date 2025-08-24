@@ -1,6 +1,8 @@
 // prisma/seed.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma} from "@prisma/client";
 import { hash } from "bcrypt"; // Importiamo direttamente 'hash' da bcrypt
+import {structureDefinitionSchema, QuestionnaireData} from '../src/api/validators/questionnaire.schemas'
+import {bilingualismQuestionnaireData} from '../mock-template' //IMPORTANTE: Sostituire con template iniziale (completo)
 
 const prisma = new PrismaClient();
 
@@ -42,7 +44,28 @@ async function main() {
   console.log(`Upserted admin user: ${admin.email}`);
   console.log(`Upserted operator user: ${operator.email}`);
 
-  // Aggiungi qui altri dati di seed se necessario...
+  console.log('Seeding questionnaire templates...');
+  
+  const validatedStructure: QuestionnaireData = structureDefinitionSchema.parse(bilingualismQuestionnaireData);
+  
+  const template = await prisma.template.upsert({
+    // Usiamo 'name' come chiave univoca per l'upsert
+    where: { name: 'Questionario Bilinguismo Base' }, 
+    // Se il template esiste già, non facciamo nulla (ma potremmo aggiornarlo se volessimo)
+    update: {}, 
+    // Se non esiste, lo creiamo
+    create: {
+      name: 'Questionario Bilinguismo Base',
+      description: 'Questionario standard per la valutazione iniziale del bilinguismo.',
+      // Inseriamo l'intero oggetto JSON del questionario qui
+      structure_definition: validatedStructure,
+      // Definiamo le lingue disponibili basandoci sulle chiavi dell'oggetto title
+      available_languages: ['it', 'en', 'es', 'ar'], // Potresti derivarlo dinamicamente se vuoi
+      is_active: true,
+    },
+  });
+
+  console.log(`Upserted template: ${template.name} with ID: ${template.template_id}`);
 
   console.log(`Seeding finished.`);
 }
