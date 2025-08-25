@@ -51,6 +51,35 @@ export const deleteTemplateQuerySchema = z.object({
   permanent_delete: z.coerce.boolean().default(false),
 });
 
+export const updateTemplateBodySchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name cannot be empty")
+    .max(255, "Name must not exceed 255 characters")
+    .optional(),
+
+  description: z
+    .string()
+    .max(1000, "Description must not exceed 1000 characters")
+    .nullable()
+    .optional(),
+
+  structure_definition: structureDefinitionSchema.optional(),
+  
+  is_active: z.boolean().optional(),
+
+  available_languages: z
+    .array(languageCodeSchema)
+    .min(1, "At least one language must be specified")
+    .optional(),
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "At least one field must be provided for update" }
+);
+
+
+export type UpdateTemplateInput = z.infer<typeof updateTemplateBodySchema>;
+
 export type CreateTemplateInput = z.infer<
   typeof createTemplateBodySchema
 >;

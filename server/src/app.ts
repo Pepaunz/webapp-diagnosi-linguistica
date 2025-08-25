@@ -45,8 +45,10 @@ app.get("/api/health", (req, res) => {
 // Esempio:
 import authRoutes from "./api/routes/auth.routes";
 import submissionRoutes from "./api/routes/submission.routes";
+import templateRoutes from "./api/routes/template.routes";
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/submissions", submissionRoutes);
+app.use("/api/v1/templates", templateRoutes);
 // test err 404
 
 app.use((req, res, next) => {
