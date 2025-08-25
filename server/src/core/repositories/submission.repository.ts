@@ -1,4 +1,5 @@
 import { PrismaClient, Submission, Answer, Prisma } from "@prisma/client";
+import { ListSubmissionsQuery } from "@/api/validators";
 const prisma = new PrismaClient();
 
 export const findLatestInProgress = async (
@@ -137,4 +138,110 @@ export const saveAndCompleteSubmission = async (
   }
   
   return updatedSubmission;
+};
+
+export const findSubmissionsWithFilters = async (
+  query: ListSubmissionsQuery
+): Promise<{
+  submissions: Submission[];
+  total: number;
+}> => {
+  // Costruisce il filtro WHERE dinamicamente
+  const whereClause: Prisma.SubmissionWhereInput = {};
+
+  if (query.status) {
+    whereClause.status = query.status;
+  }
+
+  if (query.fiscal_code) {
+    whereClause.fiscal_code = query.fiscal_code;
+  }
+
+  if (query.template_id) {
+    whereClause.template_id = query.template_id;
+  }
+
+  // Aggiungi filtri per date se presenti nella query
+  if (query.date_from || query.date_to) {
+    whereClause.created_at = {};
+    if (query.date_from) {
+      whereClause.created_at.gte = query.date_from;
+    }
+    if (query.date_to) {
+      whereClause.created_at.lte = query.date_to;
+    }
+  }
+
+  // Costruisce l'ordinamento dinamico
+  let orderBy: Prisma.SubmissionOrderByWithRelationInput = { last_updated_at: "desc" };
+  
+  if (query.sort_by) {
+    switch (query.sort_by) {
+      case "created_at":
+        orderBy = { created_at: query.sort_order };
+        break;
+      case "last_updated_at":
+        orderBy = { last_updated_at: query.sort_order };
+        break;
+      case "completed_at":
+        orderBy = { completed_at: query.sort_order };
+        break;
+      case "fiscal_code":
+        orderBy = { fiscal_code: query.sort_order };
+        break;
+      case "status":
+        orderBy = { status: query.sort_order };
+        break;
+      default:
+        orderBy = { last_updated_at: "desc" };
+    }
+  }
+
+  // Esegue le query in parallelo per ottimizzare le performance
+  const [submissions, total] = await Promise.all([
+    prisma.submission.findMany({
+      where: whereClause,
+      orderBy,
+      skip: query.offset,
+      take: query.limit,
+      include: {
+        template: {
+          select: {
+            template_id: true,
+            name: true,
+          },
+        },
+      },
+    }),
+    prisma.submission.count({
+      where: whereClause,
+    }),
+  ]);
+
+  return { submissions, total };
+};
+
+export const findSubmissionById = async (
+  id: string
+): Promise<Submission | null> => {
+  return prisma.submission.findUnique({
+    where: { submission_id: id },
+    include: {
+      template: {
+        select: {
+          template_id: true,
+          name: true,
+          description: true,
+        },
+      },
+    },
+  });
+};
+
+export const deleteSubmission = async (id: string): Promise<void> => {
+  // Elimina la submission. Grazie ai vincoli CASCADE definiti nello schema Prisma,
+  // tutte le entità correlate (answers, notes, feedback) verranno eliminate automaticamente
+  await prisma.submission.delete({
+    where: { submission_id: id },
+  });
 };

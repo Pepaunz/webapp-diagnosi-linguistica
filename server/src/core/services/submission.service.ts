@@ -3,9 +3,9 @@ import * as templateRepo from "../repositories/template.repository";
 import { StartOrResumeRequest } from "../../api/validators/submission.validator";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
-import { Prisma, Submission as PrismaSubmission } from "@prisma/client";
+import { Prisma, Submission as PrismaSubmission, Answer } from "@prisma/client";
 import { SaveProgressRequest } from "../../api/validators/submission.validator";
-import { Submission, SubmissionSchema, CompleteSubmissionBody } from "../../api/validators/submission.validator";
+import { ListSubmissionsQuery, CompleteSubmissionBody } from "../../api/validators/submission.validator";
 
 //POST /submissions/start_or_resume.
 export const startOrResume = async (
@@ -124,15 +124,93 @@ export const complete = async (
     current_step_identifier
   );
 
-  // Usiamo .parse() per validare l'oggetto ricevuto dal DB e
-  // contemporaneamente fare il cast al nostro tipo di dominio Zod.
- 
   return completedSubmissionFromPrisma;
-  // try {
-  //   return SubmissionSchema.parse(completedSubmissionFromPrisma);
-  // } catch (error) {
-  //   // Se la validazione fallisce, significa che c'è un'incoerenza tra DB e dominio.
-  //   console.error("Data integrity error: Database object does not match domain schema", error);
-  //   throw new ApiError(500, "Internal data consistency error.");
+
+};
+
+// GET /submissions - Per operatori
+export const getSubmissions = async (
+  query: ListSubmissionsQuery
+): Promise<{
+  submissions: PrismaSubmission[];
+  total: number;
+  pagination: {
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+}> => {
+  // Chiama il repository per ottenere le submission con filtri e paginazione
+  const { submissions, total } = await submissionRepo.findSubmissionsWithFilters(query);
+
+  // Calcola se ci sono più pagine disponibili
+  const hasMore = query.offset + query.limit < total;
+
+  return {
+    submissions,
+    total,
+    pagination: {
+      limit: query.limit,
+      offset: query.offset,
+      has_more: hasMore,
+    },
+  };
+};
+
+// GET /submissions/{id} - Dettagli completi di una submission per operatori
+export const getSubmissionById = async (
+  submission_id: string
+): Promise<{
+  submission: PrismaSubmission;
+  answers: Answer[];
+  template: any; // Il tipo dipende dal template repository
+  notes?: any[]; // Note dell'operatore se presenti
+}> => {
+  // 1. Verifica che la submission esista
+  const submission = await submissionRepo.findSubmissionById(submission_id);
+  if (!submission) {
+    throw new ApiError(404, "Submission not found");
+  }
+
+  // 2. Recupera le risposte associate
+  const answers = await submissionRepo.findAnswersBySubmissionId(submission_id);
+
+  // 3. Recupera i dettagli del template
+  const template = await templateRepo.findTemplateById(submission.template_id);
+  if (!template) {
+    throw new ApiError(500, "Associated template not found");
+  }
+
+  // 4. Recupera eventuali note degli operatori (opzionale per questa fase)
+  // const notes = await operatorNotesRepo.findNotesBySubmissionId(submission_id);
+
+  return {
+    submission,
+    answers,
+    template,
+    // notes
+  };
+};
+
+// DELETE /submissions/{id} - Eliminazione di una submission per operatori
+export const deleteSubmission = async (
+  submission_id: string
+): Promise<void> => {
+  // 1. Verifica che la submission esista
+  const submission = await submissionRepo.findSubmissionById(submission_id);
+  if (!submission) {
+    throw new ApiError(404, "Submission not found");
+  }
+
+  // 2. Verifica che la submission non sia in uno stato che non dovrebbe essere eliminato
+  // Ad esempio, potremmo voler impedire l'eliminazione di submission completate
+  // (questo dipende dalle regole di business specifiche)
+  // if (submission.status === "Completed") {
+  //   throw new ApiError(400, "Cannot delete completed submissions");
   // }
+
+  // 3. Procedi con l'eliminazione
+  // Grazie ai vincoli CASCADE nel database, le entità correlate 
+  // (answers, notes, feedback) verranno eliminate automaticamente
+  await submissionRepo.deleteSubmission(submission_id);
 };

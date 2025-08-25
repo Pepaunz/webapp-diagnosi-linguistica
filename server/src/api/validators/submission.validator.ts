@@ -83,7 +83,17 @@ export const listSubmissionsQuerySchema = z.object({
   status: submissionStatusSchema.optional(),
   fiscal_code: fiscalCodeSchema.optional(),
   template_id: z.string().uuid().optional(),
-});
+  date_from: z.coerce.date().optional(),
+  date_to: z.coerce.date().optional(),
+  ...paginationQuerySchema.shape, // Questo funziona perché paginationQuerySchema è un semplice z.object()
+}).refine(
+  (data) =>
+    !data.date_from || !data.date_to || data.date_from <= data.date_to,
+  {
+    message: "date_from must be before or equal to date_to",
+    path: ["date_from"],
+  }
+);
 
 // Submission params
 export const submissionParamsSchema = z.object({

@@ -8,3 +8,11 @@ export const findActiveTemplateById = async (
     where: { template_id: id, is_active: true },
   });
 };
+
+export const findTemplateById = async (
+  id: string
+): Promise<Template | null> => {
+  return prisma.template.findUnique({
+    where: { template_id: id },
+  });
+};
