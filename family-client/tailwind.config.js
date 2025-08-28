@@ -14,7 +14,7 @@ export default {
           'header-text': '#FFFFFF',     // Testo "WebApp" bianco
           
           // Background
-          'background': '#F7FAFC',      // Background grigio chiaro app
+          'background': '#F7FCFF',      // Background grigio chiaro app
           
           // Typography  
           'text-primary': '#2D3748',    // "Benvenuto/a" - testo scuro
@@ -33,8 +33,8 @@ export default {
           'button-text': '#FFFFFF',     // Testo button bianco
           
           // Language selector
-          'select-bg': '#F9F9F9',       // Background selector
-          'select-border': '#DDDDDD',   // Border selector
+          'select-bg': '#FFFFFF',       // Background selector
+          'select-border': '#E2E8F0',   // Border selector
           
           // Stati di errore
           'error': '#E53E3E',           // Rosso per errori
