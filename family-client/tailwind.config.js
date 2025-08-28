@@ -3,6 +3,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily : {
+        'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        'mono': ['SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', 'monospace'],
+      },
       colors: {
         'family': {
           // Header scuro grigio-blu
@@ -21,7 +25,7 @@ export default {
           // Input
           'input-bg': '#FFFFFF',        // Background input bianco
           'input-border': '#E2E8F0',    // Border input grigio chiaro
-          'input-focus': '#4299E1',     // Focus border blu (standard)
+          'input-focus': '#426c8f',     // Focus border blu (standard)
           
           // Button
           'button': '#2D3748',          // Button "Avanti" scuro
@@ -29,8 +33,8 @@ export default {
           'button-text': '#FFFFFF',     // Testo button bianco
           
           // Language selector
-          'select-bg': '#FFFFFF',       // Background selector
-          'select-border': '#E2E8F0',   // Border selector
+          'select-bg': '#F9F9F9',       // Background selector
+          'select-border': '#DDDDDD',   // Border selector
           
           // Stati di errore
           'error': '#E53E3E',           // Rosso per errori

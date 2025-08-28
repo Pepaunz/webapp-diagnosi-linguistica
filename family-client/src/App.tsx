@@ -1,11 +1,15 @@
 // src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import CFLoginPage from './pages/CFLoginPage';
+import TestPage from './pages/TestPage';
 
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
+
+        {/* 🆕 Pagina di test componenti */}
+        <Route path="/test" element={<TestPage />} />
         {/* Pagina di accesso con CF */}
         <Route path="/questionnaire/:templateId" element={<CFLoginPage />} />
         

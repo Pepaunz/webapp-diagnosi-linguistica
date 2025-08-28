@@ -2,7 +2,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-// Button Component
+// Button Component - Mobile First + Figma Style
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
@@ -19,18 +19,20 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
   
+  // Styling basato sul tuo design Figma
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-400',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500'
+    primary: 'bg-family-button text-family-button-text hover:bg-family-button-hover focus:outline-none focus:shadow-[0_0_0_4px_rgba(74,85,104,0.3)] focus:border-slate-700 active:scale-[0.98]',
+    secondary: 'bg-family-input-bg text-family-text-primary border-2 border-family-input-border hover:border-family-button active:scale-[0.98] focus:outline-none focus:border-slate-700 focus:shadow-[0_0_0_4px_rgba(45,55,72,0.2)]  ',
+    outline: 'border-2 border-family-button bg-transparent text-family-button hover:bg-family-button hover:text-family-button-text focus:outline-none focus:shadow-[0_0_0_4px_rgba(71,85,105,0.1)] focus:border-slate-600'
   };
   
+  // Mobile-first sizing con touch targets appropriati
   const sizeClasses = {
-    sm: 'px-4 py-2 text-base min-h-[44px]',  // Mobile minimum
-    md: 'px-5 py-3 text-base min-h-[48px]',  // Standard mobile
-    lg: 'px-6 py-4 text-lg min-h-[52px]'     // Large mobile
+    sm: 'px-4 py-2 text-mobile-sm min-h-touch-sm rounded-mobile-md',      // 44px min - tight
+    md: 'px-5 py-3 text-mobile-md min-h-touch-md rounded-mobile-md',      // 48px min - standard
+    lg: 'px-6 py-4 text-button-mobile min-h-touch-lg rounded-mobile-md'   // 52px min - comfortable
   };
   
   return (
@@ -45,7 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-// Input Component - Mobile Optimized
+// Input Component - Mobile First + Figma Style  
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
@@ -62,24 +64,35 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-base font-medium text-gray-700 mb-2">
+        <label className="block text-mobile-md font-medium text-family-text-label mb-mobile-sm">
           {label}
-          {props.required && <span className="text-red-500 ml-1">*</span>}
+          {props.required && <span className="text-family-error ml-1">*</span>}
         </label>
       )}
       <input
-        className={`w-full px-4 py-3 text-base border rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed min-h-[48px] ${
-          error 
-            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-            : 'border-gray-300'
-        } ${className}`}
+        className={`
+          w-full px-mobile-md py-mobile-sm text-mobile-md
+          bg-family-input-bg
+          border-2 border-family-input-border
+          rounded-mobile-md
+          min-h-touch-md
+          transition-all duration-200
+          focus:outline-none focus:ring-2 focus:ring-family-input-focus focus:border-family-input-focus
+          disabled:bg-gray-100 disabled:cursor-not-allowed
+          placeholder:text-family-text-muted
+          ${error 
+            ? 'border-family-error focus:ring-family-error focus:border-family-error' 
+            : 'border-family-input-border hover:border-gray-400'
+          } 
+          ${className}
+        `}
         {...props}
       />
       {error && (
-        <p className="mt-2 text-base text-red-600">{error}</p>
+        <p className="mt-mobile-xs text-mobile-sm text-family-error">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-2 text-base text-gray-500">{helperText}</p>
+        <p className="mt-mobile-xs text-mobile-sm text-family-text-muted">{helperText}</p>
       )}
     </div>
   );

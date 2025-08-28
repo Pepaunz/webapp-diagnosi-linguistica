@@ -1,4 +1,3 @@
-// src/components/layout/SimpleLayout.tsx
 import React from 'react';
 
 interface SimpleLayoutProps {
@@ -9,30 +8,28 @@ interface SimpleLayoutProps {
 
 const SimpleLayout: React.FC<SimpleLayoutProps> = ({
   children,
-  title = 'Questionario Bilinguismo',
+  title = 'WebApp',
   showHeader = true
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-family-background">
       {showHeader && (
-        <header className="bg-white border-b border-gray-200 px-4 py-4 safe-area-top">
-          <div className="max-w-lg mx-auto">
-            <h1 className="text-xl font-semibold text-gray-900 text-center">{title}</h1>
+        <header className="bg-family-header px-4 py-4 shadow-mobile-sm">
+          <div className="flex items-center gap-3">
+            {/* Logo/Icon placeholder - sostituisci con il tuo logo */}
+            <div className="w-8 h-8 bg-white/10 rounded flex items-center justify-center">
+              <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
+            </div>
+            <h1 className="text-xl font-semibold text-family-header-text tracking-wide">
+              {title}
+            </h1>
           </div>
         </header>
       )}
       
-      <main className="flex-1 flex items-center justify-center p-4 safe-area-bottom">
-        <div className="w-full max-w-sm mx-auto">
-          {children}
-        </div>
+      <main className="px-mobile-md py-mobile-lg">
+        {children}
       </main>
-      
-      <footer className="bg-white border-t border-gray-200 px-4 py-4 safe-area-bottom">
-        <div className="max-w-lg mx-auto text-center text-sm text-gray-500">
-          <p>Questionario per la valutazione del bilinguismo nei bambini</p>
-        </div>
-      </footer>
     </div>
   );
 };
