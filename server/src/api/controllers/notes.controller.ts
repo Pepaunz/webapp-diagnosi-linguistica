@@ -1,7 +1,7 @@
 // src/api/controllers/notes.controller.ts
 import { Request, Response, NextFunction } from "express";
-import { AddNoteRequest, UpdateNoteRequest, NoteParams } from "../validators/note.validator";
-import { UuidParam } from "../validators";
+import { AddNoteRequest, UpdateNoteRequest, NoteParams } from "@bilinguismo/shared";
+import { UuidParam } from "@bilinguismo/shared";
 import * as notesService from "../../core/services/notes.service";
 
 // Extend Request interface per includere operator info

@@ -6,8 +6,8 @@ import {
   submitFeedbackBodySchema,
   listFeedbackQuerySchema,
   updateFeedbackBodySchema
-} from "../validators/feedback.validator";
-import { uuidParamSchema } from "../validators";
+} from "@bilinguismo/shared";
+import { uuidParamSchema } from "@bilinguismo/shared";
 import * as feedbackController from "../controllers/feedback.controller";
 
 const router = Router();

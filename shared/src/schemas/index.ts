@@ -1,4 +1,3 @@
-export * from "./auth.validator";
 export * from "./template.validator";
 export * from "./submission.validator";
 export * from "./note.validator";

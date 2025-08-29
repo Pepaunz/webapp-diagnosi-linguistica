@@ -1,4 +1,4 @@
-import { ListTemplatesQuery, CreateTemplateInput, UpdateTemplateInput } from "../../api/validators/template.validator";
+import { ListTemplatesQuery, CreateTemplateInput, UpdateTemplateInput } from "@bilinguismo/shared";
 import { PrismaClient, Template, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 

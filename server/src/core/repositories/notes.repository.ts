@@ -1,6 +1,6 @@
 // src/core/repositories/notes.repository.ts
 import { PrismaClient, OperatorNote, Prisma } from "@prisma/client";
-import { AddNoteRequest, UpdateNoteRequest } from "../../api/validators/note.validator";
+import { AddNoteRequest, UpdateNoteRequest } from "@bilinguismo/shared";
 
 const prisma = new PrismaClient();
 

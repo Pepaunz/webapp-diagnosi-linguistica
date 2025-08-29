@@ -1,11 +1,11 @@
 import * as submissionRepo from "../repositories/submission.repository";
 import * as templateRepo from "../repositories/template.repository";
-import { StartOrResumeRequest } from "../../api/validators/submission.validator";
+import { StartOrResumeRequest } from "@bilinguismo/shared";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
 import { Prisma, Submission as PrismaSubmission, Answer } from "@prisma/client";
-import { SaveProgressRequest } from "../../api/validators/submission.validator";
-import { ListSubmissionsQuery, CompleteSubmissionBody } from "../../api/validators/submission.validator";
+import { SaveProgressRequest } from "@bilinguismo/shared";
+import { ListSubmissionsQuery, CompleteSubmissionBody } from "@bilinguismo/shared";
 
 //POST /submissions/start_or_resume.
 export const startOrResume = async (

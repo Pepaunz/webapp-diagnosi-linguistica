@@ -1,5 +1,5 @@
 import { PrismaClient, Submission, Answer, Prisma } from "@prisma/client";
-import { ListSubmissionsQuery } from "@/api/validators";
+import { ListSubmissionsQuery } from "@bilinguismo/shared";
 const prisma = new PrismaClient();
 
 export const findLatestInProgress = async (

@@ -7,8 +7,8 @@ import {
   updateTemplateBodySchema,
   listTemplatesQuerySchema,
   templateParamsSchema
-} from "../validators/template.validator";
-import { uuidParamSchema } from "../validators";
+} from "@bilinguismo/shared";
+import { uuidParamSchema } from "@bilinguismo/shared";
 import * as templateController from "../controllers/template.controller";
 
 const router = Router();

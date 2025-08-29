@@ -5,7 +5,7 @@ import {
   ListTemplatesQuery, 
   CreateTemplateInput, 
   UpdateTemplateInput 
-} from "../../api/validators/template.validator";
+} from "@bilinguismo/shared";
 import { Template as PrismaTemplate } from "@prisma/client";
 
 // GET /templates - Lista template con filtri

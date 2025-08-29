@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { validate } from "../middlewares/validator.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { completeSubmissionBodySchema, startOrResumeRequestSchema,saveProgressRequestSchema, listSubmissionsQuerySchema } from "../validators/submission.validator";
-import { uuidParamSchema } from "../validators";
-import { } from "../validators/submission.validator";
+import { completeSubmissionBodySchema, startOrResumeRequestSchema,saveProgressRequestSchema, listSubmissionsQuerySchema } from "@bilinguismo/shared";
+import { uuidParamSchema } from "@bilinguismo/shared";
+import { } from "@bilinguismo/shared";
 import * as submissionController from "../controllers/submission.controller";
 
 const router = Router();

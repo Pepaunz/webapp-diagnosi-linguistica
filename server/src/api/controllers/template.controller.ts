@@ -5,8 +5,8 @@ import {
   UpdateTemplateInput,
   ListTemplatesQuery,
   TemplateParams
-} from "../validators/template.validator";
-import { UuidParam } from "../validators";
+} from "@bilinguismo/shared";
+import { UuidParam } from "@bilinguismo/shared";
 import * as templateService from "../../core/services/template.service";
 
 // GET /templates - Lista template con filtri

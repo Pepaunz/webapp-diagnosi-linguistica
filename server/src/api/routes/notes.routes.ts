@@ -2,8 +2,8 @@
 import { Router } from "express";
 import { validate } from "../middlewares/validator.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { addNoteRequestSchema, updateNoteRequestSchema } from "../validators/note.validator";
-import { uuidParamSchema } from "../validators";
+import { addNoteRequestSchema, updateNoteRequestSchema } from "@bilinguismo/shared";
+import { uuidParamSchema } from "@bilinguismo/shared";
 import * as notesController from "../controllers/notes.controller";
 
 const router = Router();

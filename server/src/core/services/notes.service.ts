@@ -2,7 +2,7 @@
 import * as notesRepo from "../repositories/notes.repository";
 import * as submissionRepo from "../repositories/submission.repository";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
-import { AddNoteRequest, UpdateNoteRequest } from "../../api/validators/note.validator";
+import { AddNoteRequest, UpdateNoteRequest } from "@bilinguismo/shared";
 import { JwtPayload } from "../../utils/jwt.utils";
 
 // Type per response con operator info

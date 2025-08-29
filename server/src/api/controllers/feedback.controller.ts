@@ -5,8 +5,8 @@ import {
   UpdateFeedbackInput, 
   ListFeedbackQuery,
   FeedbackParams
-} from "../validators/feedback.validator";
-import { UuidParam } from "../validators";
+} from '@bilinguismo/shared';
+import { UuidParam } from "@bilinguismo/shared";
 import * as feedbackService from "../../core/services/feedback.service";
 
 // POST /feedback - Invia feedback (PUBBLICO - nessuna autenticazione)

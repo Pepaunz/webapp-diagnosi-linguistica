@@ -24,7 +24,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@bilinguismo/shared": ["../shared/src"],
+      "@bilinguismo/shared/*": ["../shared/src/*"]
     }
   },
   "include": ["src"]

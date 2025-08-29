@@ -1,6 +1,6 @@
 // src/core/repositories/feedback.repository.ts
 import { PrismaClient, FeedbackReport, Prisma } from "@prisma/client";
-import { SubmitFeedbackInput, ListFeedbackQuery } from "../../api/validators/feedback.validator";
+import { SubmitFeedbackInput, ListFeedbackQuery } from "@bilinguismo/shared";
 
 const prisma = new PrismaClient();
 

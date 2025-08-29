@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as submissionService from "../../core/services/submission.service";
-import { UuidParam } from "../validators";
-import { SaveProgressRequest , CompleteSubmissionBody,StartOrResumeRequest, ListSubmissionsQuery } from "../validators/submission.validator";
+import { UuidParam } from "@bilinguismo/shared";
+import { SaveProgressRequest , CompleteSubmissionBody,StartOrResumeRequest, ListSubmissionsQuery } from "@bilinguismo/shared";
 
 // POST /submissions/start_or_resume
 export const startOrResume = async (

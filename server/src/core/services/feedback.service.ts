@@ -6,7 +6,7 @@ import {
   SubmitFeedbackInput, 
   ListFeedbackQuery, 
   UpdateFeedbackInput 
-} from "../../api/validators/feedback.validator";
+} from "@bilinguismo/shared";
 import { FeedbackReport as PrismaFeedbackReport } from "@prisma/client";
 
 // POST /feedback - Invia feedback (pubblico)
