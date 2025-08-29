@@ -2,6 +2,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import CFLoginPage from './pages/CFLoginPage';
 import TestPage from './pages/TestPage';
+import QuestionnairePage from './pages/QuestionnairePage';
 
 function App() {
   return (
@@ -14,21 +15,7 @@ function App() {
         <Route path="/questionnaire/:templateId" element={<CFLoginPage />} />
         
         {/* Pagina questionario attivo - TODO */}
-        <Route 
-          path="/questionnaire/:templateId/:submissionId" 
-          element={
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                  Questionario Page
-                </h1>
-                <p className="text-gray-600">
-                  Da implementare - Step successivo
-                </p>
-              </div>
-            </div>
-          } 
-        />
+        <Route path="/questionnaire/:templateId/:submissionId" element={<QuestionnairePage />} />
         
         {/* Pagina completamento - TODO */}
         <Route 
