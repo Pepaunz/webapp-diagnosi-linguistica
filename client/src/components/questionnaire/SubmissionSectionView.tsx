@@ -1,20 +1,8 @@
 // src/components/questionnaire/SubmissionSectionView.tsx
 
 import React from "react";
-import { Section } from "@shared/types/questionnaire.types";
-import { Language } from "@shared/types/common.types";
-import { Answer } from "@shared/types/submission.types";
+import { Section,Language, AnswerDTO as Answer, OperatorNoteDTO as Note } from "@bilinguismo/shared";
 import SubmissionQuestionView from "./SubmissionQuestionView";
-
-interface Note {
-  note_id: string;
-  question_identifier?: string;
-  note_text: string;
-  created_at: string;
-  operator: {
-    full_name: string;
-  };
-}
 
 interface SubmissionSectionViewProps {
   section: Section;

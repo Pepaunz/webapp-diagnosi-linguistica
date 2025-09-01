@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import { MessageSquare, Plus, Star } from "lucide-react";
-import { Question } from "@shared/types/questionnaire.types";
-import { Answer, Note } from "@shared/types/submission.types";
-import { Language } from "@shared/types/common.types";
+import { Question, Language } from "@bilinguismo/shared";
+import { AnswerDTO as Answer, OperatorNoteDTO as Note } from "@bilinguismo/shared";
 
 interface SubmissionQuestionViewProps {
   question: Question;
@@ -143,7 +142,7 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
                 <div className="flex-1">
                   <p className="text-sm text-gray-800">{note.note_text}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {note.operator.full_name} -{" "}
+                    {note.operator_full_name} -{" "}
                     {new Date(note.created_at).toLocaleString()}
                   </p>
                 </div>

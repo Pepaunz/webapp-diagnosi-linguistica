@@ -6,10 +6,12 @@ export const optionSchema = z.object({
   text: localizedTextSchema,
 });
 
+export const questionTypeSchema = z.enum(["text", "multiple-choice", "rating", "date"]);
+
 export const questionSchema = z.object({
   questionId: z.string(),
   text: localizedTextSchema,
-  type: z.enum(["text", "multiple-choice", "rating", "date"]),
+  type: questionTypeSchema,
   helpText: localizedTextSchema.optional(),
   required: z.boolean().optional(),
   options: z.array(optionSchema).optional(),
@@ -35,5 +37,7 @@ export const structureDefinitionSchema = z.object({
 
 // Tipi inferiti
 export type QuestionnaireData = z.infer<typeof structureDefinitionSchema>;
+export type QuestionType = z.infer<typeof questionTypeSchema>;
 export type Section = z.infer<typeof sectionSchema>;
 export type Question = z.infer<typeof questionSchema>;
+export type Option = z.infer<typeof optionSchema>;

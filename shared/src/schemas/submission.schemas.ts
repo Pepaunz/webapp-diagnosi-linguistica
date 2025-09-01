@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   fiscalCodeSchema,
   paginationQuerySchema,
-  dateFilterSchema,
 } from "./common.schemas";
 
 // ====================================================================
@@ -45,7 +44,9 @@ export const answerSchema = z.object({
   answer_id: z.number().int(),
   submission_id: z.string().uuid(),
   question_identifier: z.string(),
-  answer_value: z.record(z.string(), z.unknown()),
+  answer_value: z.object({
+    value: z.any(),
+  }),
   saved_at: z.date(),
 });
 
@@ -62,6 +63,7 @@ export const SubmissionSchema = z.object({
   fiscal_code: fiscalCodeSchema,
   template_id: z.string().uuid(),
   status: submissionStatusSchema,
+  language_used: z.string().max(10, "Language code too long"),
   current_step_identifier: z.string().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
   created_at: z.date(),
@@ -131,3 +133,4 @@ export type ListSubmissionsQuery = z.infer<typeof listSubmissionsQuerySchema>;
 export type ModifyAnswerRequest = z.infer<typeof modifyAnswerRequestSchema>;
 export type CompleteSubmissionBody = z.infer<typeof completeSubmissionBodySchema>;
 
+export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;

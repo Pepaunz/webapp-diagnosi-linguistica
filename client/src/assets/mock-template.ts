@@ -1,6 +1,6 @@
 // src/data/questionnaireTemplates.ts
 
-import { QuestionnaireData } from "@shared/types/questionnaire.types";
+import { QuestionnaireData } from "@bilinguismo/shared";
 
 export const bilingualismQuestionnaire: QuestionnaireData = {
   questionnaireTitle: {

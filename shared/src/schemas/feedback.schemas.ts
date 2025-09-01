@@ -28,7 +28,7 @@ export const submitFeedbackBodySchema = z.object({
 
 // Feedback status enum
 const feedbackStatusSchema = z.enum(
-  ["New", "Acknowledged", "Investigating", "Resolved", "WontFix"],
+  ["New", "Investigating", "Resolved"],
   
 );
 
@@ -63,4 +63,4 @@ export type SubmitFeedbackInput = z.infer<typeof submitFeedbackBodySchema>;
 export type ListFeedbackQuery = z.infer<typeof listFeedbackQuerySchema>;
 export type FeedbackParams = z.infer<typeof feedbackParamsSchema>;
 export type UpdateFeedbackInput = z.infer<typeof updateFeedbackBodySchema>;
-export type FeedbackReport = z.infer<typeof feedbackReportSchema>;
+export type Feedback = z.infer<typeof feedbackReportSchema>;

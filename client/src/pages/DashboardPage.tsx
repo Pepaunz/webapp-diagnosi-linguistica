@@ -11,19 +11,7 @@ import {
   Pagination,
   Button,
 } from "../components/shared/Filters";
-import { SubmissionStatus } from "@shared/types/submission.types";
-
-// Define TypeScript interfaces
-interface Submission {
-  id: number;
-  fiscalCode: string;
-  template: string;
-  status: SubmissionStatus;
-  progress: number;
-  lastUpdated: string;
-  completedOn: string | null;
-  language: string;
-}
+import { SubmissionDTO } from "@bilinguismo/shared";
 
 interface FilterState {
   search: string;
@@ -107,7 +95,7 @@ const FilterBar = ({
   </div>
 );
 
-const StatusBadge = ({ status }: { status: Submission["status"] }) => {
+const StatusBadge = ({ status }: { status: SubmissionDTO["status"] }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Completed":
@@ -188,7 +176,7 @@ const SubmissionRow = ({
   submission,
   onDelete,
 }: {
-  submission: Submission;
+  submission: SubmissionDTO;
   onDelete: (id: number) => void;
 }) => (
   <tr key={submission.id} className="hover:bg-gray-50">
@@ -227,7 +215,7 @@ const SubmissionsTable = ({
   submissions,
   onDelete,
 }: {
-  submissions: Submission[];
+  submissions: SubmissionDTO[];
   onDelete: (id: number) => void;
 }) => (
   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -254,57 +242,28 @@ const SubmissionsTable = ({
 
 function QuestionnaireDashboard() {
   // Sample data
-  const [submissions, setSubmissions] = useState<Submission[]>([
+  const [submissions, setSubmissions] = useState<SubmissionDTO[]>([
     {
       id: 1,
       fiscalCode: "ABCDEF12G34H567I",
       template: "Standard Bilinguismo",
       status: "Completed",
-      progress: 100,
+      progress: "4/5",
       lastUpdated: "2025-04-22T14:30:00",
       completedOn: "2025-04-22T14:30:00",
-      language: "Italiano",
+      language: "it",
     },
     {
       id: 2,
       fiscalCode: "LMNOPQ78R90S123T",
       template: "Follow-up",
       status: "InProgress",
-      progress: 40,
+      progress: "2/3",
       lastUpdated: "2025-04-23T09:15:00",
       completedOn: null,
-      language: "Español",
+      language: "en",
     },
-    {
-      id: 3,
-      fiscalCode: "UVWXYZ45A67B890C",
-      template: "Standard Bilinguismo",
-      status: "InProgress",
-      progress: 70,
-      lastUpdated: "2025-04-23T16:45:00",
-      completedOn: null,
-      language: "Italiano",
-    },
-    {
-      id: 4,
-      fiscalCode: "DEFGHI12J34K567L",
-      template: "Standard Bilinguismo",
-      status: "Completed",
-      progress: 100,
-      lastUpdated: "2025-04-21T11:20:00",
-      completedOn: "2025-04-21T11:20:00",
-      language: "العربية",
-    },
-    {
-      id: 5,
-      fiscalCode: "MNOPQR78S90T123U",
-      template: "Follow-up",
-      status: "Abandoned",
-      progress: 0,
-      lastUpdated: "2025-04-20T08:30:00",
-      completedOn: null,
-      language: "Español",
-    },
+    
   ]);
 
   // Filter states in a single object

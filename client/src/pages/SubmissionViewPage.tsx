@@ -5,12 +5,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "../components/shared/Filters";
-import { Language } from "@shared/types/common.types";
+import { Section } from "@bilinguismo/shared";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
-import { submissionTemplates } from "../assets/mock-submission";
-import { bilingualismQuestionnaire } from "../assets/mock-template";
-import { SubmissionStatus } from "@shared/types/submission.types";
-import { Submission } from "@shared/types/submission.types";
+import { SubmissionDetailDTO as Submission } from "@bilinguismo/shared";
+
+
 const SubmissionViewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -18,76 +17,18 @@ const SubmissionViewPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call to fetch submission data
     const fetchSubmission = async () => {
+      if (!id) return;
+      
       try {
-        // Qui usiamo i dati importati
-        const submissionData = submissionTemplates["sub_001"];
-        console.log("Submission data:", submissionData);
-        if (submissionData) {
-          // Usa il questionario completo da questionnaireTemplates
-          // ma mantieni solo la lingua selezionata nella submission
-          const fullQuestionnaire = bilingualismQuestionnaire;
-
-          setSubmission({
-            ...submissionData,
-            questionnaire: {
-              ...fullQuestionnaire,
-              // Sovrascrivi con solo i dati nella lingua utilizzata
-              sections: fullQuestionnaire.sections.map((section) => ({
-                ...section,
-                questions: section.questions.map((question) => ({
-                  ...question,
-                  text: {
-                    [submissionData.language_used]:
-                      question.text[submissionData.language_used] || "",
-                    it:
-                      submissionData.language_used === "it"
-                        ? question.text.it || ""
-                        : "",
-                    en:
-                      submissionData.language_used === "en"
-                        ? question.text.en || ""
-                        : "",
-                    es:
-                      submissionData.language_used === "es"
-                        ? question.text.es || ""
-                        : "",
-                    ar:
-                      submissionData.language_used === "ar"
-                        ? question.text.ar || ""
-                        : "",
-                  },
-                  options: question.options?.map((option) => ({
-                    ...option,
-                    text: {
-                      [submissionData.language_used]:
-                        option.text[submissionData.language_used] || "",
-                      it:
-                        submissionData.language_used === "it"
-                          ? option.text.it || ""
-                          : "",
-                      en:
-                        submissionData.language_used === "en"
-                          ? option.text.en || ""
-                          : "",
-                      es:
-                        submissionData.language_used === "es"
-                          ? option.text.es || ""
-                          : "",
-                      ar:
-                        submissionData.language_used === "ar"
-                          ? option.text.ar || ""
-                          : "",
-                    },
-                  })),
-                })),
-              })),
-            },
-          });
-        } else {
-          console.error("Submission not found:", id);
-        }
+        // TODO: Sostituisci con chiamata API reale
+        // const data = await submissionApi.getSubmissionById(id);
+        // setSubmission(data);
+        
+        // TEMP: Mock fino a quando non implementi l'API
+        console.log("Fetching submission:", id);
+        // setSubmission(mockData); // Rimuovi quando hai l'API
+        
       } catch (error) {
         console.error("Error fetching submission:", error);
       } finally {
@@ -130,7 +71,9 @@ const SubmissionViewPage = () => {
             >
               <ArrowLeft size={24} />
             </button>
-            <h2 className="text-2xl font-bold">Visualizza Compilazione</h2>
+            <h2 className="text-2xl font-bold">
+              Visualizza Compilazione #{submission.submission.id}
+            </h2>
           </div>
           <div className="flex gap-2">
             <Button
@@ -150,23 +93,31 @@ const SubmissionViewPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-500">Codice Fiscale</p>
-              <p className="font-medium">{submission.fiscal_code}</p>
+              <p className="font-medium">{submission.submission.fiscalCode}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Template</p>
+              <p className="font-medium">{submission.submission.template}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Stato</p>
               <p className="font-medium">
                 <span
                   className={`px-2 py-1 text-xs rounded-full ${
-                    submission.status === "Completed"
+                    submission.submission.status === "Completed"
                       ? "bg-green-100 text-green-800"
                       : "bg-yellow-100 text-yellow-800"
                   }`}
                 >
-                  {submission.status === "Completed"
+                  {submission.submission.status === "Completed"
                     ? "Completato"
                     : "In corso"}
                 </span>
               </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Progresso</p>
+              <p className="font-medium">{submission.submission.progress}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Lingua utilizzata</p>
@@ -178,7 +129,7 @@ const SubmissionViewPage = () => {
                     es: { name: "Español", flag: "🇪🇸" },
                     ar: { name: "العربية", flag: "🇸🇦" },
                   };
-                  const lang = langMap[submission.language_used];
+                  const lang = langMap[submission.submission.language];
                   return (
                     <>
                       <span>{lang.flag}</span>
@@ -189,10 +140,16 @@ const SubmissionViewPage = () => {
               </p>
             </div>
             <div>
+              <p className="text-sm text-gray-500">Ultimo aggiornamento</p>
+              <p className="font-medium">
+                {new Date(submission.submission.lastUpdated).toLocaleString()}
+              </p>
+            </div>
+            <div>
               <p className="text-sm text-gray-500">Completato il</p>
               <p className="font-medium">
-                {submission.completed_at
-                  ? new Date(submission.completed_at).toLocaleString()
+                {submission.submission.completedOn
+                  ? new Date(submission.submission.completedOn).toLocaleString()
                   : "-"}
               </p>
             </div>
@@ -202,37 +159,33 @@ const SubmissionViewPage = () => {
         {/* Questionnaire Content */}
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
           <h3 className="text-xl font-semibold mb-2">
-            {
-              submission.questionnaire.questionnaireTitle[
-                submission.language_used
-              ]
-            }
+            {submission.template.structure_definition.questionnaireTitle?.[submission.submission.language] || submission.template.name}
           </h3>
           <p className="text-gray-600">
-            {submission.questionnaire.description[submission.language_used]}
+            {submission.template.structure_definition.description?.[submission.submission.language] || submission.template.description}
           </p>
         </div>
 
         {/* Sections with Answers */}
         <div className="space-y-6">
-          {submission.questionnaire.sections.map((section, index) => {
+          {submission.template.structure_definition.sections.map((section: Section, index: number) => {
             // Calcola il numero di domande nelle sezioni precedenti
-            const previousQuestionsCount = submission.questionnaire.sections
+            const previousQuestionsCount = submission.template.structure_definition.sections
               .slice(0, index)
-              .reduce((count, sect) => count + sect.questions.length, 0);
+              .reduce((count: number, sect: Section) => count + sect.questions.length, 0);
 
             return (
               <SubmissionSectionView
                 key={section.sectionId}
                 section={section}
                 sectionIndex={index}
-                selectedLanguage={submission.language_used}
+                selectedLanguage={submission.submission.language}
                 startingQuestionNumber={previousQuestionsCount + 1}
                 answers={submission.answers}
                 notes={submission.notes}
                 onAddNote={(questionId, noteText) => {
-                  // Handle add note
                   console.log("Add note:", questionId, noteText);
+                  // TODO: Implementa logica per aggiungere nota
                 }}
               />
             );
@@ -242,5 +195,4 @@ const SubmissionViewPage = () => {
     </AppLayout>
   );
 };
-
 export default SubmissionViewPage;

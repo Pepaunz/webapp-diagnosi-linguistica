@@ -8,6 +8,7 @@ import {
   UpdateFeedbackInput 
 } from "@bilinguismo/shared";
 import { FeedbackReport as PrismaFeedbackReport } from "@prisma/client";
+import { FeedbackDTO, FeedbackStatus} from "@bilinguismo/shared";
 
 // POST /feedback - Invia feedback (pubblico)
 export const submitFeedback = async (
@@ -39,7 +40,7 @@ export const submitFeedback = async (
 export const getFeedback = async (
   query: ListFeedbackQuery
 ): Promise<{
-  feedback: PrismaFeedbackReport[];
+  feedback: FeedbackDTO[];
   total: number;
   pagination: {
     limit: number;
@@ -47,12 +48,23 @@ export const getFeedback = async (
     has_more: boolean;
   };
 }> => {
-  const { feedback, total } = await feedbackRepo.findAllFeedbackWithFilters(query);
+  const { feedback: rawFeedbacks, total } = await feedbackRepo.findAllFeedbackWithFilters(query);
 
   const hasMore = query.offset + query.limit < total;
 
+  const feedbacksDTO: FeedbackDTO[] = rawFeedbacks.map((feedback, index) => ({
+    id: (query.offset || 0) + index + 1,
+    submission_id: feedback.submission_id || undefined,
+    question_identifier: feedback.question_identifier || undefined,
+    feedback_text: feedback.feedback_text,
+    template_name: feedback.submission?.template?.name || "Unknown",
+    reporter_metadata: feedback.reporter_metadata as Record<string,any> || undefined,
+    submitted_at: feedback.submitted_at.toISOString(),
+    status: feedback.status as FeedbackStatus,
+  }));
+
   return {
-    feedback,
+    feedback: feedbacksDTO,
     total,
     pagination: {
       limit: query.limit,

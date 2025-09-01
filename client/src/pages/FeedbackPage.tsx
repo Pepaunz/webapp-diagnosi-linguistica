@@ -7,12 +7,12 @@ import {
   SearchBar,
   SelectFilter,
   Pagination,
-  EmptyState,
   StatsCard,
   Button,
 } from "../components/shared/Filters";
 
-import { Feedback } from "@shared/types/feedback.types";
+import {FeedbackDTO as Feedback} from "@bilinguismo/shared";
+
 
 interface FilterState {
   search: string;

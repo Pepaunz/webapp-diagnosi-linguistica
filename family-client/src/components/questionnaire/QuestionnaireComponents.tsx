@@ -1,6 +1,3 @@
-// src/components/questionnaire/QuestionnaireComponents.tsx
-// Tutti i componenti del questionario in un file
-
 import React from 'react';
 
 // ===== PROGRESS BAR =====

@@ -1,11 +1,37 @@
 import * as submissionRepo from "../repositories/submission.repository";
 import * as templateRepo from "../repositories/template.repository";
-import { StartOrResumeRequest } from "@bilinguismo/shared";
+import * as operatorNotesRepo from "../repositories/notes.repository";
+import { Language, QuestionnaireData, StartOrResumeRequest, SubmissionStatus } from "@bilinguismo/shared";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
 import { Prisma, Submission as PrismaSubmission, Answer } from "@prisma/client";
 import { SaveProgressRequest } from "@bilinguismo/shared";
 import { ListSubmissionsQuery, CompleteSubmissionBody } from "@bilinguismo/shared";
+import { SubmissionDTO } from "@bilinguismo/shared";
+import { SubmissionDetailDTO, AnswerDTO, OperatorNoteDTO, TemplateDTO } from "@bilinguismo/shared";
+
+// ====================================================================
+// HELPER FUNCTIONS
+// ====================================================================
+
+const calculateProgress = (
+  currentStepIdentifier: string | null,
+  structureDefinition: any
+): string => {
+  
+  if (!currentStepIdentifier) return "0/" + structureDefinition.sections.length;
+  
+  const totalSteps = structureDefinition.sections.length;
+  
+  const currentStepNumber = structureDefinition.sections.findIndex(
+    (    section: { sectionId: string; }) => section.sectionId === currentStepIdentifier
+  ) + 1;
+  
+  // Se non trova il sectionId (caso edge), assume step 0
+  if (currentStepNumber === 0) return `0/${totalSteps}`;
+  
+  return `${currentStepNumber}/${totalSteps}`;
+};
 
 //POST /submissions/start_or_resume.
 export const startOrResume = async (
@@ -132,7 +158,7 @@ export const complete = async (
 export const getSubmissions = async (
   query: ListSubmissionsQuery
 ): Promise<{
-  submissions: PrismaSubmission[];
+  submissions: SubmissionDTO[];
   total: number;
   pagination: {
     limit: number;
@@ -141,13 +167,36 @@ export const getSubmissions = async (
   };
 }> => {
   // Chiama il repository per ottenere le submission con filtri e paginazione
-  const { submissions, total } = await submissionRepo.findSubmissionsWithFilters(query);
+  const { submissions: rawSubmissions, total } = await submissionRepo.findSubmissionsWithFilters(query);
 
   // Calcola se ci sono più pagine disponibili
   const hasMore = query.offset + query.limit < total;
+   // 2. Trasformazione in DTO per frontend
+   const submissionsDTO: SubmissionDTO[] = rawSubmissions.map((submission, index) => {
+    
+    // Calcola ID incrementale basato su paginazione
+    const incrementalId = (query.offset || 0) + index + 1;
+    
+    // Calcola progress usando la struttura del template
+    const progress = calculateProgress(
+      submission.current_step_identifier, 
+      submission.template.structure_definition
+    );
+    
+    return {
+      id: incrementalId,
+      fiscalCode: submission.fiscal_code,
+      template: submission.template.name,
+      status: submission.status as SubmissionStatus,
+      progress: progress,
+      lastUpdated: submission.last_updated_at.toISOString(),
+      completedOn: submission.completed_at?.toISOString() || null,
+      language: submission.language_used as Language,
+    };
+  });
 
   return {
-    submissions,
+    submissions: submissionsDTO,
     total,
     pagination: {
       limit: query.limit,
@@ -160,12 +209,7 @@ export const getSubmissions = async (
 // GET /submissions/{id} - Dettagli completi di una submission per operatori
 export const getSubmissionById = async (
   submission_id: string
-): Promise<{
-  submission: PrismaSubmission;
-  answers: Answer[];
-  template: any; // Il tipo dipende dal template repository
-  notes?: any[]; // Note dell'operatore se presenti
-}> => {
+): Promise<SubmissionDetailDTO> => {
   // 1. Verifica che la submission esista
   const submission = await submissionRepo.findSubmissionById(submission_id);
   if (!submission) {
@@ -182,14 +226,58 @@ export const getSubmissionById = async (
   }
 
   // 4. Recupera eventuali note degli operatori (opzionale per questa fase)
-  // const notes = await operatorNotesRepo.findNotesBySubmissionId(submission_id);
+   const notes = await operatorNotesRepo.findNotesBySubmissionId(submission_id);
 
-  return {
-    submission,
-    answers,
-    template,
-    // notes
+   const submissionDTO: SubmissionDTO = {
+    id: 1,
+    fiscalCode: submission.fiscal_code,
+    template: template.name,
+    status: submission.status as SubmissionStatus,
+    progress: calculateProgress(
+      submission.current_step_identifier, 
+      template.structure_definition
+    ),
+    lastUpdated: submission.last_updated_at.toISOString(),
+    completedOn: submission.completed_at?.toISOString() || null,
+    language: submission.language_used as Language,
   };
+
+  // 2. Trasforma template in DTO (converti date in string)
+  const templateDTO: TemplateDTO = {
+    ...template, 
+    // Safe cast: structure_definition è validato con structureDefinitionSchema durante la creazione
+    structure_definition: template.structure_definition as QuestionnaireData,
+    created_at: template.created_at.toISOString(),
+    updated_at: template.updated_at.toISOString(),
+   
+  };
+
+  // 3. Trasforma answers in DTO (gestisci JsonValue)
+  const answersDTO: AnswerDTO[] = answers.map(answer => ({
+    ...answer, 
+    saved_at: answer.saved_at.toISOString(),
+  }));
+
+  // 4. Trasforma notes in DTO (gestisci null values e aggiungi operator info)
+  const notesDTO: OperatorNoteDTO[] = notes.map(note => ({
+    note_id: note.note_id,
+    submission_id: note.submission_id,
+    question_identifier: note.question_identifier,
+    note_text: note.note_text,
+    operator_full_name: note.operator?.full_name || "Operatore sconosciuto", 
+    created_at: note.created_at.toISOString(),
+    updated_at: note.updated_at.toISOString(),
+  }));
+
+  // 5. Costruisci il DTO finale
+  const submissionDetail: SubmissionDetailDTO = {
+    submission: submissionDTO,
+    template: templateDTO,
+    answers: answersDTO,
+    notes: notesDTO,
+  };
+
+  return submissionDetail;
 };
 
 // DELETE /submissions/{id} - Eliminazione di una submission per operatori

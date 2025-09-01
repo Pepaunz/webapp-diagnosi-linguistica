@@ -4,6 +4,14 @@ import { SubmitFeedbackInput, ListFeedbackQuery } from "@bilinguismo/shared";
 
 const prisma = new PrismaClient();
 
+type FeedbackWithTemplate = FeedbackReport & {
+  submission: {
+    template: {
+      name: string;
+    };
+  } | null;
+};
+
 // POST /feedback - Crea nuovo feedback (pubblico)
 export const createFeedback = async (
   data: SubmitFeedbackInput
@@ -23,7 +31,7 @@ export const createFeedback = async (
 export const findAllFeedbackWithFilters = async (
   query: ListFeedbackQuery
 ): Promise<{
-  feedback: FeedbackReport[];
+  feedback: FeedbackWithTemplate[];
   total: number;
 }> => {
   // Costruisce il filtro WHERE dinamicamente
@@ -56,6 +64,17 @@ export const findAllFeedbackWithFilters = async (
       orderBy,
       skip: query.offset,
       take: query.limit,
+      include: {
+        submission: {
+          include: {
+            template: {
+              select: {
+                name: true, // Solo il campo che ci serve
+              }
+            }
+          }
+        }
+      },
     }),
     prisma.feedbackReport.count({
       where: whereClause,

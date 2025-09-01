@@ -29,10 +29,11 @@ export const updateNoteRequestSchema = z.object({
 // Full operator note schema
 export const operatorNoteSchema = z.object({
   note_id: z.string().uuid(),
-  submission_id: z.string().uuid(),
   question_identifier: z.string().nullable(),
   operator_id: z.string().uuid(),
-  operator_full_name: z.string(),
+  operator: z.object({
+    full_name: z.string(),
+  }),
   note_text: z.string(),
   created_at: z.date(),
   updated_at: z.date(),
@@ -48,3 +49,4 @@ export type AddNoteRequest = z.infer<typeof addNoteRequestSchema>;
 export type UpdateNoteRequest = z.infer<typeof updateNoteRequestSchema>;
 export type OperatorNote = z.infer<typeof operatorNoteSchema>;
 export type NoteParams = z.infer<typeof noteParamsSchema>;
+

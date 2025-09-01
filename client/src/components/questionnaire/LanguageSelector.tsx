@@ -1,7 +1,7 @@
 // src/components/questionnaire/LanguageSelector.tsx
 
 import React from "react";
-import { Language } from "@shared/types/common.types";
+import { Language } from "@bilinguismo/shared";
 
 interface LanguageSelectorProps {
   selectedLanguage: Language;

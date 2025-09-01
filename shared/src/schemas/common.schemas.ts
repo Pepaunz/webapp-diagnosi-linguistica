@@ -64,3 +64,4 @@ export const languageCodeSchema = z
 export type UuidParam = z.infer<typeof uuidParamSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type DateFilter = z.infer<typeof dateFilterSchema>;
+export type Language = "it" | "en" | "es" | "ar";

@@ -2,6 +2,13 @@ import { PrismaClient, Submission, Answer, Prisma } from "@prisma/client";
 import { ListSubmissionsQuery } from "@bilinguismo/shared";
 const prisma = new PrismaClient();
 
+type SubmissionWithTemplate = Submission & {
+  template: {
+    template_id: string;
+    name: string;
+    structure_definition: any; // Aggiungi anche questo se serve per calcolare gli step
+  };
+};
 export const findLatestInProgress = async (
   fiscal_code: string,
   template_id: string
@@ -143,7 +150,7 @@ export const saveAndCompleteSubmission = async (
 export const findSubmissionsWithFilters = async (
   query: ListSubmissionsQuery
 ): Promise<{
-  submissions: Submission[];
+  submissions: SubmissionWithTemplate[];
   total: number;
 }> => {
   // Costruisce il filtro WHERE dinamicamente
@@ -209,6 +216,7 @@ export const findSubmissionsWithFilters = async (
           select: {
             template_id: true,
             name: true,
+            structure_definition:true,
           },
         },
       },

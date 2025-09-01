@@ -9,8 +9,8 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { Question, Option } from "@shared/types/questionnaire.types";
-import { Language } from "@shared/types/common.types";
+import { Question, Option } from "@bilinguismo/shared";
+import { Language } from "@bilinguismo/shared";
 
 interface QuestionEditorProps {
   question: Question;

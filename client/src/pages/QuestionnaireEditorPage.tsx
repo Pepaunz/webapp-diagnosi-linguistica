@@ -6,10 +6,8 @@ import { Button } from "../components/shared/Filters";
 import {
   QuestionnaireData,
   Section,
-  Question,
-  QuestionType,
-} from "@shared/types/questionnaire.types";
-import { Language } from "@shared/types/common.types";
+} from "@bilinguismo/shared";
+import { Language } from "@bilinguismo/shared";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
 import { questionnaireTemplates } from "../assets/mock-template";
@@ -28,7 +26,6 @@ const QuestionnaireEditorPage = () => {
   const [loading, setLoading] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const sectionsEndRef = useRef<HTMLDivElement>(null);
-  const isEditMode = !!id; // Se c'è un ID, stiamo editando
   const [hasUserAddedSection, setHasUserAddedSection] = useState(false);
 
   // Scroll intelligente per mantenere la nuova sezione al centro della viewport

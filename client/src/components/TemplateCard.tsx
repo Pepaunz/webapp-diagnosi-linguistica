@@ -1,4 +1,4 @@
-import { Edit, Share2, Copy, Trash2 } from "lucide-react";
+import { Edit, Share2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 // Import the image directly - this is the recommended way in most React frameworks
@@ -7,7 +7,6 @@ import qrCodeImage from "../assets/Rickrolling_QR_code.png";
 export function TemplateCard({
   name,
   modified,
-  isDefault,
 }: {
   name: string;
   modified: string;
