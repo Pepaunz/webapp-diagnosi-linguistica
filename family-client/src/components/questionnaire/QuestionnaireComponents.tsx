@@ -1,5 +1,6 @@
 import React from 'react';
-
+import TTSQuestionControls from '../accessibility/TTSQuestionControls';
+import { TTSStatus } from '../../hooks/useTextToSpeech';
 // ===== SECTION HEADER =====
 interface SectionHeaderProps {
   title: string;
@@ -77,33 +78,83 @@ interface QuestionBlockProps {
   required?: boolean;
 }
 
+interface QuestionBlockProps {
+  question: string;
+  children: React.ReactNode;
+  className?: string;
+  questionId: string;
+  required?: boolean;
+  
+  // ➕ AGGIUNGI: Props TTS opzionali
+  ttsEnabled?: boolean;
+  questionText?: string;
+  onQuestionSpeak?: (text: string, questionId: string) => void;
+  currentSpeakingId?: string | null;
+  ttsStatus?: TTSStatus;
+  questionOptions?: string[]; // Per multiple choice
+}
+
+// ➕ MODIFICA: QuestionBlock component
 export const QuestionBlock: React.FC<QuestionBlockProps> = ({ 
   question, 
   children, 
   className = '',
   questionId,
-  required = false
+  required = false,
+  
+  // ➕ AGGIUNGI: TTS props con default
+  ttsEnabled = false,
+  questionText,
+  onQuestionSpeak,
+  currentSpeakingId = null,
+  ttsStatus = 'idle',
+  questionOptions = []
 }) => {
   const legendId = `question-${questionId}`;
   
+  // ➕ AGGIUNGI: Gestione click TTS
+  const handleTTSClick = () => {
+    if (onQuestionSpeak && questionText) {
+      onQuestionSpeak(questionText, questionId);
+    }
+  };
+  
   return (
     <fieldset className={`mb-mobile-md ${className}`}>
-      {/* Question Container - grigio come nel Figma */}
+      {/* Question Container con TTS integration */}
       <legend 
         id={legendId}
         className="bg-gradient-to-r from-family-header to-family-header/90 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm w-full"
       >
-        <span className="text-mobile-md font-medium leading-relaxed block">
-          {question}
-          {required && (
-            <span className="text-red-300 ml-1" aria-label="obbligatorio">
-              *
-            </span>
+        <div className="flex items-center justify-between">
+          {/* Question Text */}
+          <span className="text-mobile-md font-medium leading-relaxed flex-1">
+            {question}
+            {required && (
+              <span className="text-red-300 ml-1" aria-label="obbligatorio">
+                *
+              </span>
+            )}
+          </span>
+          
+          {/* ➕ AGGIUNGI: TTS Controls per domanda */}
+          {ttsEnabled && onQuestionSpeak && (
+            <div className="ml-3 flex-shrink-0">
+              <TTSQuestionControls
+                questionId={questionId}
+                questionText={questionText || question}
+                options={questionOptions}
+                isEnabled={ttsEnabled}
+                onSpeak={onQuestionSpeak}
+                currentSpeakingId={currentSpeakingId}
+                status={ttsStatus}
+              />
+            </div>
           )}
-        </span>
+        </div>
       </legend>
       
-      {/* Answer Container - bianco */}
+      {/* Answer Container (come prima) */}
       <div 
         className="bg-white px-mobile-md py-mobile-md rounded-b-mobile-sm border border-gray-200 border-t-0"
         role="group"

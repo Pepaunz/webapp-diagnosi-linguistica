@@ -1,4 +1,4 @@
-// src/pages/QuestionnairePage.tsx
+// src/pages/QuestionnairePage.tsx - MODIFICHE PER TTS
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
@@ -14,9 +14,12 @@ import { AlertTriangle } from 'lucide-react';
 import { bilingualismQuestionnaireData } from '../../mock-template';
 import { ProgressBar } from '../components/questionnaire/ProgressBar';
 import { StarRating } from '../components/questionnaire/QuestionnaireComponents';
-import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements'
+import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements';
+// ➕ AGGIUNGI QUESTI IMPORT
+import TTSFloatingButton from '../components/accessibility/TTSFloatingButton';
+import { useTextToSpeech} from '../hooks/useTextToSpeech';
 
-// Types per il questionario
+// Types per il questionario (stesso di prima)
 type Language = 'it' | 'en' | 'es' | 'ar';
 
 interface MultilingualText {
@@ -48,7 +51,6 @@ interface Section {
   questions: Question[];
 }
 
-// Cast dei dati per assicurare compatibilità
 const questionnaireData = bilingualismQuestionnaireData as {
   sections: Section[];
 };
@@ -57,34 +59,82 @@ const QuestionnairePage: React.FC = () => {
   const { templateId, submissionId } = useParams();
   const navigate = useNavigate();
   
-  // Focus management refs
+  // Focus management refs (come prima)
   const sectionHeaderRef = useRef<HTMLHeadingElement>(null);
   const skipToNavRef = useRef<HTMLDivElement>(null);
   
-  // Screen reader announcements
+  // Screen reader announcements (come prima)
   const { announce } = useScreenReaderAnnouncements();
   
-  // State management
+  // ➕ AGGIUNGI: TTS State
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [currentSpeakingQuestionId, setCurrentSpeakingQuestionId] = useState<string | null>(null);
+  
+  // ➕ AGGIUNGI: TTS Hook
+
+  
+  // State management (come prima)
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedLanguage] = useState<Language>('en');
+  const [selectedLanguage] = useState<Language>('it');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
-  // Usa i dati reali del questionario bilinguismo
+  // Dati questionario (come prima)
   const currentSection = questionnaireData.sections[currentSectionIndex];
   const totalSections = questionnaireData.sections.length;
   const isLastSection = currentSectionIndex === totalSections - 1;
   const isFirstSection = currentSectionIndex === 0;
 
-  // Focus management quando cambia sezione
+
+  const { speak, stop, status } = useTextToSpeech(selectedLanguage);
+  // ➕ AGGIUNGI: Gestione TTS per singola domanda
+  const handleQuestionSpeak = async (text: string, questionId: string) => {
+    // Se sta già parlando questa domanda, ferma
+    if (currentSpeakingQuestionId === questionId && status === 'speaking') {
+      stop();
+      setCurrentSpeakingQuestionId(null);
+      return;
+    }
+    
+    // Ferma qualsiasi altra lettura in corso
+    stop();
+    
+    // Imposta domanda corrente e inizia lettura
+    setCurrentSpeakingQuestionId(questionId);
+    
+    const success = await speak(text);
+    if (!success) {
+      setCurrentSpeakingQuestionId(null);
+      announce('Errore nella lettura della domanda', 'assertive');
+    }
+  };
+
+  useEffect(() => {
+    if (status === 'idle' && currentSpeakingQuestionId) {
+      setCurrentSpeakingQuestionId(null);
+    }
+  }, [status, currentSpeakingQuestionId]);
+
+  // ➕ AGGIUNGI: Cleanup TTS quando cambia sezione
+  useEffect(() => {
+    stop();
+    setCurrentSpeakingQuestionId(null);
+  }, [currentSectionIndex, stop]);
+
+  // ➕ AGGIUNGI: Reset TTS quando viene disabilitato
+  useEffect(() => {
+    if (!ttsEnabled) {
+      stop();
+      setCurrentSpeakingQuestionId(null);
+    }
+  }, [ttsEnabled, stop]);
+
+  // Focus management quando cambia sezione (come prima)
   useEffect(() => {
     if (sectionHeaderRef.current) {
-      // Focus sul titolo della sezione
       sectionHeaderRef.current.focus();
-      
-      // Annuncia il cambio sezione
       const sectionTitle = currentSection.title[selectedLanguage];
       announce(
         `Sezione ${currentSectionIndex + 1} di ${totalSections}: ${sectionTitle}`,
@@ -93,7 +143,7 @@ const QuestionnairePage: React.FC = () => {
     }
   }, [currentSectionIndex, announce, currentSection, selectedLanguage, totalSections]);
 
-  // Validazione delle domande obbligatorie
+  // Validazione (come prima)
   const validateCurrentSection = (): boolean => {
     const errors: Record<string, string> = {};
     let hasErrors = false;
@@ -112,7 +162,6 @@ const QuestionnairePage: React.FC = () => {
     
     if (hasErrors) {
       announce('Alcune domande obbligatorie non sono state compilate', 'assertive');
-      // Focus sulla prima domanda con errore
       const firstErrorQuestionId = Object.keys(errors)[0];
       const firstErrorElement = document.querySelector(`[data-question-id="${firstErrorQuestionId}"]`);
       if (firstErrorElement instanceof HTMLElement) {
@@ -123,14 +172,13 @@ const QuestionnairePage: React.FC = () => {
     return !hasErrors;
   };
 
-  // Handle answer change
+  // Handle answer change (come prima)
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
     
-    // Rimuovi errore di validazione se presente
     if (validationErrors[questionId]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -140,18 +188,15 @@ const QuestionnairePage: React.FC = () => {
     }
   };
 
-  // Navigation handlers
+  // Navigation handlers (come prima)
   const handleNext = async () => {
-    // Valida sezione corrente prima di procedere
     if (!validateCurrentSection()) {
       return;
     }
     
     if (isLastSection) {
-      // Completa questionario
       await handleComplete();
     } else {
-      // Vai alla sezione successiva
       await saveProgress();
       setCurrentSectionIndex(prev => prev + 1);
     }
@@ -164,20 +209,19 @@ const QuestionnairePage: React.FC = () => {
     }
   };
 
-  // Skip to navigation (accessibility)
+  // Skip to navigation (come prima)
   const handleSkipToNavigation = () => {
     if (skipToNavRef.current) {
       skipToNavRef.current.focus();
     }
   };
 
-  // API calls
+  // API calls (come prima - non modificato)
   const saveProgress = async () => {
     setSaving(true);
     announce('Salvataggio in corso...', 'polite');
     
     try {
-      // TODO: chiamata API PUT /api/submissions/{submissionId}/save_progress
       await new Promise(resolve => setTimeout(resolve, 800));
       console.log('Progress saved:', { submissionId, answers, currentStep: currentSectionIndex + 1 });
       announce('Progressi salvati', 'polite');
@@ -194,10 +238,7 @@ const QuestionnairePage: React.FC = () => {
     announce('Completamento questionario in corso...', 'polite');
     
     try {
-      // Prima salva progress finale
       await saveProgress();
-      // Poi completa
-      // TODO: chiamata API POST /api/submissions/{submissionId}/complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       announce('Questionario completato con successo!', 'polite');
       navigate(`/complete/${submissionId}`);
@@ -210,12 +251,11 @@ const QuestionnairePage: React.FC = () => {
   };
 
   const handleReportProblem = () => {
-    // TODO: implementare modal segnalazione
     announce('Apertura modulo segnalazione problema', 'polite');
     alert('Funzionalità "Segnala problema" da implementare');
   };
 
-  // Render question based on type
+  // ➕ MODIFICA: Render question con integrazione TTS
   const renderQuestion = (question: Question) => {
     const questionText = question.text[selectedLanguage];
     const questionValue = answers[question.questionId] || '';
@@ -227,6 +267,15 @@ const QuestionnairePage: React.FC = () => {
       required: question.required,
       helpText: hasError ? errorMessage : undefined,
     };
+
+    // ➕ AGGIUNGI: Props TTS per QuestionBlock
+    const ttsProps = ttsEnabled ? {
+      ttsEnabled,
+      questionText,
+      onQuestionSpeak: handleQuestionSpeak,
+      currentSpeakingId: currentSpeakingQuestionId,
+      ttsStatus: status
+    } : {};
 
     if (question.type === 'multiple-choice') {
       const options = question.options?.map((opt) => ({
@@ -240,6 +289,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <MultipleChoiceQuestion
@@ -261,6 +311,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <TextQuestion
@@ -282,6 +333,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <DateQuestion
@@ -296,7 +348,6 @@ const QuestionnairePage: React.FC = () => {
     }
 
     if (question.type === 'rating') {
-      // Per le domande di tipo rating, converte il valore stringa in numero
       const numValue = questionValue ? parseInt(questionValue, 10) : 0;
       const maxValue = question.maxValue || 10;
       
@@ -306,6 +357,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <StarRating
@@ -323,6 +375,7 @@ const QuestionnairePage: React.FC = () => {
     return null;
   };
 
+  // Loading state (come prima)
   if (loading) {
     return (
       <SimpleLayout>
@@ -340,10 +393,10 @@ const QuestionnairePage: React.FC = () => {
 
   return (
     <SimpleLayout>
-      {/* Screen Reader Announcements */}
+      {/* Screen Reader Announcements (come prima) */}
       <ScreenReaderAnnouncements />
       
-      {/* Skip Link per keyboard navigation */}
+      {/* Skip Link (come prima) */}
       <a 
         href="#navigation" 
         className="skip-link sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded"
@@ -355,13 +408,18 @@ const QuestionnairePage: React.FC = () => {
         Salta al contenuto principale
       </a>
       
-      {/* Main Content */}
+      {/* ➕ AGGIUNGI: TTS Floating Button */}
+      <TTSFloatingButton
+        isEnabled={ttsEnabled}
+        onToggle={setTtsEnabled}
+        currentLanguage={selectedLanguage}
+      />
+      
+      {/* Main Content (come prima) */}
       <main role="main" aria-label="Compilazione questionario">
-        {/* Progress Bar */}
         <ProgressBar currentStep={currentSectionIndex + 1} totalSteps={totalSections} />
         
-        {/* Section Content */}
-        <div className="flex-1 pb-24 sm:px-0" aria-label="Contenuto sezione corrente">
+        <div className="flex-1 pb-24" aria-label="Contenuto sezione corrente">
           <SectionHeader 
             title={currentSection.title[selectedLanguage]}
             description={currentSection.description?.[selectedLanguage]}
@@ -369,22 +427,20 @@ const QuestionnairePage: React.FC = () => {
             sectionId={currentSection.sectionId}
           />
           
-          {/* Questions */}
           <div role="group" aria-label="Domande della sezione">
             {currentSection.questions.map(renderQuestion)}
           </div>
         </div>
 
-        {/* Fixed Bottom Navigation */}
+        {/* Navigation (come prima) */}
         <nav 
           id="navigation"
-          className="bottom-0 left-0 right-0  border-t border-gray-200 px-mobile-md py-mobile-md"
+          className="bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-mobile-md py-mobile-md"
           aria-label="Navigazione questionario"
           ref={skipToNavRef}
           tabIndex={-1}
         >
           <div className="max-w-sm mx-auto">
-            {/* Navigation Buttons */}
             <div className="flex gap-mobile-sm mb-mobile-sm" role="group" aria-label="Controlli navigazione">
               {!isFirstSection && (
                 <Button
@@ -412,7 +468,6 @@ const QuestionnairePage: React.FC = () => {
               </Button>
             </div>
             
-            {/* Report Problem */}
             <div className="text-center">
               <button 
                 type="button"
