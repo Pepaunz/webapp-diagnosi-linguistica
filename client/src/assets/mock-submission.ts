@@ -1,4 +1,5 @@
 import { SubmissionDetailDTO } from "@bilinguismo/shared";
+
 export const bilingualismSubmission: SubmissionDetailDTO = {
   submission: {
     id: 1,
@@ -62,7 +63,7 @@ export const bilingualismSubmission: SubmissionDetailDTO = {
               questionId: "s1_q2",
               text: {
                 it: "Dove è nato il bambino?",
-                en: "",
+                en: "born",
                 es: "",
                 ar: "",
               },

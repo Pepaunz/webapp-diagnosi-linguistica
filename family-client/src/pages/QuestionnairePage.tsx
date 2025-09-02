@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
 import { Button, LoadingSpinner } from '../components/ui';
 import { 
-  ProgressBar, 
   SectionHeader, 
   QuestionBlock, 
   MultipleChoiceQuestion, 
@@ -13,7 +12,8 @@ import {
 } from '../components/questionnaire/QuestionnaireComponents';
 import { AlertTriangle } from 'lucide-react';
 import { bilingualismQuestionnaireData } from '../../mock-template';
-
+import { ProgressBar } from '../components/questionnaire/ProgressBar';
+import { StarRating } from '../components/questionnaire/QuestionnaireComponents';
 // Types per il questionario
 type Language = 'it' | 'en' | 'es' | 'ar';
 
@@ -183,25 +183,11 @@ const QuestionnairePage: React.FC = () => {
       
       return (
         <QuestionBlock key={question.questionId} question={questionText}>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {Array.from({ length: maxValue }, (_, i) => i + 1).map((rating) => (
-              <button
-                key={rating}
-                type="button"
-                onClick={() => handleAnswerChange(question.questionId, rating.toString())}
-                className={`
-                  w-8 h-8 rounded border-2 min-h-touch-sm
-                  flex items-center justify-center transition-all duration-200
-                  ${rating <= numValue
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400'
-                  }
-                `}
-              >
-                <span className="text-sm font-medium">{rating}</span>
-              </button>
-            ))}
-          </div>
+          <StarRating
+            value={numValue}
+            onChange={(value) => handleAnswerChange(question.questionId, value.toString())}
+            maxStars={maxValue}
+          />
         </QuestionBlock>
       );
     }
@@ -219,6 +205,7 @@ const QuestionnairePage: React.FC = () => {
     );
   }
 
+
   return (
     <SimpleLayout>
       {/* Progress Bar */}
@@ -229,6 +216,7 @@ const QuestionnairePage: React.FC = () => {
         <SectionHeader 
           title={currentSection.title[selectedLanguage]}
           description={currentSection.description?.[selectedLanguage]}
+          sectionNumber={currentSectionIndex + 1}
         />
         
         {/* Questions */}
@@ -238,7 +226,7 @@ const QuestionnairePage: React.FC = () => {
       </div>
 
       {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-mobile-md py-mobile-md">
+      <div className="bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-mobile-md py-mobile-md">
         <div className="max-w-sm mx-auto">
           {/* Navigation Buttons */}
           <div className="flex gap-mobile-sm mb-mobile-sm">

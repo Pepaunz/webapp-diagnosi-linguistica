@@ -77,7 +77,7 @@ export const Input: React.FC<InputProps> = ({
           rounded-mobile-md
           min-h-touch-md
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-family-input-focus focus:border-family-input-focus
+          focus:outline-none focus:ring-2 focus:ring-family-input-focus/80 focus:border-family-input-focus/90
           disabled:bg-gray-100 disabled:cursor-not-allowed
           placeholder:text-family-text-muted
           ${error 

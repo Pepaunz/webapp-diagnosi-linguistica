@@ -1,54 +1,51 @@
 import React from 'react';
 
-// ===== PROGRESS BAR =====
-interface ProgressBarProps {
-  currentStep: number;
-  totalSteps: number;
-}
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps }) => {
-  const progress = (currentStep / totalSteps) * 100;
-  
-  return (
-    <div className="px-mobile-md py-mobile-sm bg-white border-b border-gray-200">
-      <div className="text-center mb-2">
-        <span className="text-mobile-sm text-family-text-body font-medium">
-          Passo {currentStep} di {totalSteps}
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-    </div>
-  );
-};
 
 // ===== SECTION HEADER =====
 interface SectionHeaderProps {
   title: string;
   description?: string;
+  sectionNumber: number;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => {
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ 
+  title, 
+  description, 
+  sectionNumber 
+}) => {
   return (
     <div className="px-mobile-md py-mobile-md">
-      {/* Section Title - grigio scuro come nel Figma */}
-      <div className="bg-gray-500 text-white px-mobile-sm py-mobile-xs rounded-mobile-sm mb-mobile-sm">
-        <h2 className="text-mobile-md font-medium">{title}</h2>
+      {/* Section Title con numero - design più moderno */}
+      <div className="bg-family-header text-white px-mobile-sm py-mobile-xs rounded-mobile-sm mb-mobile-sm shadow-sm">
+        <div className="flex items-center gap-3">
+          {/* Numero sezione con design più accattivante */}
+          <div className="bg-blue-600 text-white px-2.5 py-1.5 rounded-md text-mobile-sm font-bold min-w-[32px] text-center shadow-sm">
+            {sectionNumber}
+          </div>
+          <h2 className="text-mobile-md font-medium flex-1">{title}</h2>
+        </div>
       </div>
       
-      {/* Section Description */}
+      {/* Section Description - versione moderna */}
       {description && (
-        <div className="mb-mobile-md">
-          <p className="text-mobile-md text-family-text-primary font-medium leading-relaxed">
-            {description}
-          </p>
-          <p className="text-mobile-sm text-family-text-body mt-1">
-            rispondi sinceramente perché puoi aiutarci molto
-          </p>
+        <div className=" mb-mobile-md"> {/* ml-11 per compensare il numero più largo */}
+          {/* Card per la descrizione */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-3">
+            <p className="text-mobile-md text-family-text-primary font-medium leading-relaxed text-gray-800 mb-3">
+              {description}
+            </p>
+            
+            {/* Divider sottile */}
+            <hr className="border-gray-200 mb-3" />
+            
+            {/* Testo di incoraggiamento con icona */}
+            <div className="flex items-start gap-3">
+              <p className="text-mobile-sm text-family-text-body text-gray-600 leading-relaxed">
+                Rispondi sinceramente perché puoi aiutarci molto
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -70,7 +67,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   return (
     <div className={`mx-mobile-md mb-mobile-md ${className}`}>
       {/* Question Container - grigio come nel Figma */}
-      <div className="bg-gray-400 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm">
+      <div className="bg-gradient-to-r from-family-header to-family-header/90 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm">
         <h3 className="text-mobile-md font-medium leading-relaxed">{question}</h3>
       </div>
       
@@ -106,7 +103,14 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
       {options.map((option) => (
         <label
           key={option.value}
-          className="flex items-center min-h-touch-sm cursor-pointer group"
+          className={`
+            flex items-center min-h-touch-sm cursor-pointer group
+            px-3 py-2 rounded-lg border-2 transition-all duration-200
+            ${value === option.value 
+              ? 'border-family-input-focus/50 bg-family-input-focus/15 shadow-sm' 
+              : 'border-transparent bg-white hover:bg-gray-50 hover:border-gray-200'
+            }
+          `}
         >
           <input
             type="radio"
@@ -120,9 +124,9 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
           {/* Custom Radio Button */}
           <div className={`
             w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center
-            transition-all duration-200
+            transition-all duration-200 flex-shrink-0
             ${value === option.value 
-              ? 'border-blue-500 bg-blue-500' 
+              ? 'border-family-input-focus bg-family-input-focus/80' 
               : 'border-gray-400 bg-white group-hover:border-gray-500'
             }
           `}>
@@ -131,7 +135,13 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
             )}
           </div>
           
-          <span className="text-mobile-md text-family-text-primary flex-1 leading-relaxed">
+          <span className={`
+            text-mobile-md flex-1 leading-relaxed transition-colors duration-200
+            ${value === option.value 
+              ? 'text-blue-800 font-medium' 
+              : 'text-family-text-primary group-hover:text-gray-700'
+            }
+          `}>
             {option.label}
           </span>
         </label>
@@ -139,6 +149,7 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
     </div>
   );
 };
+
 
 // ===== TEXT QUESTION =====
 interface TextQuestionProps {
@@ -166,7 +177,7 @@ export const TextQuestion: React.FC<TextQuestionProps> = ({
           border border-gray-300 rounded-mobile-sm
           min-h-touch-md resize-none
           text-mobile-md text-family-text-primary
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+          focus:outline-none focus:ring-2 focus:ring-family-input-focus/80 focus:border-family-input-focus/90
           placeholder:text-family-text-muted
           transition-all duration-200
         "
@@ -185,7 +196,7 @@ export const TextQuestion: React.FC<TextQuestionProps> = ({
         border border-gray-300 rounded-mobile-sm
         min-h-touch-md
         text-mobile-md text-family-text-primary
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+        focus:outline-none focus:ring-2 focus:ring-family-input-focus/70 focus:border-family-input-focus/90
         placeholder:text-family-text-muted
         transition-all duration-200
       "
@@ -213,7 +224,7 @@ export const DateQuestion: React.FC<DateQuestionProps> = ({
         border border-gray-300 rounded-mobile-sm
         min-h-touch-md
         text-mobile-md text-family-text-primary
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+        focus:outline-none focus:ring-2 focus:ring-family-input-focus/70 focus:border-family-input-focus/90
         transition-all duration-200
       "
     />
@@ -270,24 +281,27 @@ export const StarRating: React.FC<StarRatingProps> = ({
   maxStars = 10
 }) => {
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
-      {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          className={`
-            w-8 h-8 rounded border-2 min-h-touch-sm
-            flex items-center justify-center transition-all duration-200
-            ${star <= value
-              ? 'bg-blue-500 border-blue-500 text-white'
-              : 'bg-white border-gray-300 text-gray-400 hover:border-gray-400'
-            }
-          `}
-        >
-          <span className="text-sm font-medium">{star}</span>
-        </button>
-      ))}
+    <div className="px-3 py-2 rounded-lg border-2 border-transparent bg-white">
+      <div className="flex flex-wrap gap-2 justify-center">
+        {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className={`
+              w-10 h-10 rounded-lg border-2 min-h-touch-sm
+              flex items-center justify-center transition-all duration-200
+              ${star <= value
+                ? 'border-family-input-focus bg-family-input-focus text-white shadow-sm font-semibold'
+                : 'bg-white border-gray-400 text-gray-600 hover:border-gray-500 hover:bg-gray-50'
+              }
+            `}
+          >
+            <span className="text-sm font-medium">{star}</span>
+          </button>
+        ))}
+      </div>
+    
     </div>
   );
 };

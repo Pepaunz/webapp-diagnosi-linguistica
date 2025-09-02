@@ -82,7 +82,7 @@ export const bilingualismQuestionnaireData = {
             es: "¿Cuándo llegó el niño/a a Italia?",
             ar: "",
           },
-          type: "text",
+          type: "rating",
           required: false,
         },
         {

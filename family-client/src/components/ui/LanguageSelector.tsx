@@ -80,7 +80,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             rounded-mobile-md
             min-h-touch-md
             text-mobile-md text-family-text-primary
-            focus:outline-none focus:ring-2 focus:ring-family-input-focus focus:border-family-input-focus
+            focus:outline-none focus:ring-2 focus:ring-family-input-focus/80 focus:border-family-input-focus/90
             transition-all duration-200
             flex items-center justify-between
             hover:border-gray-400

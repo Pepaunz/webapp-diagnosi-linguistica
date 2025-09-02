@@ -8,6 +8,7 @@ import { Button } from "../components/shared/Filters";
 import { Section } from "@bilinguismo/shared";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
 import { SubmissionDetailDTO as Submission } from "@bilinguismo/shared";
+import {submissionTemplates} from "../assets/mock-submission";
 
 
 const SubmissionViewPage = () => {
@@ -27,7 +28,8 @@ const SubmissionViewPage = () => {
         
         // TEMP: Mock fino a quando non implementi l'API
         console.log("Fetching submission:", id);
-        // setSubmission(mockData); // Rimuovi quando hai l'API
+        const mockData = submissionTemplates["sub_001"];
+        setSubmission(mockData); // Rimuovi quando hai l'API
         
       } catch (error) {
         console.error("Error fetching submission:", error);
