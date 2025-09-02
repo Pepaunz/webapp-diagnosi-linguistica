@@ -1,43 +1,59 @@
 import React from 'react';
 
-
-
 // ===== SECTION HEADER =====
 interface SectionHeaderProps {
   title: string;
   description?: string;
   sectionNumber: number;
+  sectionId?: string;
 }
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({ 
   title, 
   description, 
-  sectionNumber 
+  sectionNumber,
+  sectionId = `section-${sectionNumber}`
 }) => {
+  const titleId = `section-title-${sectionId}`;
+  
   return (
-    <div className="px-mobile-md py-mobile-md">
+    <section 
+      aria-labelledby={titleId}
+      className="py-mobile-md"
+    >
       {/* Section Title con numero - design più moderno */}
-      <div className="bg-family-header text-white px-mobile-sm py-mobile-xs rounded-mobile-sm mb-mobile-sm shadow-sm">
+      <header className="bg-family-header text-white px-mobile-sm py-mobile-xs rounded-mobile-sm mb-mobile-sm shadow-sm">
         <div className="flex items-center gap-3">
           {/* Numero sezione con design più accattivante */}
           <div className="bg-blue-600 text-white px-2.5 py-1.5 rounded-md text-mobile-sm font-bold min-w-[32px] text-center shadow-sm">
-            {sectionNumber}
+            <span aria-hidden="true">{sectionNumber}</span>
           </div>
-          <h2 className="text-mobile-md font-medium flex-1">{title}</h2>
+          <h2 
+            id={titleId}
+            className="text-mobile-md font-medium flex-1"
+            tabIndex={-1} // Consente focus programmatico
+          >
+            <span className="sr-only">Sezione {sectionNumber}: </span>
+            {title}
+          </h2>
         </div>
-      </div>
+      </header>
       
       {/* Section Description - versione moderna */}
       {description && (
-        <div className=" mb-mobile-md"> {/* ml-11 per compensare il numero più largo */}
+        <div className="mb-mobile-md">
           {/* Card per la descrizione */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-3">
+          <div 
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-3"
+            role="note"
+            aria-labelledby={titleId}
+          >
             <p className="text-mobile-md text-family-text-primary font-medium leading-relaxed text-gray-800 mb-3">
               {description}
             </p>
             
             {/* Divider sottile */}
-            <hr className="border-gray-200 mb-3" />
+            <hr className="border-gray-200 mb-3" aria-hidden="true" />
             
             {/* Testo di incoraggiamento con icona */}
             <div className="flex items-start gap-3">
@@ -48,7 +64,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
@@ -57,25 +73,45 @@ interface QuestionBlockProps {
   question: string;
   children: React.ReactNode;
   className?: string;
+  questionId: string;
+  required?: boolean;
 }
 
 export const QuestionBlock: React.FC<QuestionBlockProps> = ({ 
   question, 
   children, 
-  className = '' 
+  className = '',
+  questionId,
+  required = false
 }) => {
+  const legendId = `question-${questionId}`;
+  
   return (
-    <div className={`mx-mobile-md mb-mobile-md ${className}`}>
+    <fieldset className={`mb-mobile-md ${className}`}>
       {/* Question Container - grigio come nel Figma */}
-      <div className="bg-gradient-to-r from-family-header to-family-header/90 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm">
-        <h3 className="text-mobile-md font-medium leading-relaxed">{question}</h3>
-      </div>
+      <legend 
+        id={legendId}
+        className="bg-gradient-to-r from-family-header to-family-header/90 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm w-full"
+      >
+        <span className="text-mobile-md font-medium leading-relaxed block">
+          {question}
+          {required && (
+            <span className="text-red-300 ml-1" aria-label="obbligatorio">
+              *
+            </span>
+          )}
+        </span>
+      </legend>
       
       {/* Answer Container - bianco */}
-      <div className="bg-white px-mobile-md py-mobile-md rounded-b-mobile-sm border border-gray-200 border-t-0">
+      <div 
+        className="bg-white px-mobile-md py-mobile-md rounded-b-mobile-sm border border-gray-200 border-t-0"
+        role="group"
+        aria-labelledby={legendId}
+      >
         {children}
       </div>
-    </div>
+    </fieldset>
   );
 };
 
@@ -90,17 +126,28 @@ interface MultipleChoiceProps {
   value?: string;
   onChange: (value: string) => void;
   name: string;
+  required?: boolean;
+  helpText?: string;
 }
 
 export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
   options,
   value,
   onChange,
-  name
+  name,
+  required = false,
+  helpText
 }) => {
+  const helpId = `${name}-help`;
+  
   return (
-    <div className="space-y-mobile-sm">
-      {options.map((option) => (
+    <div 
+      className="space-y-mobile-sm"
+      role="radiogroup"
+      aria-required={required}
+      aria-describedby={helpText ? helpId : undefined}
+    >
+      {options.map((option, index) => (
         <label
           key={option.value}
           className={`
@@ -119,17 +166,24 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
             checked={value === option.value}
             onChange={() => onChange(option.value)}
             className="sr-only"
+            required={required}
+            aria-describedby={helpText ? helpId : undefined}
           />
           
           {/* Custom Radio Button */}
-          <div className={`
-            w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center
-            transition-all duration-200 flex-shrink-0
-            ${value === option.value 
-              ? 'border-family-input-focus bg-family-input-focus/80' 
-              : 'border-gray-400 bg-white group-hover:border-gray-500'
-            }
-          `}>
+          <div 
+            className={`
+              w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center
+              transition-all duration-200 flex-shrink-0
+              ${value === option.value 
+                ? 'border-family-input-focus bg-family-input-focus/80' 
+                : 'border-gray-400 bg-white group-hover:border-gray-500'
+              }
+            `}
+            role="radio"
+            aria-checked={value === option.value}
+            aria-hidden="true"
+          >
             {value === option.value && (
               <div className="w-2 h-2 bg-white rounded-full" />
             )}
@@ -146,10 +200,16 @@ export const MultipleChoiceQuestion: React.FC<MultipleChoiceProps> = ({
           </span>
         </label>
       ))}
+      
+      {/* Help text */}
+      {helpText && (
+        <div id={helpId} className="text-mobile-sm text-family-text-body mt-2">
+          {helpText}
+        </div>
+      )}
     </div>
   );
 };
-
 
 // ===== TEXT QUESTION =====
 interface TextQuestionProps {
@@ -157,50 +217,72 @@ interface TextQuestionProps {
   onChange: (value: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  required?: boolean;
+  questionId: string;
+  label?: string;
+  helpText?: string;
 }
 
 export const TextQuestion: React.FC<TextQuestionProps> = ({
   value = '',
   onChange,
   placeholder = 'Inserisci risposta',
-  multiline = false
+  multiline = false,
+  required = false,
+  questionId,
+  label,
+  helpText
 }) => {
-  if (multiline) {
-    return (
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        rows={3}
-        className="
-          w-full px-mobile-sm py-mobile-sm
-          border border-gray-300 rounded-mobile-sm
-          min-h-touch-md resize-none
-          text-mobile-md text-family-text-primary
-          focus:outline-none focus:ring-2 focus:ring-family-input-focus/80 focus:border-family-input-focus/90
-          placeholder:text-family-text-muted
-          transition-all duration-200
-        "
-      />
-    );
-  }
+  const inputId = `input-${questionId}`;
+  const helpId = `${questionId}-help`;
+  const labelId = `${questionId}-label`;
+
+  const commonProps = {
+    id: inputId,
+    value,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value),
+    placeholder,
+    required,
+    'aria-labelledby': label ? labelId : undefined,
+    'aria-describedby': helpText ? helpId : undefined,
+    className: `
+      w-full px-mobile-sm py-mobile-sm
+      border border-gray-300 rounded-mobile-sm
+      min-h-touch-md
+      text-mobile-md text-family-text-primary
+      focus:outline-none focus:ring-2 focus:ring-family-input-focus/80 focus:border-family-input-focus/90
+      placeholder:text-family-text-muted
+      transition-all duration-200
+    `
+  };
 
   return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="
-        w-full px-mobile-sm py-mobile-sm
-        border border-gray-300 rounded-mobile-sm
-        min-h-touch-md
-        text-mobile-md text-family-text-primary
-        focus:outline-none focus:ring-2 focus:ring-family-input-focus/70 focus:border-family-input-focus/90
-        placeholder:text-family-text-muted
-        transition-all duration-200
-      "
-    />
+    <div>
+      {label && (
+        <label id={labelId} htmlFor={inputId} className="sr-only">
+          {label}
+        </label>
+      )}
+      
+      {multiline ? (
+        <textarea
+          {...commonProps}
+          rows={3}
+          className={`${commonProps.className} resize-none`}
+        />
+      ) : (
+        <input
+          type="text"
+          {...commonProps}
+        />
+      )}
+      
+      {helpText && (
+        <div id={helpId} className="text-mobile-sm text-family-text-body mt-2">
+          {helpText}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -208,26 +290,56 @@ export const TextQuestion: React.FC<TextQuestionProps> = ({
 interface DateQuestionProps {
   value?: string;
   onChange: (value: string) => void;
+  required?: boolean;
+  questionId: string;
+  label?: string;
+  helpText?: string;
 }
 
 export const DateQuestion: React.FC<DateQuestionProps> = ({
   value = '',
-  onChange
+  onChange,
+  required = false,
+  questionId,
+  label,
+  helpText
 }) => {
+  const inputId = `date-${questionId}`;
+  const helpId = `${questionId}-help`;
+  const labelId = `${questionId}-label`;
+
   return (
-    <input
-      type="date"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="
-        w-full px-mobile-sm py-mobile-sm
-        border border-gray-300 rounded-mobile-sm
-        min-h-touch-md
-        text-mobile-md text-family-text-primary
-        focus:outline-none focus:ring-2 focus:ring-family-input-focus/70 focus:border-family-input-focus/90
-        transition-all duration-200
-      "
-    />
+    <div>
+      {label && (
+        <label id={labelId} htmlFor={inputId} className="sr-only">
+          {label}
+        </label>
+      )}
+      
+      <input
+        type="date"
+        id={inputId}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        aria-labelledby={label ? labelId : undefined}
+        aria-describedby={helpText ? helpId : undefined}
+        className="
+          w-full px-mobile-sm py-mobile-sm
+          border border-gray-300 rounded-mobile-sm
+          min-h-touch-md
+          text-mobile-md text-family-text-primary
+          focus:outline-none focus:ring-2 focus:ring-family-input-focus/70 focus:border-family-input-focus/90
+          transition-all duration-200
+        "
+      />
+      
+      {helpText && (
+        <div id={helpId} className="text-mobile-sm text-family-text-body mt-2">
+          {helpText}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -238,6 +350,10 @@ interface NumberQuestionProps {
   placeholder?: string;
   min?: number;
   max?: number;
+  required?: boolean;
+  questionId: string;
+  label?: string;
+  helpText?: string;
 }
 
 export const NumberQuestion: React.FC<NumberQuestionProps> = ({
@@ -245,26 +361,52 @@ export const NumberQuestion: React.FC<NumberQuestionProps> = ({
   onChange,
   placeholder = 'Inserisci numero',
   min,
-  max
+  max,
+  required = false,
+  questionId,
+  label,
+  helpText
 }) => {
+  const inputId = `number-${questionId}`;
+  const helpId = `${questionId}-help`;
+  const labelId = `${questionId}-label`;
+
   return (
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      min={min}
-      max={max}
-      className="
-        w-full px-mobile-sm py-mobile-sm
-        border border-gray-300 rounded-mobile-sm
-        min-h-touch-md
-        text-mobile-md text-family-text-primary
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-        placeholder:text-family-text-muted
-        transition-all duration-200
-      "
-    />
+    <div>
+      {label && (
+        <label id={labelId} htmlFor={inputId} className="sr-only">
+          {label}
+        </label>
+      )}
+      
+      <input
+        type="number"
+        id={inputId}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        required={required}
+        aria-labelledby={label ? labelId : undefined}
+        aria-describedby={helpText ? helpId : undefined}
+        className="
+          w-full px-mobile-sm py-mobile-sm
+          border border-gray-300 rounded-mobile-sm
+          min-h-touch-md
+          text-mobile-md text-family-text-primary
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+          placeholder:text-family-text-muted
+          transition-all duration-200
+        "
+      />
+      
+      {helpText && (
+        <div id={helpId} className="text-mobile-sm text-family-text-body mt-2">
+          {helpText}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -273,35 +415,79 @@ interface StarRatingProps {
   value?: number;
   onChange: (value: number) => void;
   maxStars?: number;
+  required?: boolean;
+  questionId: string;
+  label?: string;
+  helpText?: string;
 }
 
 export const StarRating: React.FC<StarRatingProps> = ({
   value = 0,
   onChange,
-  maxStars = 10
+  maxStars = 10,
+  required = false,
+  questionId,
+  label,
+  helpText
 }) => {
+  const ratingId = `rating-${questionId}`;
+  const helpId = `${questionId}-help`;
+  const labelId = `${questionId}-label`;
+
   return (
-    <div className="px-3 py-2 rounded-lg border-2 border-transparent bg-white">
-      <div className="flex flex-wrap gap-2 justify-center">
-        {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => onChange(star)}
-            className={`
-              w-10 h-10 rounded-lg border-2 min-h-touch-sm
-              flex items-center justify-center transition-all duration-200
-              ${star <= value
-                ? 'border-family-input-focus bg-family-input-focus text-white shadow-sm font-semibold'
-                : 'bg-white border-gray-400 text-gray-600 hover:border-gray-500 hover:bg-gray-50'
-              }
-            `}
-          >
-            <span className="text-sm font-medium">{star}</span>
-          </button>
-        ))}
+    <div>
+      {label && (
+        <div id={labelId} className="sr-only">
+          {label}
+        </div>
+      )}
+      
+      <div className="px-3 py-2 rounded-lg border-2 border-transparent bg-white">
+        <div 
+          role="radiogroup"
+          aria-labelledby={label ? labelId : undefined}
+          aria-describedby={helpText ? helpId : undefined}
+          aria-required={required}
+          className="flex flex-wrap gap-2 justify-center"
+        >
+          {Array.from({ length: maxStars }, (_, i) => i + 1).map((star) => (
+            <button
+              key={star}
+              type="button"
+              role="radio"
+              aria-checked={star === value}
+              aria-setsize={maxStars}
+              aria-posinset={star}
+              aria-label={`${star} su ${maxStars}`}
+              onClick={() => onChange(star)}
+              className={`
+                w-10 h-10 rounded-lg border-2 min-h-touch-sm
+                flex items-center justify-center transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-family-input-focus/80
+                ${star <= value
+                  ? 'border-family-input-focus bg-family-input-focus text-white shadow-sm font-semibold'
+                  : 'bg-white border-gray-400 text-gray-600 hover:border-gray-500 hover:bg-gray-50'
+                }
+              `}
+            >
+              <span className="text-sm font-medium" aria-hidden="true">
+                {star}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
-    
+      
+      {helpText && (
+        <div id={helpId} className="text-mobile-sm text-family-text-body mt-2">
+          {helpText}
+        </div>
+      )}
+      
+      {/* Screen reader announcement for current value */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {value > 0 ? `Valore selezionato: ${value} su ${maxStars}` : 'Nessun valore selezionato'}
+      </div>
     </div>
   );
 };

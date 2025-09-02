@@ -27,7 +27,7 @@ const SimpleLayout: React.FC<SimpleLayoutProps> = ({
         </header>
       )}
       
-      <main className="px-mobile-md py-mobile-lg">
+      <main className="max-w-[1300px] mx-auto px-4 sm:px-mobile-sm lg:px-mobile-md py-mobile-lg">
         {children}
       </main>
     </div>

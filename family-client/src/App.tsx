@@ -3,9 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import CFLoginPage from './pages/CFLoginPage';
 import TestPage from './pages/TestPage';
 import QuestionnairePage from './pages/QuestionnairePage';
+import { AnnouncementProvider } from './components/accessibility/ScreenReaderAnnouncements';
 
 function App() {
   return (
+    <AnnouncementProvider>
     <div className="min-h-screen bg-gray-50">
       <Routes>
 
@@ -55,6 +57,7 @@ function App() {
         />
       </Routes>
     </div>
+    </AnnouncementProvider>
   );
 }
 

@@ -13,6 +13,7 @@ interface LanguageSelectorProps {
   onChange: (value: string) => void;
   label?: string;
   className?: string;
+  id: string;
 }
 
 const languages: LanguageOption[] = [

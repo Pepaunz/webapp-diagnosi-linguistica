@@ -100,7 +100,161 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    // Plugin personalizzato per utilità di accessibilità
+    function({ addUtilities, addComponents, theme }) {
+      // Utilità per screen reader
+      addUtilities({
+        '.sr-only': {
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: '0',
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: '0',
+        },
+        '.not-sr-only': {
+          position: 'static',
+          width: 'auto',
+          height: 'auto',
+          padding: 'inherit',
+          margin: 'inherit',
+          overflow: 'visible',
+          clip: 'auto',
+          whiteSpace: 'normal',
+        },
+      });
+
+      // Componenti per accessibilità
+      addComponents({
+        '.skip-link': {
+          position: 'absolute',
+          top: '-40px',
+          left: '6px',
+          backgroundColor: theme('colors.family.text-primary'),
+          color: 'white',
+          padding: `${theme('spacing.2')} ${theme('spacing.4')}`,
+          textDecoration: 'none',
+          borderRadius: theme('borderRadius.mobile-sm'),
+          fontSize: theme('fontSize.mobile-sm[0]'),
+          fontWeight: '500',
+          transition: 'top 0.2s ease',
+          zIndex: theme('zIndex.skip-link'),
+          boxShadow: theme('boxShadow.mobile-md'),
+          
+          '&:focus': {
+            top: '6px',
+          }
+        },
+        
+        '.focus-ring': {
+          '&:focus-visible': {
+            outline: `3px solid ${theme('colors.family.input-focus')}`,
+            outlineOffset: '2px',
+            borderRadius: theme('borderRadius.DEFAULT'),
+          }
+        },
+        
+        '.focus-ring-error': {
+          '&:focus-visible': {
+            outline: `3px solid ${theme('colors.family.error')}`,
+            outlineOffset: '2px',
+            boxShadow: theme('boxShadow.focus-error'),
+          }
+        },
+
+        '.touch-target': {
+          minHeight: theme('spacing.touch-sm'),
+          minWidth: theme('spacing.touch-sm'),
+          
+          '@media (max-width: 768px)': {
+            minHeight: theme('spacing.touch-md'),
+            minWidth: theme('spacing.touch-md'),
+          }
+        },
+
+        '.error-input': {
+          borderColor: `${theme('colors.family.error')} !important`,
+          borderWidth: '2px !important',
+          backgroundColor: `${theme('colors.family.error-bg')} !important`,
+          boxShadow: `0 0 0 3px rgba(229, 62, 62, 0.1) !important`,
+          
+          '&:focus': {
+            outline: `3px solid ${theme('colors.family.error')} !important`,
+            outlineOffset: '2px',
+            boxShadow: '0 0 0 6px rgba(229, 62, 62, 0.15) !important',
+          }
+        },
+
+        '.announcement-banner': {
+          position: 'fixed',
+          bottom: theme('spacing.4'),
+          left: theme('spacing.4'),
+          right: theme('spacing.4'),
+          backgroundColor: theme('colors.family.text-primary'),
+          color: 'white',
+          padding: theme('spacing.4'),
+          borderRadius: theme('borderRadius.mobile-md'),
+          boxShadow: theme('boxShadow.mobile-lg'),
+          transform: 'translateY(100%)',
+          transition: 'transform 0.3s ease',
+          zIndex: theme('zIndex.announcement'),
+          
+          '&.show': {
+            transform: 'translateY(0)',
+          },
+          
+          '&.error': {
+            backgroundColor: theme('colors.family.error'),
+          },
+          
+          '&.success': {
+            backgroundColor: '#38A169',
+          }
+        }
+      });
+
+      // Utilità responsive per accessibilità
+      addUtilities({
+        '@media (prefers-contrast: high)': {
+          '.text-family-text-body': {
+            color: '#1A202C !important',
+          },
+          '.text-family-text-muted': {
+            color: '#2D3748 !important',
+          },
+          '.border-family-input-border': {
+            borderColor: '#2D3748 !important',
+            borderWidth: '2px !important',
+          },
+        },
+        
+        '@media (prefers-reduced-motion: reduce)': {
+          '*': {
+            animationDuration: '0.01ms !important',
+            animationIterationCount: '1 !important',
+            transitionDuration: '0.01ms !important',
+          },
+          'html': {
+            scrollBehavior: 'auto !important',
+          },
+        },
+
+        // Utilità per zoom e ridimensionamento
+        '@media (max-width: 768px)': {
+          '.max-w-sm': {
+            maxWidth: 'min(24rem, 90vw)',
+          },
+          '.touch-spacing > * + *': {
+            marginTop: theme('spacing.2'),
+          }
+        }
+      });
+    }
+  ],
 }
 
 // ESEMPIO DI COME CONVERTIRE VALORI FIGMA:

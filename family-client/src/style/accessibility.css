@@ -1,0 +1,325 @@
+/* src/styles/accessibility.css */
+
+/* ===== SCREEN READER ONLY =====
+   Nasconde visivamente ma mantiene accessibile per screen reader */
+   .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* Mostra quando in focus (utile per skip links) */
+  .sr-only.focus\:not-sr-only:focus,
+  .focus\:not-sr-only:focus.sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  
+  /* ===== SKIP LINKS =====
+     Per navigazione rapida da tastiera */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #2D3748; /* usa family-text-primary */
+    color: white;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 0.5rem; /* mobile-sm */
+    font-size: 1rem; /* mobile-sm */
+    font-weight: 500;
+    transition: top 0.2s ease;
+    z-index: 9999;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* mobile-md */
+  }
+  
+  .skip-link:focus {
+    top: 6px;
+  }
+  
+  /* ===== FOCUS INDICATORS =====
+     Indicatori di focus visibili e conformi WCAG */
+  
+  /* Focus ring base - usa i colori del tuo tema */
+  .focus-visible,
+  .focus-visible:focus,
+  *:focus-visible {
+    outline: 3px solid #426c8f; /* family-input-focus */
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+  
+  /* Rimuovi outline default del browser */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* Focus specifici per elementi interattivi */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid #426c8f; /* family-input-focus */
+    outline-offset: 2px;
+  }
+  
+  /* Focus per elementi custom (radio buttons, checkboxes) */
+  [role="radio"]:focus-visible,
+  [role="checkbox"]:focus-visible,
+  [role="tab"]:focus-visible {
+    outline: 3px solid #426c8f;
+    outline-offset: 2px;
+    border-radius: 0.5rem; /* mobile-sm */
+  }
+  
+  /* Focus più prominente per elementi critici */
+  [role="alertdialog"]:focus-visible,
+  [role="alert"]:focus-visible,
+  .error-focus:focus-visible {
+    outline: 3px solid #E53E3E; /* family-error */
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(229, 62, 62, 0.1);
+  }
+  
+  /* ===== HIGH CONTRAST SUPPORT =====
+     Supporto per modalità alto contrasto */
+  @media (prefers-contrast: high) {
+    /* Aumenta contrasto per testi */
+    .text-family-text-body {
+      color: #1A202C !important;
+    }
+    
+    .text-family-text-muted {
+      color: #2D3748 !important;
+    }
+    
+    /* Borders più marcati */
+    .border-family-input-border {
+      border-color: #2D3748 !important;
+      border-width: 2px !important;
+    }
+    
+    /* Focus ancora più visibile */
+    *:focus-visible {
+      outline: 4px solid #000000 !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.1) !important;
+    }
+  }
+  
+  /* ===== REDUCED MOTION SUPPORT =====
+     Rispetta preferenze di riduzione movimento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    
+    /* Mantieni alcune transizioni essenziali per UX */
+    .focus-transition:focus-visible {
+      transition: outline 0.1s ease !important;
+    }
+  }
+  
+  /* ===== ZOOM E RIDIMENSIONAMENTO TESTO =====
+     Supporta zoom fino al 200% senza perdita funzionalità */
+  @media (min-resolution: 144dpi) and (max-width: 768px), 
+         (min-resolution: 2dppx) and (max-width: 768px) {
+    /* Aumenta touch targets per display ad alta densità */
+    .min-h-touch-sm {
+      min-height: 3rem; /* da 2.75rem a 3rem */
+    }
+    
+    .min-h-touch-md {
+      min-height: 3.25rem; /* da 3rem a 3.25rem */
+    }
+  }
+  
+  /* Supporto per zoom 200% */
+  @media (max-width: 768px) and (orientation: portrait) {
+    /* Assicura che gli elementi rimangano utilizzabili */
+    .w-full {
+      min-width: 0;
+    }
+    
+    /* Previeni overflow orizzontale */
+    body {
+      overflow-x: hidden;
+    }
+    
+    /* Mantieni proporzioni per elementi critici */
+    .max-w-sm {
+      max-width: min(24rem, 90vw);
+    }
+  }
+  
+  /* ===== ERROR STATES ACCESSIBILI =====
+     Stati di errore con contrasto e visibilità adeguati */
+  .error-input {
+    border-color: #E53E3E !important; /* family-error */
+    border-width: 2px !important;
+    background-color: #FED7D7; /* family-error-bg */
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1) !important;
+  }
+  
+  .error-input:focus {
+    outline: 3px solid #E53E3E !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(229, 62, 62, 0.15) !important;
+  }
+  
+  .error-text {
+    color: #C53030; /* Più scuro di family-error per contrasto */
+    font-weight: 500;
+  }
+  
+  /* ===== LIVE REGIONS STYLING =====
+     Per annunci screen reader con feedback visivo opzionale */
+  .announcement-banner {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    background: #2D3748;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.75rem; /* mobile-md */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .announcement-banner.show {
+    transform: translateY(0);
+  }
+  
+  .announcement-banner.error {
+    background: #E53E3E;
+  }
+  
+  .announcement-banner.success {
+    background: #38A169;
+  }
+  
+  /* ===== MOBILE ACCESSIBILITY ENHANCEMENTS =====
+     Miglioramenti specifici per dispositivi touch */
+  
+  /* Touch targets più grandi per accessibility */
+  @media (max-width: 768px) {
+    /* Bottoni e link */
+    button,
+    a,
+    [role="button"],
+    [role="link"] {
+      min-height: 2.75rem; /* 44px minimo */
+      min-width: 2.75rem;
+    }
+    
+    /* Input fields */
+    input,
+    select,
+    textarea {
+      min-height: 3rem; /* 48px per comfort */
+    }
+    
+    /* Radio buttons e checkboxes custom */
+    [role="radio"],
+    [role="checkbox"] {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+    }
+    
+    /* Spacing tra elementi touch */
+    .touch-spacing > * + * {
+      margin-top: 0.5rem; /* 8px minimo tra touch targets */
+    }
+  }
+  
+  /* ===== DARK MODE ACCESSIBILITY =====
+     Se implementi dark mode, mantieni contrasto */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --focus-color: #60A5FA; /* Blu più chiaro per dark mode */
+      --error-color: #F87171; /* Rosso più chiaro per dark mode */
+    }
+    
+    .skip-link {
+      background: #1F2937;
+      border: 1px solid #374151;
+    }
+    
+    *:focus-visible {
+      outline-color: var(--focus-color);
+    }
+  }
+  
+  /* ===== UTILITY CLASSES PER ACCESSIBILITÀ =====
+     Classi helper per casi comuni */
+  
+  /* Nascondere decorazioni da screen reader */
+  .aria-hidden {
+    speak: none;
+  }
+  
+  /* Testo solo per screen reader con contesto */
+  .sr-context::before {
+    content: attr(data-sr-prefix);
+    speak: literal-punctuation;
+  }
+  
+  /* Pausa nell'audio per screen reader */
+  .sr-pause::after {
+    content: "";
+    speak: spell-out;
+  }
+  
+  /* ===== PRINT ACCESSIBILITY =====
+     Mantieni accessibilità anche in stampa */
+  @media print {
+    /* Mostra URL per link */
+    a[href^="http"]:after {
+      content: " (" attr(href) ")";
+      font-size: smaller;
+    }
+    
+    /* Mantieni testo essenziale */
+    .sr-only {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      overflow: visible !important;
+      clip: auto !important;
+      white-space: normal !important;
+      font-size: smaller;
+      color: #666;
+    }
+    
+    /* Rimuovi focus indicators */
+    *:focus,
+    *:focus-visible {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  }
