@@ -1,8 +1,12 @@
 // src/pages/QuestionnairePage.tsx - MODIFICHE PER TTS
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
 import { Button, LoadingSpinner } from '../components/ui';
+import { Question, Section, Language } from '@bilinguismo/shared';
+import { getLocalizedText } from '../utils/localization';
+import { z } from 'zod';
+import { questionSchema } from '../../../shared/src/schemas/questionnaire.schemas';
 import { 
   SectionHeader, 
   QuestionBlock, 
@@ -18,38 +22,6 @@ import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../comp
 // ➕ AGGIUNGI QUESTI IMPORT
 import TTSFloatingButton from '../components/accessibility/TTSFloatingButton';
 import { useTextToSpeech} from '../hooks/useTextToSpeech';
-
-// Types per il questionario (stesso di prima)
-type Language = 'it' | 'en' | 'es' | 'ar';
-
-interface MultilingualText {
-  it: string;
-  en: string;
-  es: string;
-  ar: string;
-}
-
-interface QuestionOption {
-  value: string;
-  text: MultilingualText;
-}
-
-interface Question {
-  questionId: string;
-  text: MultilingualText;
-  type: 'text' | 'multiple-choice' | 'date' | 'rating';
-  required: boolean;
-  options?: QuestionOption[];
-  minValue?: number;
-  maxValue?: number;
-}
-
-interface Section {
-  sectionId: string;
-  title: MultilingualText;
-  description?: MultilingualText;
-  questions: Question[];
-}
 
 const questionnaireData = bilingualismQuestionnaireData as {
   sections: Section[];
@@ -72,13 +44,14 @@ const QuestionnairePage: React.FC = () => {
   
   // ➕ AGGIUNGI: TTS Hook
 
+  const location = useLocation();
   
   // State management (come prima)
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedLanguage] = useState<Language>('it');
+  const [selectedLanguage] = useState<Language>(location.state?.language || 'it');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   // Dati questionario (come prima)
@@ -135,7 +108,7 @@ const QuestionnairePage: React.FC = () => {
   useEffect(() => {
     if (sectionHeaderRef.current) {
       sectionHeaderRef.current.focus();
-      const sectionTitle = currentSection.title[selectedLanguage];
+      const sectionTitle = getLocalizedText(currentSection.title, selectedLanguage);
       announce(
         `Sezione ${currentSectionIndex + 1} di ${totalSections}: ${sectionTitle}`,
         'polite'
@@ -146,22 +119,35 @@ const QuestionnairePage: React.FC = () => {
   // Validazione (come prima)
   const validateCurrentSection = (): boolean => {
     const errors: Record<string, string> = {};
-    let hasErrors = false;
+
 
     currentSection.questions.forEach((question) => {
-      if (question.required) {
-        const answer = answers[question.questionId];
-        if (!answer || answer.trim() === '') {
+      const answer = answers[question.questionId] || '';
+      
+      // Valida con Zod schema invece di logica manuale
+      try {
+        questionSchema.parse(question); // Valida struttura domanda
+        
+        // Controllo required più robusto
+        if (question.required && (!answer || answer.trim() === '')) {
           errors[question.questionId] = 'Questa domanda è obbligatoria';
-          hasErrors = true;
+        }     
+        if (answer && question.type === 'date') {
+          const dateSchema = z.string().datetime();
+          const result = dateSchema.safeParse(answer);
+          if (!result.success) {
+            errors[question.questionId] = 'Data non valida';
+          }
         }
+        
+      } catch (error) {
+        errors[question.questionId] = 'Errore nella domanda';
       }
     });
-
     setValidationErrors(errors);
     
-    if (hasErrors) {
-      announce('Alcune domande obbligatorie non sono state compilate', 'assertive');
+    if (Object.keys(errors).length > 0) {
+      announce('Ci sono errrori nelle domande', 'assertive');
       const firstErrorQuestionId = Object.keys(errors)[0];
       const firstErrorElement = document.querySelector(`[data-question-id="${firstErrorQuestionId}"]`);
       if (firstErrorElement instanceof HTMLElement) {
@@ -169,7 +155,7 @@ const QuestionnairePage: React.FC = () => {
       }
     }
     
-    return !hasErrors;
+    return Object.keys(errors).length === 0;
   };
 
   // Handle answer change (come prima)
@@ -257,7 +243,7 @@ const QuestionnairePage: React.FC = () => {
 
   // ➕ MODIFICA: Render question con integrazione TTS
   const renderQuestion = (question: Question) => {
-    const questionText = question.text[selectedLanguage];
+    const questionText = getLocalizedText(question.text, selectedLanguage);
     const questionValue = answers[question.questionId] || '';
     const hasError = !!validationErrors[question.questionId];
     const errorMessage = validationErrors[question.questionId];
@@ -266,6 +252,11 @@ const QuestionnairePage: React.FC = () => {
       questionId: question.questionId,
       required: question.required,
       helpText: hasError ? errorMessage : undefined,
+    };
+
+    const errorProps = {
+      hasError,
+      errorMessage
     };
 
     // ➕ AGGIUNGI: Props TTS per QuestionBlock
@@ -280,7 +271,7 @@ const QuestionnairePage: React.FC = () => {
     if (question.type === 'multiple-choice') {
       const options = question.options?.map((opt) => ({
         value: opt.value,
-        label: opt.text[selectedLanguage]
+        label: getLocalizedText(opt.text, selectedLanguage)
       })) || [];
 
       return (
@@ -289,6 +280,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...errorProps}
           {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
@@ -311,6 +303,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...errorProps}
           {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
@@ -333,6 +326,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...errorProps}
           {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
@@ -357,6 +351,7 @@ const QuestionnairePage: React.FC = () => {
           question={questionText}
           questionId={question.questionId}
           required={question.required}
+          {...errorProps}
           {...ttsProps} // ➕ AGGIUNGI TTS PROPS
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
@@ -421,8 +416,8 @@ const QuestionnairePage: React.FC = () => {
         
         <div className="flex-1 pb-24" aria-label="Contenuto sezione corrente">
           <SectionHeader 
-            title={currentSection.title[selectedLanguage]}
-            description={currentSection.description?.[selectedLanguage]}
+            title={getLocalizedText(currentSection.title, selectedLanguage)}
+            description={getLocalizedText(currentSection.description, selectedLanguage)}
             sectionNumber={currentSectionIndex + 1}
             sectionId={currentSection.sectionId}
           />

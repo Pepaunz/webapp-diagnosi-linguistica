@@ -80,11 +80,7 @@ const TestPage: React.FC = () => {
         <div className="space-y-mobile-md">
           <h3 className="text-mobile-lg font-medium text-family-text-primary">Language Selector</h3>
           
-          <LanguageSelector
-            value={language}
-            onChange={setLanguage}
-            label="Scegli lingua"
-          />
+        
         </div>
         
         {/* Privacy Link Test */}

@@ -14,7 +14,7 @@ export const fiscalCodeSchema = z
   .string()
   .regex(
     /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{2}[A-Z]{1}[0-9LMNPQRSTUV]{3}[A-Z]{1}$/,
-    "Invalid fiscal code format"
+    "Codice fiscale non valido"
   )
   .length(16, "Fiscal code must be exactly 16 characters");
 
@@ -65,3 +65,4 @@ export type UuidParam = z.infer<typeof uuidParamSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type DateFilter = z.infer<typeof dateFilterSchema>;
 export type Language = "it" | "en" | "es" | "ar";
+export type LocalizedText = z.infer<typeof localizedTextSchema>;

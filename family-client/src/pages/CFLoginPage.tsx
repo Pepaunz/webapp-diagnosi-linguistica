@@ -7,6 +7,9 @@ import LanguageSelector from '../components/ui/LanguageSelector';
 import { Info } from 'lucide-react';
 import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements';
 
+import { z } from 'zod';
+import { fiscalCodeSchema } from '../../../shared/src/schemas/common.schemas';
+
 const CFLoginPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
@@ -34,9 +37,19 @@ const CFLoginPage: React.FC = () => {
   }, []);
 
   // Validazione base Codice Fiscale
-  const validateFiscalCode = (cf: string): boolean => {
-    const cfRegex = /^[A-Za-z]{6}[0-9]{2}[A-Za-z][0-9]{2}[A-Za-z][0-9]{3}[A-Za-z]$/;
-    return cfRegex.test(cf.toUpperCase());
+  const validateFiscalCode = (cf: string): { isValid: boolean; error?: string } => {
+    try {
+      fiscalCodeSchema.parse(cf.toUpperCase());
+      return { isValid: true };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return { 
+          isValid: false, 
+          error: error.issues[0]?.message || 'Codice fiscale non valido' 
+        };
+      }
+      return { isValid: false, error: 'Errore di validazione' };
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,11 +67,11 @@ const CFLoginPage: React.FC = () => {
       }
       return;
     }
-    
-    if (!validateFiscalCode(fiscalCode)) {
-      const errorMsg = 'Codice fiscale non valido. Deve essere di 16 caratteri nel formato corretto.';
-      setError(errorMsg);
-      announce(errorMsg, 'assertive');
+    const validation = validateFiscalCode(fiscalCode);
+    if (!validation.isValid) {
+      const errorMsg = 'Codice fiscale non valido.';
+      setError(validation.error || errorMsg);
+      announce(validation.error || errorMsg, 'assertive');
       // Focus sull'input con errore
       if (fiscalCodeInputRef.current) {
         fiscalCodeInputRef.current.focus();
@@ -74,7 +87,7 @@ const CFLoginPage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const mockSubmissionId = 'sub_' + Date.now();
       announce('Accesso effettuato con successo', 'polite');
-      navigate(`/questionnaire/${templateId}/${mockSubmissionId}`);
+      navigate(`/questionnaire/${templateId}/${mockSubmissionId}`, {state: {language: selectedLanguage}} );
     } catch (err) {
       const errorMsg = 'Errore durante l\'accesso. Riprova più tardi.';
       setError(errorMsg);

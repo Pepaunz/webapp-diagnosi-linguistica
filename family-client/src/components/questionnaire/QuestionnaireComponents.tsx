@@ -70,13 +70,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 };
 
 // ===== QUESTION BLOCK =====
-interface QuestionBlockProps {
-  question: string;
-  children: React.ReactNode;
-  className?: string;
-  questionId: string;
-  required?: boolean;
-}
 
 interface QuestionBlockProps {
   question: string;
@@ -84,6 +77,8 @@ interface QuestionBlockProps {
   className?: string;
   questionId: string;
   required?: boolean;
+  hasError?: boolean;
+  errorMessage?: string;
   
   // ➕ AGGIUNGI: Props TTS opzionali
   ttsEnabled?: boolean;
@@ -101,6 +96,8 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   className = '',
   questionId,
   required = false,
+  hasError=false,
+  errorMessage,
   
   // ➕ AGGIUNGI: TTS props con default
   ttsEnabled = false,
@@ -120,18 +117,29 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   };
   
   return (
-    <fieldset className={`mb-mobile-md ${className}`}>
+    <fieldset className={`
+      mb-mobile-md 
+      ${className}
+      `}>
       {/* Question Container con TTS integration */}
       <legend 
         id={legendId}
-        className="bg-gradient-to-r from-family-header to-family-header/90 text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm w-full"
+        className={`
+          text-white px-mobile-sm py-mobile-xs rounded-t-mobile-sm w-full transition-colors duration-200
+          ${hasError 
+            ? 'bg-gradient-to-l from-red-600 to-red-700' 
+            : 'bg-gradient-to-r from-family-header to-family-header/90'
+          }
+        `}
       >
         <div className="flex items-center justify-between">
           {/* Question Text */}
           <span className="text-mobile-md font-medium leading-relaxed flex-1">
             {question}
             {required && (
-              <span className="text-red-300 ml-1" aria-label="obbligatorio">
+              <span className={`ml-1 ${hasError ? 'text-red-200' : 'text-red-300'}`} 
+              aria-label="obbligatorio"
+            >
                 *
               </span>
             )}
@@ -156,11 +164,45 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
       
       {/* Answer Container (come prima) */}
       <div 
-        className="bg-white px-mobile-md py-mobile-md rounded-b-mobile-sm border border-gray-200 border-t-0"
-        role="group"
-        aria-labelledby={legendId}
-      >
+       className={`
+        px-mobile-md py-mobile-md rounded-b-mobile-sm border border-t-0 transition-colors duration-200
+        ${hasError 
+          ? 'bg-red-50/30 border-red-300' 
+          : 'bg-white border-gray-200'
+        }
+      `}
+      role="group"
+      aria-labelledby={legendId}
+      aria-invalid={hasError}
+      aria-describedby={hasError && errorMessage ? `${questionId}-error` : undefined}
+    >
         {children}
+        {hasError && errorMessage && (
+          <div 
+            id={`${questionId}-error`}
+            role="alert"
+            aria-live="polite"
+            className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg animate-in fade-in-50 slide-in-from-top-1"
+          >
+            <div className="flex items-start gap-2">
+              <svg 
+                className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
+                <path 
+                  fillRule="evenodd" 
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+                  clipRule="evenodd" 
+                />
+              </svg>
+              <p className="text-mobile-sm text-red-800 font-medium flex-1">
+                {errorMessage}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </fieldset>
   );
