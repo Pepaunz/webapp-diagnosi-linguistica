@@ -137,7 +137,7 @@ export const StatsCard = ({
   icon: React.ReactNode;
   color: string;
 }) => (
-  <div className="bg-white shadow-sm rounded-lg p-4">
+  <div className="bg-white shadow-sm rounded-lg p-4 shadow-sm border border-gray-200">
     <div className="flex items-center">
       <div className={`p-3 rounded-lg ${color}`}>{icon}</div>
       <div className="ml-4">
