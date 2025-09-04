@@ -17,6 +17,7 @@ interface QuestionEditorProps {
   questionIndex: number;
   selectedLanguage: Language;
   isPreviewMode: boolean;
+  validateQuestionComplete: (question: Question) => boolean;
   onUpdate: (question: Question) => void;
   onDelete: () => void;
   onMove: (direction: "up" | "down") => void;
@@ -30,6 +31,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   onUpdate,
   onDelete,
   onMove,
+  validateQuestionComplete
 }) => {
   const [editMode, setEditMode] = useState(false);
 
@@ -264,12 +266,14 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setEditMode(false);
+                    if (validateQuestionComplete(question)) {
+                      setEditMode(false);
+                    }
                   }}
                   className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Fatto
-                </button>
+                  >
+                    Fatto
+                  </button>
               </div>
             </div>
           )}

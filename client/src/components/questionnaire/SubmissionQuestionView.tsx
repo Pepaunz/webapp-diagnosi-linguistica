@@ -1,9 +1,10 @@
 // src/components/questionnaire/SubmissionQuestionView.tsx
 
 import React, { useState } from "react";
-import { MessageSquare, Plus, Star } from "lucide-react";
+import { MessageSquare, Plus, Star, Loader2 } from "lucide-react";
 import { Question, Language } from "@bilinguismo/shared";
 import { AnswerDTO as Answer, OperatorNoteDTO as Note } from "@bilinguismo/shared";
+import { z } from "zod";
 
 interface SubmissionQuestionViewProps {
   question: Question;
@@ -12,6 +13,7 @@ interface SubmissionQuestionViewProps {
   answer?: Answer;
   notes: Note[];
   onAddNote: (noteText: string) => void;
+  isAddingNote?: boolean;
 }
 
 const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
@@ -21,16 +23,36 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
   answer,
   notes,
   onAddNote,
+  isAddingNote = false,
 }) => {
   const [showAddNote, setShowAddNote] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [noteError, setNoteError] = useState("");
+
+  const noteValidator = z.string()
+  .min(1, "La nota non può essere vuota")
+  .max(2000, "La nota è troppo lunga (max 2000 caratteri)");
+
 
   const handleAddNote = () => {
-    if (noteText.trim()) {
-      onAddNote(noteText);
-      setNoteText("");
-      setShowAddNote(false);
+    // Reset errore precedente
+    setNoteError("");
+    
+    // Validazione locale
+    try {
+      noteValidator.parse(noteText.trim());
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setNoteError(error.issues[0].message);
+        return;
+      }
     }
+    
+    // Se validazione passa, invia nota
+    onAddNote(noteText.trim());
+    setNoteText("");
+    setShowAddNote(false);
+    setNoteError("");
   };
 
   const renderAnswer = () => {
@@ -154,43 +176,71 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
 
       {/* Add Note Button/Form */}
       <div className="mt-4">
-        {showAddNote ? (
-          <div className="bg-white p-3 rounded-lg border border-gray-200">
-            <textarea
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Aggiungi una nota..."
-              autoFocus
-            />
-            <div className="flex justify-end gap-2 mt-2">
-              <button
-                onClick={() => {
-                  setShowAddNote(false);
-                  setNoteText("");
-                }}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
-              >
-                Annulla
-              </button>
-              <button
-                onClick={handleAddNote}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Salva Nota
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowAddNote(true)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-          >
-            <Plus size={16} />
-            Aggiungi nota
-          </button>
-        )}
+      {showAddNote ? (
+  <div className="bg-white p-3 rounded-lg border border-gray-200">
+    <textarea
+      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        noteError ? 'border-red-500 focus:ring-red-500' : ''
+      }`}
+      rows={3}
+      value={noteText}
+      onChange={(e) => {
+        setNoteText(e.target.value);
+        // Clear error when user types
+        if (noteError && e.target.value.trim()) {
+          setNoteError("");
+        }
+      }}
+      placeholder="Aggiungi una nota..."
+      autoFocus
+      disabled={isAddingNote}
+      maxLength={2000}
+    />
+    
+    {/* Character counter */}
+    <div className="flex justify-between items-center mt-1">
+      <span className={`text-xs ${noteText.length > 1900 ? 'text-red-500' : 'text-gray-400'}`}>
+        {noteText.length}/2000
+      </span>
+    </div>
+    
+    {/* Error message */}
+    {noteError && (
+      <p className="mt-1 text-sm text-red-600">{noteError}</p>
+    )}
+    
+    <div className="flex justify-end gap-2 mt-2">
+      <button
+        onClick={() => {
+          setShowAddNote(false);
+          setNoteText("");
+          setNoteError("");
+        }}
+        className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+        disabled={isAddingNote}
+      >
+        Annulla
+      </button>
+      <button
+        onClick={handleAddNote}
+        disabled={isAddingNote || !noteText.trim()}
+        className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+      >
+        {isAddingNote && <Loader2 size={14} className="animate-spin" />}
+        Salva Nota
+      </button>
+    </div>
+  </div>
+) : (
+  <button
+    onClick={() => setShowAddNote(true)}
+    disabled={isAddingNote}
+    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm disabled:opacity-50"
+  >
+    <Plus size={16} />
+    Aggiungi nota
+  </button>
+)}
       </div>
     </div>
   );

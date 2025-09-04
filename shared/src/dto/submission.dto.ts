@@ -2,7 +2,8 @@ import { SubmissionStatus, QuestionnaireData } from "../schemas";
 import { Language } from "../schemas";
 
 export interface SubmissionDTO {
-  id: number;                    // ID incrementale per UI
+  id: number;     
+  uuid: string               // ID incrementale per UI
   fiscalCode: string;           // CF della famiglia  
   template: string;             // Nome del template (non UUID)
   status: SubmissionStatus;     // Stato della submission

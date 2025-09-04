@@ -6,11 +6,19 @@ import { Button } from "../components/shared/Filters";
 import {
   QuestionnaireData,
   Section,
+  Question,
 } from "@bilinguismo/shared";
 import { Language } from "@bilinguismo/shared";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
 import { questionnaireTemplates } from "../assets/mock-template";
+import { useError } from "../context/ErrorContext";
+import { useValidation } from "../hooks/useValidation";
+import { structureDefinitionSchema } from "../../../shared/src/schemas";
+import {z, ZodError} from 'zod';
+import { debounce } from "../utils";
+import { sectionSchema,questionSchema } from "../../../shared/src/schemas";
+
 
 const QuestionnaireEditorPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +35,14 @@ const QuestionnaireEditorPage = () => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const sectionsEndRef = useRef<HTMLDivElement>(null);
   const [hasUserAddedSection, setHasUserAddedSection] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const { showError, getFieldError, clearAllErrors } = useError();
+    const validation = useValidation({ 
+    schema: structureDefinitionSchema,
+    debounceMs: 300,
+    validateOnChange: true 
+});
 
   // Scroll intelligente per mantenere la nuova sezione al centro della viewport
   useEffect(() => {
@@ -61,23 +77,29 @@ const QuestionnaireEditorPage = () => {
   const loadQuestionnaire = async () => {
     setLoading(true);
     try {
-      // Cerca il questionario nei template predefiniti
       const templateName = decodeURIComponent(id || "");
       const template = questionnaireTemplates[templateName];
-
+    
       if (template) {
         setQuestionnaire(template);
+        clearAllErrors(); // Pulisci errori quando carichi con successo
       } else {
-        // Se non è un template predefinito, potresti caricarlo dal backend
         console.log("Template non trovato:", templateName);
-        // Qui potresti fare una chiamata API per caricare un questionario personalizzato
+        showError("Template non trovato", 'server');
       }
     } catch (error) {
-      console.error("Error loading questionnaire:", error);
+      handleLoadError(error);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleLoadError = (error: any) => {
+    console.error("Error loading questionnaire:", error);
+    showError("Errore nel caricamento del questionario", 'server');
+  };
+
+  
 
   const handleAddSection = () => {
     const newSection: Section = {
@@ -118,24 +140,187 @@ const QuestionnaireEditorPage = () => {
   };
 
   const handleSave = async () => {
+    // Pulisci errori precedenti
+    clearAllErrors();
+    validation.clearAllErrors();
+
+
+    const hasAtLeastOneLanguage = Object.values(questionnaire.questionnaireTitle).some(title => title?.trim());
+if (!hasAtLeastOneLanguage) {
+  showError("Il questionario deve avere un titolo in almeno una lingua", 'validation');
+  return;
+}
+
+// Controlla che ogni sezione abbia almeno una domanda
+const emptySections = questionnaire.sections.filter(section => section.questions.length === 0);
+if (emptySections.length > 0) {
+  showError("Tutte le sezioni devono contenere almeno una domanda", 'validation');
+  return;
+}
+
+// Controlla che le domande multiple-choice abbiano almeno 2 opzioni
+const invalidQuestions = questionnaire.sections.flatMap(section => 
+  section.questions.filter(question => 
+    question.type === 'multiple-choice' && 
+    (!question.options || question.options.length < 2)
+    )
+);
+if (invalidQuestions.length > 0) {
+  showError("Le domande a scelta multipla devono avere almeno 2 opzioni", 'validation');
+  return;
+}
+  
+    // Validazione completa prima del submit
+    if (!validation.validateForm(questionnaire)) {
+      showError("Correggi gli errori nel questionario prima di salvare", 'validation');
+      return;
+    }
+  
+    // Validazione business logic aggiuntiva
+    if (!questionnaire.questionnaireTitle.it?.trim()) {
+      showError("Il titolo in italiano è obbligatorio", 'validation');
+      return;
+    }
+  
+    if (questionnaire.sections.length === 0) {
+      showError("Il questionario deve contenere almeno una sezione", 'validation');
+      return;
+    }
+  
+    setLoading(true);
+    
     try {
-      // Implementa la logica di salvataggio
       console.log("Saving questionnaire:", questionnaire);
-
-      // In un'app reale, faresti una chiamata API qui
+      
+      // TODO: Sostituisci con chiamata API reale
       // const response = await api.saveQuestionnaire(id || 'new', questionnaire);
-
-      alert("Questionario salvato con successo!");
-
-      // Se è un nuovo questionario, naviga alla lista dopo il salvataggio
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+  
+  
       if (!id) {
         navigate("/templates");
       }
     } catch (error) {
       console.error("Error saving questionnaire:", error);
-      alert("Errore nel salvataggio del questionario");
+      showError(error, 'server');
+    } finally {
+      setLoading(false);
     }
   };
+
+
+const validateSectionComplete = (section: Section): boolean => {
+  try {
+    sectionSchema.parse(section);
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.issues.map(issue => issue.message).join(', ');
+      showError(`Errori nella sezione: ${errorMessages}`, 'validation');
+    }
+    return false;
+  }
+};
+
+const validateQuestionComplete = (question: Question): boolean => {
+  try {
+    questionSchema.parse(question);
+    return true;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errorMessages = error.issues.map(issue => issue.message).join(', ');
+      showError(`Errori nella domanda: ${errorMessages}`, 'validation');
+    }
+    return false;
+  }
+};
+
+ /*
+ =================================================================
+ */
+
+ // Validatori semplici per singoli campi
+const titleValidator = z.string()
+.min(1, "Il titolo è obbligatorio")
+.max(255, "Il titolo è troppo lungo (max 255 caratteri)");
+
+const descriptionValidator = z.string()
+.max(1000, "La descrizione è troppa lunga (max 1000 caratteri)");
+
+// Debounced validation functions
+const validateTitleDebounced = debounce((value: string, setFieldErrors: any) => {
+try {
+  titleValidator.parse(value);
+  // Se valido, rimuovi errore
+  setFieldErrors((prev: any) => {
+    const newErrors = { ...prev };
+    delete newErrors.title;
+    return newErrors;
+  });
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    setFieldErrors((prev: any) => ({
+      ...prev,
+      title: error.issues[0].message
+    }));
+  }
+}
+}, 300);
+
+const validateDescriptionDebounced = debounce((value: string, setFieldErrors: any) => {
+  try {
+    descriptionValidator.parse(value);
+    setFieldErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors.description;
+      return newErrors;
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      setFieldErrors((prev: any) => ({
+        ...prev,
+        description: error.issues[0].message
+      }));
+    }
+  }
+}, 300);
+  
+const handleTitleChange = (value: string) => {
+  setQuestionnaire({
+    ...questionnaire,
+    questionnaireTitle: {
+      ...questionnaire.questionnaireTitle,
+      [selectedLanguage]: value,
+    },
+  });
+  
+  // Validazione real-time con debounce
+  validateTitleDebounced(value, setFieldErrors);
+};
+
+const handleDescriptionChange = (value: string) => {
+  setQuestionnaire({
+    ...questionnaire,
+    description: {
+      ...questionnaire.description,
+      [selectedLanguage]: value,
+    },
+  });
+
+ 
+  
+  // Validazione real-time con debounce
+  validateDescriptionDebounced(value, setFieldErrors);
+};
+
+const handleLanguageChange = (newLanguage: Language) => {
+  setSelectedLanguage(newLanguage);
+  
+  // Valida che ci sia contenuto nella nuova lingua
+  if (!questionnaire.questionnaireTitle[newLanguage]?.trim()) {
+    showError(`Manca il titolo in ${newLanguage.toUpperCase()}`, 'validation');
+  }
+};
 
   const handlePreview = () => {
     setIsPreviewMode(!isPreviewMode);
@@ -199,7 +384,7 @@ const QuestionnaireEditorPage = () => {
         <div className="mb-6">
           <LanguageSelector
             selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
+            onLanguageChange={handleLanguageChange}
             availableLanguages={getAvailableLanguages()}
             isEditMode={!isPreviewMode}
           />
@@ -223,21 +408,18 @@ const QuestionnaireEditorPage = () => {
               Titolo Questionario
             </label>
             <input
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                fieldErrors.title ? 'border-red-500 focus:ring-red-500' : ''
+              }`}
               type="text"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={questionnaire.questionnaireTitle[selectedLanguage] || ""}
-              onChange={(e) =>
-                setQuestionnaire({
-                  ...questionnaire,
-                  questionnaireTitle: {
-                    ...questionnaire.questionnaireTitle,
-                    [selectedLanguage]: e.target.value,
-                  },
-                })
-              }
+              onChange={(e) => handleTitleChange(e.target.value)}
               disabled={isPreviewMode}
               placeholder={`Inserisci il titolo in ${selectedLanguage.toUpperCase()}`}
             />
+            {fieldErrors.title && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.title}</p>
+            )}
           </div>
 
           <div>
@@ -245,21 +427,18 @@ const QuestionnaireEditorPage = () => {
               Descrizione
             </label>
             <textarea
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                fieldErrors.description ? 'border-red-500 focus:ring-red-500' : ''
+              }`}
               rows={3}
               value={questionnaire.description[selectedLanguage] || ""}
-              onChange={(e) =>
-                setQuestionnaire({
-                  ...questionnaire,
-                  description: {
-                    ...questionnaire.description,
-                    [selectedLanguage]: e.target.value,
-                  },
-                })
-              }
+              onChange={(e) => handleDescriptionChange(e.target.value)}
               disabled={isPreviewMode}
               placeholder={`Inserisci la descrizione in ${selectedLanguage.toUpperCase()}`}
             />
+            {fieldErrors.description && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.description}</p>
+            )}
           </div>
         </div>
 
@@ -279,6 +458,8 @@ const QuestionnaireEditorPage = () => {
                 selectedLanguage={selectedLanguage}
                 isPreviewMode={isPreviewMode}
                 startingQuestionNumber={previousQuestionsCount + 1}
+                validateSectionComplete={validateSectionComplete}
+                validateQuestionComplete={validateQuestionComplete}
                 onUpdate={(updatedSection) =>
                   handleUpdateSection(index, updatedSection)
                 }

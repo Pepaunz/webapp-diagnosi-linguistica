@@ -1,6 +1,6 @@
 import React from "react";
 import { LogOut } from "lucide-react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/ui/Sidebar";
 import logo from "../assets/logo-negativo.png";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

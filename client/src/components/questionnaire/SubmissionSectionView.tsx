@@ -12,6 +12,7 @@ interface SubmissionSectionViewProps {
   answers: Answer[];
   notes: Note[];
   onAddNote: (questionId: string, noteText: string) => void;
+  addingNoteToQuestion?: string | null; 
 }
 
 const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
@@ -22,6 +23,7 @@ const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
   answers,
   notes,
   onAddNote,
+  addingNoteToQuestion,
 }) => {
   const getAnswer = (questionId: string) => {
     return answers.find((a) => a.question_identifier === questionId);
@@ -54,6 +56,7 @@ const SubmissionSectionView: React.FC<SubmissionSectionViewProps> = ({
             answer={getAnswer(question.questionId)}
             notes={getNotes(question.questionId)}
             onAddNote={(noteText) => onAddNote(question.questionId, noteText)}
+            isAddingNote={addingNoteToQuestion === question.questionId}
           />
         ))}
       </div>

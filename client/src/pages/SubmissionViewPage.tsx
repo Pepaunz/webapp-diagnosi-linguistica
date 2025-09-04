@@ -9,6 +9,10 @@ import { Section } from "@bilinguismo/shared";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
 import { SubmissionDetailDTO as Submission } from "@bilinguismo/shared";
 import {submissionTemplates} from "../assets/mock-submission";
+import {useError} from "../context/ErrorContext";
+import { LoadingSpinner } from "../../../family-client/src/components/ui";
+import {addNoteRequestSchema,uuidParamSchema} from "../../../shared/src/schemas";
+import {z} from "zod";
 
 
 const SubmissionViewPage = () => {
@@ -16,36 +20,147 @@ const SubmissionViewPage = () => {
   const navigate = useNavigate();
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
+  const [addingNote, setAddingNote] = useState<string | null>(null); // questionId being noted
+  const { showError, showSuccess } = useError();
 
   useEffect(() => {
-    const fetchSubmission = async () => {
-      if (!id) return;
-      
+    // Valida ID usando schema Zod
+    if (id) {
       try {
-        // TODO: Sostituisci con chiamata API reale
-        // const data = await submissionApi.getSubmissionById(id);
-        // setSubmission(data);
-        
-        // TEMP: Mock fino a quando non implementi l'API
-        console.log("Fetching submission:", id);
-        const mockData = submissionTemplates["sub_001"];
-        setSubmission(mockData); // Rimuovi quando hai l'API
-        
+        uuidParamSchema.parse({ id });
+        fetchSubmission();
       } catch (error) {
-        console.error("Error fetching submission:", error);
-      } finally {
-        setLoading(false);
+        if (error instanceof z.ZodError) {
+          const errorMessage = error.issues[0].message;
+          showError(`ID submission non valido: ${errorMessage}`, 'validation');
+          navigate('/');
+          return;
+        }
       }
-    };
-
-    fetchSubmission();
+    }
   }, [id]);
+
+  const fetchSubmission = async () => {
+    if (!id) {
+      showError("ID submission non valido", 'validation');
+      navigate('/');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      console.log("Fetching submission:", id);
+      
+      // TODO: Sostituisci con vera chiamata API
+      // const response = await submissionApi.getSubmissionById(id);
+      // setSubmission(response);
+      
+      // MOCK: Simula caricamento con possibili errori
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const mockData = submissionTemplates[id] || submissionTemplates["sub_001"];
+      
+      if (!mockData) {
+        throw new Error("Submission non trovata");
+      }
+      
+      setSubmission(mockData);
+      
+    } catch (error) {
+      console.error("Error fetching submission:", error);
+      showError("Errore nel caricamento della compilazione", 'server');
+      
+      // Naviga indietro dopo un errore di caricamento
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddNote = async (questionId: string, noteText: string) => {
+    // Validazione usando schema Zod
+    try {
+      addNoteRequestSchema.parse({
+        note_text: noteText,
+        question_identifier: questionId
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.issues[0].message;
+        showError(`Errore validazione nota: ${errorMessage}`, 'validation');
+        return;
+      }
+    }
+  
+    setAddingNote(questionId);
+    
+    try {
+      console.log("Adding note:", questionId, noteText);
+      
+      // TODO: Sostituire con vera chiamata API
+      // await notesApi.addNote(submission!.submission.id, {
+      //   note_text: noteText,
+      //   question_identifier: questionId
+      // });
+      
+      // MOCK: Simula aggiunta nota
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simula aggiunta della nota alla lista locale
+      const newNote = {
+        note_id: `note_${Date.now()}`,
+        question_identifier: questionId,
+        note_text: noteText,
+        operator_full_name: "Operatore Corrente", // TODO: prendere da auth
+        created_at: new Date().toISOString(),
+      };
+      
+      if (submission) {
+        setSubmission({
+          ...submission,
+          notes: [...submission.notes, newNote]
+        });
+      }
+      
+      showSuccess("Nota aggiunta con successo");
+      
+    } catch (error) {
+      console.error("Error adding note:", error);
+      showError("Errore nell'aggiunta della nota", 'server');
+    } finally {
+      setAddingNote(null);
+    }
+  };
+
+  const handleRefreshSubmission = async () => {
+    await fetchSubmission();
+    showSuccess("Dati aggiornati");
+  };
 
   if (loading) {
     return (
       <AppLayout>
         <div className="flex justify-center items-center h-64">
-          <p>Caricamento...</p>
+          <LoadingSpinner size="lg" text="Caricamento compilazione..." />
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  if (!submission) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <p className="text-gray-500 text-lg">Compilazione non trovata</p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Torna alla Dashboard
+          </button>
         </div>
       </AppLayout>
     );
@@ -76,6 +191,13 @@ const SubmissionViewPage = () => {
             <h2 className="text-2xl font-bold">
               Visualizza Compilazione #{submission.submission.id}
             </h2>
+            <button
+              onClick={handleRefreshSubmission}
+              className="text-gray-600 hover:text-gray-800 text-sm"
+              disabled={loading}
+            >
+              Aggiorna dati
+            </button>
           </div>
           <div className="flex gap-2">
             <Button
@@ -185,10 +307,8 @@ const SubmissionViewPage = () => {
                 startingQuestionNumber={previousQuestionsCount + 1}
                 answers={submission.answers}
                 notes={submission.notes}
-                onAddNote={(questionId, noteText) => {
-                  console.log("Add note:", questionId, noteText);
-                  // TODO: Implementa logica per aggiungere nota
-                }}
+                onAddNote={handleAddNote}
+                addingNoteToQuestion={addingNote}
               />
             );
           })}

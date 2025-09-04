@@ -18,6 +18,8 @@ interface SectionEditorProps {
   selectedLanguage: Language;
   isPreviewMode: boolean;
   startingQuestionNumber: number; // Nuovo prop
+  validateSectionComplete: (section: Section) => boolean; // Funzione di validazione
+  validateQuestionComplete: (question: Question) => boolean; // Funzione di validazione
   onUpdate: (section: Section) => void;
   onDelete: () => void;
 }
@@ -30,6 +32,8 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
   startingQuestionNumber,
   onUpdate,
   onDelete,
+  validateSectionComplete,
+  validateQuestionComplete,
 }) => {
   const [showQuestionTypeSelector, setShowQuestionTypeSelector] =
     useState(false);
@@ -94,6 +98,8 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
     // Attiva lo scroll
     setHasUserAddedQuestion(true);
   };
+
+  
 
   const handleUpdateQuestion = (index: number, updatedQuestion: Question) => {
     const updatedQuestions = [...section.questions];
@@ -211,9 +217,18 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={() => setEditMode(false)} variant="primary">
-                Fatto
-              </Button>
+            <Button 
+              onClick={() => {
+                // Valida la sezione prima di chiudere edit mode
+                if (validateSectionComplete(section)) {
+                  setEditMode(false);
+                }
+                // Se non valida, resta in edit mode e mostra errori
+              }} 
+              variant="primary"
+            >
+             Fatto
+            </Button>
             </div>
           </div>
         ) : (
@@ -242,6 +257,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
             onUpdate={(updatedQuestion) =>
               handleUpdateQuestion(index, updatedQuestion)
             }
+            validateQuestionComplete={validateQuestionComplete}
             onDelete={() => handleDeleteQuestion(index)}
             onMove={(direction) => handleMoveQuestion(index, direction)}
           />

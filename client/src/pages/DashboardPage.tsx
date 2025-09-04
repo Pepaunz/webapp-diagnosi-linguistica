@@ -182,7 +182,7 @@ const SubmissionRow = ({
   <tr key={submission.id} className="hover:bg-gray-50">
     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
       <Link
-        to={`/submissions/${submission.id}`}
+        to={`/submissions/${submission.uuid}`}
         className="text-blue-600 hover:text-blue-800"
       >
         {submission.fiscalCode}
@@ -245,6 +245,7 @@ function QuestionnaireDashboard() {
   const [submissions, setSubmissions] = useState<SubmissionDTO[]>([
     {
       id: 1,
+      uuid: "24c8a554-b99e-4586-bcc4-be32dbecc125",
       fiscalCode: "ABCDEF12G34H567I",
       template: "Standard Bilinguismo",
       status: "Completed",
@@ -255,6 +256,7 @@ function QuestionnaireDashboard() {
     },
     {
       id: 2,
+      uuid:"a35c4d6c-e535-4771-9f38-e28d155fd30d",
       fiscalCode: "LMNOPQ78R90S123T",
       template: "Follow-up",
       status: "InProgress",

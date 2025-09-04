@@ -185,6 +185,7 @@ export const getSubmissions = async (
     
     return {
       id: incrementalId,
+      uuid: submission.submission_id,
       fiscalCode: submission.fiscal_code,
       template: submission.template.name,
       status: submission.status as SubmissionStatus,
@@ -230,6 +231,7 @@ export const getSubmissionById = async (
 
    const submissionDTO: SubmissionDTO = {
     id: 1,
+    uuid:submission.submission_id,
     fiscalCode: submission.fiscal_code,
     template: template.name,
     status: submission.status as SubmissionStatus,
