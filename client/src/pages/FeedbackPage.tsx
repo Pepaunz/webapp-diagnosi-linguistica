@@ -2,7 +2,11 @@
 
 import { AlertCircle, Search as SearchIcon, CheckCircle } from "lucide-react";
 import AppLayout from "../layout/AppLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useError } from "../context";
+import { LoadingSpinner } from "../../../family-client/src/components/ui";
+import { Loader2 } from "lucide-react";
+
 import {
   SearchBar,
   SelectFilter,
@@ -12,7 +16,8 @@ import {
 } from "../components/shared/Filters";
 
 import {FeedbackDTO as Feedback} from "@bilinguismo/shared";
-
+import { listFeedbackQuerySchema,updateFeedbackBodySchema } from "../../../shared/src/schemas";
+import { z } from "zod";
 
 interface FilterState {
   search: string;
@@ -182,37 +187,35 @@ const FeedbackRow = ({
   feedback,
   onUpdateStatus,
   onViewFullFeedback,
+  isUpdating = false, // NUOVO: per loading state
 }: {
   feedback: Feedback;
-  onUpdateStatus: (id: number, status: Feedback["status"]) => void;
+  onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
   onViewFullFeedback: (feedback: Feedback) => void;
+  isUpdating?: boolean; // NUOVO
 }) => (
-  <tr key={feedback.id} className="hover:bg-gray-50 ">
-    <td
-      onClick={() => onViewFullFeedback(feedback)}
-      className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 cursor-pointer"
-    >
+  <tr className="hover:bg-gray-50">
+    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
       #{feedback.id}
     </td>
-    <td
-      onClick={() => onViewFullFeedback(feedback)}
-      className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 cursor-pointer"
-    >
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
       {feedback.template_name}
     </td>
-    <td
-      onClick={() => onViewFullFeedback(feedback)}
-      className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 cursor-pointer"
-    >
-      {feedback.question_identifier || "-"}
+    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+      {feedback.question_identifier || "Generale"}
     </td>
-    <td
-      onClick={() => onViewFullFeedback(feedback)}
-      className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 cursor-pointer cursor-pointer"
-    >
-      {feedback.feedback_text.length > 50
-        ? `${feedback.feedback_text.substring(0, 50)}...`
-        : feedback.feedback_text}
+    <td className="px-6 py-4 text-sm text-gray-700 max-w-xs">
+      <div className="truncate">
+        {feedback.feedback_text.length > 50
+          ? `${feedback.feedback_text.substring(0, 50)}...`
+          : feedback.feedback_text}
+      </div>
+      <button
+        onClick={() => onViewFullFeedback(feedback)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1"
+      >
+        Visualizza completo
+      </button>
     </td>
     <td className="px-6 py-4 whitespace-nowrap text-sm">
       <StatusBadge status={feedback.status} />
@@ -221,17 +224,25 @@ const FeedbackRow = ({
       {new Date(feedback.submitted_at).toLocaleString()}
     </td>
     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
-      <select
-        className="border border-gray-300 rounded px-2 py-1 text-sm cursor-pointer"
-        value={feedback.status}
-        onChange={(e) =>
-          onUpdateStatus(feedback.id, e.target.value as Feedback["status"])
-        }
-      >
-        <option value="New">Nuovo</option>
-        <option value="Investigating">In esame</option>
-        <option value="Resolved">Risolto</option>
-      </select>
+      <div className="flex items-center justify-center gap-2">
+        <select
+          className={`border border-gray-300 rounded px-2 py-1 text-sm cursor-pointer ${
+            isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          value={feedback.status}
+          onChange={(e) =>
+            onUpdateStatus(feedback.id,feedback.uuid, e.target.value as Feedback["status"])
+          }
+          disabled={isUpdating}
+        >
+          <option value="New">Nuovo</option>
+          <option value="Investigating">In esame</option>
+          <option value="Resolved">Risolto</option>
+        </select>
+        {isUpdating && (
+          <Loader2 size={14} className="animate-spin text-gray-400" />
+        )}
+      </div>
     </td>
   </tr>
 );
@@ -248,10 +259,12 @@ const FeedbackTable = ({
   feedbacks,
   onUpdateStatus,
   onViewFullFeedback,
+  updatingFeedbackId, // NUOVO
 }: {
   feedbacks: Feedback[];
-  onUpdateStatus: (id: number, status: Feedback["status"]) => void;
+  onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
   onViewFullFeedback: (feedback: Feedback) => void;
+  updatingFeedbackId?: number | null; // NUOVO
 }) => (
   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
     <div className="overflow-x-auto">
@@ -265,6 +278,7 @@ const FeedbackTable = ({
                 feedback={feedback}
                 onUpdateStatus={onUpdateStatus}
                 onViewFullFeedback={onViewFullFeedback}
+                isUpdating={updatingFeedbackId === feedback.id} // NUOVO
               />
             ))
           ) : (
@@ -281,6 +295,7 @@ function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([
     {
       id: 1,
+      uuid: "fb-uuid-1",
       template_name: "Standard Bilinguismo",
       question_identifier: "s1_q1",
       feedback_text:
@@ -290,6 +305,7 @@ function FeedbackPage() {
     },
     {
       id: 2,
+      uuid: "fb-uuid-2",
       template_name: "Follow-up",
       question_identifier: "s1_q3",
       feedback_text:
@@ -299,6 +315,7 @@ function FeedbackPage() {
     },
     {
       id: 3,
+      uuid: "fb-uuid-3",
       template_name: "Standard Bilinguismo",
       feedback_text: "Overall, the questionnaire is too long and repetitive.",
       status: "Resolved",
@@ -306,6 +323,7 @@ function FeedbackPage() {
     },
     {
       id: 4,
+      uuid: "fb-uuid-4",
       template_name: "Follow-up",
       question_identifier: "s2_q10",
       feedback_text:
@@ -315,6 +333,7 @@ function FeedbackPage() {
     },
     {
       id: 5,
+      uuid: "fb-uuid-5",
       template_name: "Standard Bilinguismo",
       question_identifier: "s4_q2",
       feedback_text:
@@ -324,6 +343,7 @@ function FeedbackPage() {
     },
     {
       id: 6,
+      uuid: "fb-uuid-6",
       template_name: "Standard Bilinguismo",
       question_identifier: "s4_q2",
       feedback_text:
@@ -340,8 +360,58 @@ function FeedbackPage() {
     template: "All Templates",
   });
 
-  // Handler to update individual filter
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<number | null>(null); // feedback id being updated
+  const { showError, showSuccess } = useError();
+
+  useEffect(() => {
+    loadFeedbacks();
+  }, []); // Ricarica quando cambiano i filtri
+  
+  const loadFeedbacks = async () => {
+    setLoading(true);
+    
+    try {
+      // Valida parametri query usando schema Zod
+      const queryParams = {
+        status: filters.status !== "All" ? filters.status : undefined,
+        limit: 50,
+        offset: 0,
+        sort_by: "submitted_at",
+        sort_order: "desc" as const
+      };
+      
+      // Validazione parametri
+      const validatedParams = listFeedbackQuerySchema.parse(queryParams);
+      console.log("Loading feedbacks with params:", validatedParams);
+      
+      // TODO: Sostituire con vera chiamata API
+      // const response = await feedbackApi.getFeedbacks(validatedParams);
+      // setFeedbacks(response.feedbacks);
+      
+      // MOCK: Simula caricamento con possibili errori
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Mock data già esistente nel componente...
+      // setFeedbacks rimane uguale per ora
+      
+    } catch (error) {
+      console.error("Error loading feedbacks:", error);
+      showError("Errore nel caricamento delle segnalazioni", 'server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFilterChange = (key: keyof FilterState, value: string) => {
+    // Validazione solo per status, NON per search
+    if (key === 'status' && value !== 'All') {
+      const validStatuses = ['New', 'Investigating', 'Resolved'];
+      if (!validStatuses.includes(value)) {
+        showError("Stato filtro non valido", 'validation');
+        return;
+      }
+    }
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -371,14 +441,71 @@ function FeedbackPage() {
   });
 
   // Handler for updating a feedback status
-  const handleUpdateStatus = (id: number, status: Feedback["status"]) => {
-    setFeedbacks(
-      feedbacks.map((feedback) =>
-        feedback.id === id ? { ...feedback, status } : feedback
-      )
-    );
+  const handleUpdateStatus = async (feedbackId: number,feedbackUuid: string, newStatus: Feedback["status"]) => {
+    // Trova il feedback corrente
+    const currentFeedback = feedbacks.find(f => f.id === feedbackId);
+    if (!currentFeedback) {
+      showError("Feedback non trovato", 'validation');
+      return;
+    }
+  
+    // Evita update inutili
+    if (currentFeedback.status === newStatus) {
+      return;
+    }
+  
+    // Validazione usando schema Zod
+    try {
+      updateFeedbackBodySchema.parse({ status: newStatus });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.issues[0].message;
+        showError(`Stato non valido: ${errorMessage}`, 'validation');
+        return;
+      }
+    }
+    const validTransitions: Record<string, string[]> = {
+      "New": ["Investigating", "Resolved"],
+      "Investigating": ["Resolved", "New"],
+      "Resolved": ["Investigating"] // Può riaprire se necessario
+    };
+  
+    const currentStatus = currentFeedback.status;
+    const allowedTransitions = validTransitions[currentStatus] || [];
+    
+    if (!allowedTransitions.includes(newStatus)) {
+      showError(`Non è possibile cambiare da "${currentStatus}" a "${newStatus}"`, 'validation');
+      return;
+    }
+  
+    setUpdating(feedbackId);
+    
+    try {
+      console.log("Updating feedback status:", feedbackUuid, newStatus);
+      
+      // TODO: Sostituire con vera chiamata API
+      // await feedbackApi.updateStatus(feedbackUuid, { status: newStatus });
+      
+      // MOCK: Simula aggiornamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Aggiorna stato locale
+      setFeedbacks(feedbacks.map(feedback =>
+        feedback.id === feedbackId 
+          ? { ...feedback, status: newStatus }
+          : feedback
+      ));
+      
+      showSuccess(`Stato aggiornato a "${newStatus}"`);
+      
+    } catch (error) {
+      console.error("Error updating feedback status:", error);
+      showError("Errore nell'aggiornamento dello stato", 'server');
+    } finally {
+      setUpdating(null);
+    }
   };
-
+  
   // Calculate stats
   const newCount = feedbacks.filter((f) => f.status === "New").length;
   const investigatingCount = feedbacks.filter(
@@ -401,11 +528,36 @@ function FeedbackPage() {
     setSelectedFeedback(null);
   };
 
+  const handleRefreshFeedbacks = async () => {
+    await loadFeedbacks();
+    showSuccess("Segnalazioni aggiornate");
+  };
+
+  
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" text="Caricamento segnalazioni..." />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Segnalazioni sui questionari</h2>
+        <button
+          onClick={handleRefreshFeedbacks}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+          disabled={loading}
+        >
+          Aggiorna Dati
+        </button>
       </div>
+      
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -441,6 +593,7 @@ function FeedbackPage() {
         feedbacks={filteredFeedbacks}
         onUpdateStatus={handleUpdateStatus}
         onViewFullFeedback={handleViewFullFeedback}
+        updatingFeedbackId={updating}
       />
 
       {/* Pagination component */}

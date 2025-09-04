@@ -193,7 +193,7 @@ const SubmissionViewPage = () => {
             </h2>
             <button
               onClick={handleRefreshSubmission}
-              className="text-gray-600 hover:text-gray-800 text-sm"
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
               disabled={loading}
             >
               Aggiorna dati

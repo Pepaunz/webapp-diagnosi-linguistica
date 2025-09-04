@@ -1,7 +1,8 @@
 export type FeedbackStatus = "New" | "Investigating" | "Resolved";
 
 export interface FeedbackDTO {
-    id: number;
+    id: number; // ID incrementale per UI
+    uuid: string; // UUID univoco per API
     submission_id?: string;
     question_identifier?: string;
     feedback_text: string;

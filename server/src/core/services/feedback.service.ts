@@ -54,6 +54,7 @@ export const getFeedback = async (
 
   const feedbacksDTO: FeedbackDTO[] = rawFeedbacks.map((feedback, index) => ({
     id: (query.offset || 0) + index + 1,
+    uuid: feedback.feedback_id,
     submission_id: feedback.submission_id || undefined,
     question_identifier: feedback.question_identifier || undefined,
     feedback_text: feedback.feedback_text,
