@@ -3,6 +3,7 @@ import TTSQuestionControls from '../accessibility/TTSQuestionControls';
 import { TTSStatus } from '../../hooks/useTextToSpeech';
 // ===== SECTION HEADER =====
 interface SectionHeaderProps {
+  ref: any;
   title: string;
   description?: string;
   sectionNumber: number;

@@ -1,7 +1,7 @@
 // prisma/seed.ts
 import { PrismaClient, Prisma} from "@prisma/client";
 import { hash } from "bcrypt"; // Importiamo direttamente 'hash' da bcrypt
-import {structureDefinitionSchema, QuestionnaireData} from '../src/api/validators/questionnaire.schemas'
+import {structureDefinitionSchema, QuestionnaireData} from '@bilinguismo/shared'
 import {bilingualismQuestionnaireData} from '../mock-template' //IMPORTANTE: Sostituire con template iniziale (completo)
 
 const prisma = new PrismaClient();

@@ -1,14 +1,15 @@
-// src/pages/CFLoginPage.tsx
+// src/pages/CFLoginPage.tsx - versione semplificata con useApiError
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
-import { Button, Input, LoadingSpinner } from '../components/ui';
+import { Button, LoadingSpinner } from '../components/ui';
 import LanguageSelector from '../components/ui/LanguageSelector';
 import { Info } from 'lucide-react';
 import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements';
-
 import { z } from 'zod';
 import { fiscalCodeSchema } from '../../../shared/src/schemas/common.schemas';
+import { submissionApi } from '../services/apiService';
+import { useApiError } from '../hooks/useApiError';
 
 const CFLoginPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -18,8 +19,9 @@ const CFLoginPage: React.FC = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const fiscalCodeInputRef = useRef<HTMLInputElement>(null);
   
-  // Screen reader announcements
+  // Hooks
   const { announce } = useScreenReaderAnnouncements();
+  const { handleApiError, handleApiSuccess, clearErrors } = useApiError();
   
   // State
   const [fiscalCode, setFiscalCode] = useState('');
@@ -30,7 +32,6 @@ const CFLoginPage: React.FC = () => {
 
   // Focus management on mount
   useEffect(() => {
-    // Focus sul contenuto principale quando la pagina si carica
     if (mainContentRef.current) {
       mainContentRef.current.focus();
     }
@@ -56,23 +57,32 @@ const CFLoginPage: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsSubmitted(true);
+    clearErrors();
     
+    // Validazione campo vuoto
     if (!fiscalCode.trim()) {
       const errorMsg = 'Il codice fiscale è obbligatorio';
       setError(errorMsg);
       announce(errorMsg, 'assertive');
-      // Focus sull'input con errore
       if (fiscalCodeInputRef.current) {
         fiscalCodeInputRef.current.focus();
       }
       return;
     }
+
+    if (!templateId) {
+      const errorMsg = 'Template ID mancante. Ricarica la pagina.';
+      setError(errorMsg);
+      handleApiError(errorMsg, 'validation');
+      return;
+    }
+
+    // Validazione formato
     const validation = validateFiscalCode(fiscalCode);
     if (!validation.isValid) {
-      const errorMsg = 'Codice fiscale non valido.';
-      setError(validation.error || errorMsg);
-      announce(validation.error || errorMsg, 'assertive');
-      // Focus sull'input con errore
+      const errorMsg = validation.error || 'Codice fiscale non valido. Controlla il formato e riprova.';
+      setError(errorMsg);
+      announce(errorMsg, 'assertive');
       if (fiscalCodeInputRef.current) {
         fiscalCodeInputRef.current.focus();
       }
@@ -83,15 +93,38 @@ const CFLoginPage: React.FC = () => {
     announce('Verifica codice fiscale in corso...', 'polite');
     
     try {
-      // TODO: Chiamata API reale
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const mockSubmissionId = 'sub_' + Date.now();
+      const result = await submissionApi.startOrResume({
+        fiscal_code: fiscalCode.toUpperCase(),
+        questionnaire_template_id: templateId,
+        language_used: selectedLanguage as 'it' | 'en' | 'es' | 'ar'
+      });
+
+      handleApiSuccess('Accesso effettuato con successo');
       announce('Accesso effettuato con successo', 'polite');
-      navigate(`/questionnaire/${templateId}/${mockSubmissionId}`, {state: {language: selectedLanguage}} );
+      
+      navigate(`/questionnaire/${templateId}/${result.submission_id}`, {
+        state: { 
+          language: selectedLanguage,
+          questionnaire: result.questionnaire_template,
+          answers: result.answers 
+        }
+      });
+      
     } catch (err) {
-      const errorMsg = 'Errore durante l\'accesso. Riprova più tardi.';
-      setError(errorMsg);
-      announce(errorMsg, 'assertive');
+      handleApiError(err, 'l\'accesso');
+      
+      // Mantieni anche l'errore locale per l'UI inline
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Errore durante l\'accesso. Riprova più tardi.');
+      }
+      
+      announce('Errore durante l\'accesso', 'assertive');
+      
+      if (fiscalCodeInputRef.current) {
+        fiscalCodeInputRef.current.focus();
+      }
     } finally {
       setLoading(false);
     }
@@ -130,7 +163,6 @@ const CFLoginPage: React.FC = () => {
 
   return (
     <SimpleLayout>
-      {/* Screen Reader Announcements */}
       <ScreenReaderAnnouncements />
       
       <main 
@@ -162,31 +194,27 @@ const CFLoginPage: React.FC = () => {
           onSubmit={handleSubmit} 
           className="space-y-mobile-lg"
           noValidate
-          aria-describedby={error ? 'form-error' : undefined}
+          aria-describedby={error ? 'form-error fiscal-code-help' : 'fiscal-code-help'}
         >
           {/* Fiscal Code Input */}
           <div>
             <label 
-              htmlFor="fiscal-code"
+              htmlFor="fiscal-code" 
               className="block text-mobile-md font-medium text-family-text-primary mb-2"
             >
-              Codice Fiscale
-              <span className="text-red-600 ml-1" aria-label="campo obbligatorio">*</span>
+              Codice Fiscale <span className="text-red-500">*</span>
             </label>
-            
             <input
               ref={fiscalCodeInputRef}
               id="fiscal-code"
+              name="fiscalCode"
               type="text"
               value={fiscalCode}
               onChange={handleFiscalCodeChange}
               placeholder="RSSMRA85M01H501Z"
               maxLength={16}
               required
-              autoFocus
-              inputMode="text"
-              autoCapitalize="characters"
-              autoComplete="off"
+              aria-required="true"
               aria-describedby={error ? 'form-error fiscal-code-help' : 'fiscal-code-help'}
               aria-invalid={error ? 'true' : 'false'}
               className={`
@@ -201,7 +229,6 @@ const CFLoginPage: React.FC = () => {
               `}
             />
             
-            {/* Help text */}
             <div id="fiscal-code-help" className="mt-2 text-mobile-sm text-family-text-body">
               Formato: 16 caratteri (lettere e numeri)
             </div>
@@ -222,7 +249,7 @@ const CFLoginPage: React.FC = () => {
               id="form-error"
               role="alert"
               aria-live="assertive"
-              className="mt-4 p-3 bg-red-50 border border-red-200 rounded-mobile-sm"
+              className="p-4 bg-red-50 border-l-4 border-red-400 rounded-mobile-sm"
             >
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -268,7 +295,6 @@ const CFLoginPage: React.FC = () => {
             aria-label="Visualizza informazioni sulla privacy"
             onClick={() => {
               announce('Apertura informazioni privacy', 'polite');
-              // TODO: Implementare modal privacy
               alert('Modal privacy da implementare');
             }}
           >   

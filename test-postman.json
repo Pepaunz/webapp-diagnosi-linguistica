@@ -1,0 +1,1037 @@
+{
+    "info": {
+      "name": "Template API Tests",
+      "description": "Collezione completa per testare tutte le API dei Template",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000/api/v1",
+        "type": "string"
+      },
+      {
+        "key": "adminToken",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "operatorToken", 
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "testTemplateId",
+        "value": "",
+        "type": "string"
+      }
+    ],
+    "auth": {
+      "type": "bearer",
+      "bearer": [
+        {
+          "key": "token",
+          "value": "{{adminToken}}",
+          "type": "string"
+        }
+      ]
+    },
+    "item": [
+      {
+        "name": "0. Setup - Login Admin",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Login Admin successful', function () {",
+                "    pm.response.to.have.status(200);",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('token');",
+                "    pm.collectionVariables.set('adminToken', responseJson.token);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/auth/login",
+            "host": ["{{baseUrl}}"],
+            "path": ["auth", "login"]
+          }
+        }
+      },
+      {
+        "name": "0. Setup - Login Operator",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Login Operator successful', function () {",
+                "    pm.response.to.have.status(200);",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('token');",
+                "    pm.collectionVariables.set('operatorToken', responseJson.token);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type", 
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"email\": \"operator@example.com\",\n  \"password\": \"password456\"\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/auth/login",
+            "host": ["{{baseUrl}}"],
+            "path": ["auth", "login"]
+          }
+        }
+      },
+      {
+        "name": "1. GET /templates - Lista template (Admin)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Response has correct structure', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('templates');",
+                "    pm.expect(responseJson).to.have.property('total');",
+                "    pm.expect(responseJson).to.have.property('pagination');",
+                "    pm.expect(responseJson.templates).to.be.an('array');",
+                "});",
+                "",
+                "pm.test('Template structure is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    if (responseJson.templates.length > 0) {",
+                "        const template = responseJson.templates[0];",
+                "        pm.expect(template).to.have.property('template_id');",
+                "        pm.expect(template).to.have.property('name');",
+                "        pm.expect(template).to.have.property('structure_definition');",
+                "        pm.expect(template).to.have.property('is_active');",
+                "        pm.expect(template).to.have.property('available_languages');",
+                "        pm.expect(template).to.have.property('created_at');",
+                "        pm.expect(template).to.have.property('updated_at');",
+                "    }",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "2. GET /templates - Con filtri e paginazione",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Pagination works correctly', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.pagination.limit).to.equal(5);",
+                "    pm.expect(responseJson.pagination.offset).to.equal(0);",
+                "    pm.expect(responseJson.templates.length).to.be.at.most(5);",
+                "});",
+                "",
+                "pm.test('Only active templates returned', function () {",
+                "    const responseJson = pm.response.json();",
+                "    responseJson.templates.forEach(template => {",
+                "        pm.expect(template.is_active).to.be.true;",
+                "    });",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates?active_only=true&limit=5&offset=0&sort_by=created_at&sort_order=desc",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"],
+            "query": [
+              {
+                "key": "active_only",
+                "value": "true"
+              },
+              {
+                "key": "limit", 
+                "value": "5"
+              },
+              {
+                "key": "offset",
+                "value": "0"
+              },
+              {
+                "key": "sort_by",
+                "value": "created_at"
+              },
+              {
+                "key": "sort_order",
+                "value": "desc"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "3. POST /templates - Crea template (Admin)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 201', function () {",
+                "    pm.response.to.have.status(201);",
+                "});",
+                "",
+                "pm.test('Template created correctly', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('template_id');",
+                "    pm.expect(responseJson.name).to.equal('Test Template Postman');",
+                "    pm.expect(responseJson.description).to.equal('Template di test creato da Postman');",
+                "    pm.expect(responseJson.is_active).to.be.true;",
+                "    pm.expect(responseJson.available_languages).to.include.members(['it', 'en']);",
+                "    ",
+                "    // Salva l'ID per i test successivi",
+                "    pm.collectionVariables.set('testTemplateId', responseJson.template_id);",
+                "});",
+                "",
+                "pm.test('Structure definition is valid', function () {",
+                "    const responseJson = pm.response.json();",
+                "    const structure = responseJson.structure_definition;",
+                "    pm.expect(structure).to.have.property('questionnaireTitle');",
+                "    pm.expect(structure).to.have.property('description');",
+                "    pm.expect(structure).to.have.property('version');",
+                "    pm.expect(structure).to.have.property('defaultLanguage');",
+                "    pm.expect(structure).to.have.property('sections');",
+                "    pm.expect(structure.sections).to.be.an('array');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Test Template Postman\",\n  \"description\": \"Template di test creato da Postman\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\", \"en\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\n      \"it\": \"Questionario Test Postman\",\n      \"en\": \"Postman Test Questionnaire\"\n    },\n    \"description\": {\n      \"it\": \"Questionario di test per Postman\",\n      \"en\": \"Test questionnaire for Postman\"\n    },\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": [\n      {\n        \"sectionId\": \"s1_test\",\n        \"title\": {\n          \"it\": \"Sezione Test\",\n          \"en\": \"Test Section\"\n        },\n        \"description\": {\n          \"it\": \"Sezione di test\",\n          \"en\": \"Test section\"\n        },\n        \"questions\": [\n          {\n            \"questionId\": \"q1_test\",\n            \"text\": {\n              \"it\": \"Domanda di test\",\n              \"en\": \"Test question\"\n            },\n            \"type\": \"text\",\n            \"required\": true\n          },\n          {\n            \"questionId\": \"q2_test\",\n            \"text\": {\n              \"it\": \"Scelta multipla di test\",\n              \"en\": \"Test multiple choice\"\n            },\n            \"type\": \"multiple-choice\",\n            \"required\": false,\n            \"options\": [\n              {\n                \"value\": \"option1\",\n                \"text\": {\n                  \"it\": \"Opzione 1\",\n                  \"en\": \"Option 1\"\n                }\n              },\n              {\n                \"value\": \"option2\",\n                \"text\": {\n                  \"it\": \"Opzione 2\",\n                  \"en\": \"Option 2\"\n                }\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "4. POST /templates - Tentativo operatore (Forbidden)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 403 (Forbidden)', function () {",
+                "    pm.response.to.have.status(403);",
+                "});",
+                "",
+                "pm.test('Error message is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{operatorToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Template Non Autorizzato\",\n  \"description\": \"Questo dovrebbe fallire\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\"it\": \"Test\"},\n    \"description\": {\"it\": \"Test\"},\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": []\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "5. GET /templates/:id - Dettaglio template",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Template details are correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.template_id).to.equal(pm.collectionVariables.get('testTemplateId'));",
+                "    pm.expect(responseJson.name).to.equal('Test Template Postman');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "6. GET /templates/:id - Template inesistente (404)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 404', function () {",
+                "    pm.response.to.have.status(404);",
+                "});",
+                "",
+                "pm.test('Error message is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "    pm.expect(responseJson.message).to.include('not found');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/12345678-1234-1234-1234-123456789012",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "12345678-1234-1234-1234-123456789012"]
+          }
+        }
+      },
+      {
+        "name": "7. PATCH /templates/:id - Aggiornamento parziale (Admin)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Template updated correctly', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.name).to.equal('Test Template Postman - Aggiornato');",
+                "    pm.expect(responseJson.description).to.equal('Descrizione aggiornata tramite PATCH');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "PATCH",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Test Template Postman - Aggiornato\",\n  \"description\": \"Descrizione aggiornata tramite PATCH\"\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "8. PATCH /templates/:id - Soft delete (Operator)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Template deactivated correctly', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.is_active).to.be.false;",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "PATCH",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{operatorToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"is_active\": false\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "9. PUT /templates/:id - Aggiornamento completo (Admin)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Template completely updated', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.name).to.equal('Template Completamente Aggiornato');",
+                "    pm.expect(responseJson.description).to.equal('Nuova descrizione completa');",
+                "    pm.expect(responseJson.available_languages).to.include.members(['it', 'en', 'es']);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Template Completamente Aggiornato\",\n  \"description\": \"Nuova descrizione completa\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\", \"en\", \"es\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\n      \"it\": \"Questionario Aggiornato\",\n      \"en\": \"Updated Questionnaire\",\n      \"es\": \"Cuestionario Actualizado\"\n    },\n    \"description\": {\n      \"it\": \"Questionario completamente aggiornato\",\n      \"en\": \"Completely updated questionnaire\",\n      \"es\": \"Cuestionario completamente actualizado\"\n    },\n    \"version\": \"2.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": [\n      {\n        \"sectionId\": \"s1_updated\",\n        \"title\": {\n          \"it\": \"Sezione Aggiornata\",\n          \"en\": \"Updated Section\",\n          \"es\": \"Sección Actualizada\"\n        },\n        \"questions\": [\n          {\n            \"questionId\": \"q1_updated\",\n            \"text\": {\n              \"it\": \"Domanda aggiornata\",\n              \"en\": \"Updated question\",\n              \"es\": \"Pregunta actualizada\"\n            },\n            \"type\": \"text\",\n            \"required\": true\n          }\n        ]\n      }\n    ]\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "10. PUT /templates/:id - Tentativo operatore (Forbidden)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 403 (Forbidden)', function () {",
+                "    pm.response.to.have.status(403);",
+                "});",
+                "",
+                "pm.test('Error message is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{operatorToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Tentativo Non Autorizzato\",\n  \"description\": \"Questo dovrebbe fallire\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\"it\": \"Test\"},\n    \"description\": {\"it\": \"Test\"},\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": []\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "11. POST /templates - Validazione errori (Nome mancante)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 400 (Bad Request)', function () {",
+                "    pm.response.to.have.status(400);",
+                "});",
+                "",
+                "pm.test('Validation error for missing name', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "    pm.expect(responseJson.message).to.include('name');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"description\": \"Template senza nome\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\"it\": \"Test\"},\n    \"description\": {\"it\": \"Test\"},\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": []\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "12. POST /templates - Validazione errori (Structure definition invalida)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 400 (Bad Request)', function () {",
+                "    pm.response.to.have.status(400);",
+                "});",
+                "",
+                "pm.test('Validation error for invalid structure', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Template con struttura invalida\",\n  \"description\": \"Struttura mancante di sezioni\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\"it\": \"Test\"},\n    \"description\": {\"it\": \"Test\"},\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\"\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "13. GET /templates - Senza autenticazione (401)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 401 (Unauthorized)', function () {",
+                "    pm.response.to.have.status(401);",
+                "});",
+                "",
+                "pm.test('Error message is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "15. DELETE /templates/:id - Tentativo con submission esistenti",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "// Questo test potrebbe dare 400 se ci sono submission collegate",
+                "// oppure 204 se non ci sono submission",
+                "pm.test('Status code is either 204 or 400', function () {",
+                "    pm.expect([204, 400]).to.include(pm.response.code);",
+                "});",
+                "",
+                "if (pm.response.code === 400) {",
+                "    pm.test('Error message about linked submissions', function () {",
+                "        const responseJson = pm.response.json();",
+                "        pm.expect(responseJson.message).to.include('submission');",
+                "    });",
+                "}"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "16. DELETE /templates/:id - Tentativo operatore (Forbidden)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 403 (Forbidden)', function () {",
+                "    pm.response.to.have.status(403);",
+                "});",
+                "",
+                "pm.test('Error message is correct', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{operatorToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "17. GET /templates/:id - Template con UUID malformato (400)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 400 (Bad Request)', function () {",
+                "    pm.response.to.have.status(400);",
+                "});",
+                "",
+                "pm.test('Error message about invalid UUID', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "    pm.expect(responseJson.message).to.include('UUID');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/invalid-uuid-format",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "invalid-uuid-format"]
+          }
+        }
+      },
+      {
+        "name": "18. PATCH /templates/:id - Body vuoto (400)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 400 (Bad Request)', function () {",
+                "    pm.response.to.have.status(400);",
+                "});",
+                "",
+                "pm.test('Error message about empty update', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson).to.have.property('error');",
+                "    pm.expect(responseJson.message).to.include('field must be provided');",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "PATCH",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "19. Test Performance - Lista template con molti risultati",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 200', function () {",
+                "    pm.response.to.have.status(200);",
+                "});",
+                "",
+                "pm.test('Response time is acceptable', function () {",
+                "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                "});",
+                "",
+                "pm.test('Pagination limits are respected', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.templates.length).to.be.at.most(100);",
+                "    pm.expect(responseJson.pagination.limit).to.equal(100);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates?limit=100&offset=0&active_only=false",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"],
+            "query": [
+              {
+                "key": "limit",
+                "value": "100"
+              },
+              {
+                "key": "offset",
+                "value": "0"
+              },
+              {
+                "key": "active_only",
+                "value": "false"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "20. Test Edge Case - Template con lingue multiple",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status code is 201', function () {",
+                "    pm.response.to.have.status(201);",
+                "});",
+                "",
+                "pm.test('All languages are correctly saved', function () {",
+                "    const responseJson = pm.response.json();",
+                "    pm.expect(responseJson.available_languages).to.include.members(['it', 'en', 'es', 'ar']);",
+                "    pm.expect(responseJson.available_languages.length).to.equal(4);",
+                "});",
+                "",
+                "pm.test('Multilingual structure is valid', function () {",
+                "    const responseJson = pm.response.json();",
+                "    const structure = responseJson.structure_definition;",
+                "    pm.expect(structure.questionnaireTitle).to.have.property('it');",
+                "    pm.expect(structure.questionnaireTitle).to.have.property('en');",
+                "    pm.expect(structure.questionnaireTitle).to.have.property('es');",
+                "    pm.expect(structure.questionnaireTitle).to.have.property('ar');",
+                "});",
+                "",
+                "// Salva questo template per cleanup finale",
+                "pm.collectionVariables.set('multilingualTemplateId', responseJson.template_id);"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"name\": \"Template Multilingue Test\",\n  \"description\": \"Template con supporto completo multilingue\",\n  \"is_active\": true,\n  \"available_languages\": [\"it\", \"en\", \"es\", \"ar\"],\n  \"structure_definition\": {\n    \"questionnaireTitle\": {\n      \"it\": \"Questionario Multilingue\",\n      \"en\": \"Multilingual Questionnaire\",\n      \"es\": \"Cuestionario Multilingüe\",\n      \"ar\": \"استبيان متعدد اللغات\"\n    },\n    \"description\": {\n      \"it\": \"Questo questionario supporta quattro lingue\",\n      \"en\": \"This questionnaire supports four languages\",\n      \"es\": \"Este cuestionario admite cuatro idiomas\",\n      \"ar\": \"يدعم هذا الاستبيان أربع لغات\"\n    },\n    \"version\": \"1.0\",\n    \"defaultLanguage\": \"it\",\n    \"sections\": [\n      {\n        \"sectionId\": \"s1_multilingual\",\n        \"title\": {\n          \"it\": \"Sezione Multilingue\",\n          \"en\": \"Multilingual Section\",\n          \"es\": \"Sección Multilingüe\",\n          \"ar\": \"قسم متعدد اللغات\"\n        },\n        \"questions\": [\n          {\n            \"questionId\": \"q1_multi\",\n            \"text\": {\n              \"it\": \"Come ti chiami?\",\n              \"en\": \"What is your name?\",\n              \"es\": \"¿Cómo te llamas?\",\n              \"ar\": \"ما اسمك؟\"\n            },\n            \"type\": \"text\",\n            \"required\": true\n          },\n          {\n            \"questionId\": \"q2_multi\",\n            \"text\": {\n              \"it\": \"Quale è la tua lingua preferita?\",\n              \"en\": \"What is your preferred language?\",\n              \"es\": \"¿Cuál es tu idioma preferido?\",\n              \"ar\": \"ما هي لغتك المفضلة؟\"\n            },\n            \"type\": \"multiple-choice\",\n            \"required\": true,\n            \"options\": [\n              {\n                \"value\": \"italian\",\n                \"text\": {\n                  \"it\": \"Italiano\",\n                  \"en\": \"Italian\",\n                  \"es\": \"Italiano\",\n                  \"ar\": \"الإيطالية\"\n                }\n              },\n              {\n                \"value\": \"english\",\n                \"text\": {\n                  \"it\": \"Inglese\",\n                  \"en\": \"English\",\n                  \"es\": \"Inglés\",\n                  \"ar\": \"الإنجليزية\"\n                }\n              }\n            ]\n          }\n        ]\n      }\n    ]\n  }\n}"
+          },
+          "url": {
+            "raw": "{{baseUrl}}/templates",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates"]
+          }
+        }
+      },
+      {
+        "name": "21. Cleanup - Elimina template multilingue",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Template cleanup successful', function () {",
+                "    pm.expect([204, 404]).to.include(pm.response.code);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{multilingualTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{multilingualTemplateId}}"]
+          }
+        }
+      },
+      {
+        "name": "22. Cleanup - Verifica eliminazione template test finale",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Template cleanup verification', function () {",
+                "    // Accetta sia 404 (già eliminato) che 204 (appena eliminato)",
+                "    pm.expect([204, 404]).to.include(pm.response.code);",
+                "});",
+                "",
+                "// Cleanup delle variabili",
+                "pm.collectionVariables.unset('testTemplateId');",
+                "pm.collectionVariables.unset('multilingualTemplateId');"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "DELETE",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer {{adminToken}}"
+            }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/templates/{{testTemplateId}}",
+            "host": ["{{baseUrl}}"],
+            "path": ["templates", "{{testTemplateId}}"]
+          }
+        }
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "// Script pre-request globale per la collezione",
+            "console.log('Executing Template API Test: ' + pm.info.requestName);"
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "// Script post-request globale per logging",
+            "console.log('Completed: ' + pm.info.requestName + ' - Status: ' + pm.response.code);",
+            "",
+            "// Test globale per verificare che il content-type sia sempre JSON nelle risposte non-204",
+            "if (pm.response.code !== 204) {",
+            "    pm.test('Response Content-Type is JSON', function () {",
+            "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+            "    });",
+            "}"
+          ]
+        }
+      }
+    ]
+  }
+   

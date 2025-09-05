@@ -1,4 +1,4 @@
-// src/pages/QuestionnairePage.tsx - MODIFICHE PER TTS
+// src/pages/QuestionnairePage.tsx - Con API reali e gestione errori
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
@@ -14,14 +14,16 @@ import {
   TextQuestion,
   DateQuestion
 } from '../components/questionnaire/QuestionnaireComponents';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import { bilingualismQuestionnaireData } from '../../mock-template';
 import { ProgressBar } from '../components/questionnaire/ProgressBar';
 import { StarRating } from '../components/questionnaire/QuestionnaireComponents';
 import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements';
-// ➕ AGGIUNGI QUESTI IMPORT
 import TTSFloatingButton from '../components/accessibility/TTSFloatingButton';
-import { useTextToSpeech} from '../hooks/useTextToSpeech';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { submissionApi } from '../services/apiService';
+import { useApiError } from '../hooks/useApiError';
+import FeedbackForm from "../components/questionnaire/FeedbackForm"
 
 const questionnaireData = bilingualismQuestionnaireData as {
   sections: Section[];
@@ -30,51 +32,80 @@ const questionnaireData = bilingualismQuestionnaireData as {
 const QuestionnairePage: React.FC = () => {
   const { templateId, submissionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // Focus management refs (come prima)
+  // Focus management refs
   const sectionHeaderRef = useRef<HTMLHeadingElement>(null);
   const skipToNavRef = useRef<HTMLDivElement>(null);
   
-  // Screen reader announcements (come prima)
+  // Hooks
   const { announce } = useScreenReaderAnnouncements();
+  const { handleApiError, handleApiSuccess, clearErrors } = useApiError();
   
-  // ➕ AGGIUNGI: TTS State
+  // TTS State
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [currentSpeakingQuestionId, setCurrentSpeakingQuestionId] = useState<string | null>(null);
+  const { speak, stop, status } = useTextToSpeech(location.state?.language || 'it');
   
-  // ➕ AGGIUNGI: TTS Hook
-
-  const location = useLocation();
-  
-  // State management (come prima)
+  // State management - Inizializza con dati dal navigation state se disponibili
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(
+    location.state?.answers ? 
+    location.state.answers.reduce((acc: Record<string, string>, answer: any) => {
+      acc[answer.question_id] = answer.answer_value;
+      return acc;
+    }, {}) : {}
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedLanguage] = useState<Language>(location.state?.language || 'it');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
-  // Dati questionario (come prima)
+  // Network & Error states
+  const [error, setError] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [retryCount, setRetryCount] = useState(0);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  
+  // Dati questionario
   const currentSection = questionnaireData.sections[currentSectionIndex];
   const totalSections = questionnaireData.sections.length;
   const isLastSection = currentSectionIndex === totalSections - 1;
   const isFirstSection = currentSectionIndex === 0;
 
+  // Network monitoring
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (error) {
+        setError('');
+        announce('Connessione ristabilita', 'polite');
+      }
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      announce('Connessione persa. Le modifiche verranno salvate quando tornerai online.', 'assertive');
+    };
 
-  const { speak, stop, status } = useTextToSpeech(selectedLanguage);
-  // ➕ AGGIUNGI: Gestione TTS per singola domanda
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [error]);
+
+  // TTS handlers
   const handleQuestionSpeak = async (text: string, questionId: string) => {
-    // Se sta già parlando questa domanda, ferma
     if (currentSpeakingQuestionId === questionId && status === 'speaking') {
       stop();
       setCurrentSpeakingQuestionId(null);
       return;
     }
     
-    // Ferma qualsiasi altra lettura in corso
     stop();
-    
-    // Imposta domanda corrente e inizia lettura
     setCurrentSpeakingQuestionId(questionId);
     
     const success = await speak(text);
@@ -90,13 +121,13 @@ const QuestionnairePage: React.FC = () => {
     }
   }, [status, currentSpeakingQuestionId]);
 
-  // ➕ AGGIUNGI: Cleanup TTS quando cambia sezione
+  // Cleanup TTS quando cambia sezione
   useEffect(() => {
     stop();
     setCurrentSpeakingQuestionId(null);
   }, [currentSectionIndex, stop]);
 
-  // ➕ AGGIUNGI: Reset TTS quando viene disabilitato
+  // Reset TTS quando viene disabilitato
   useEffect(() => {
     if (!ttsEnabled) {
       stop();
@@ -104,7 +135,7 @@ const QuestionnairePage: React.FC = () => {
     }
   }, [ttsEnabled, stop]);
 
-  // Focus management quando cambia sezione (come prima)
+  // Focus management quando cambia sezione
   useEffect(() => {
     if (sectionHeaderRef.current) {
       sectionHeaderRef.current.focus();
@@ -116,19 +147,16 @@ const QuestionnairePage: React.FC = () => {
     }
   }, [currentSectionIndex, announce, currentSection, selectedLanguage, totalSections]);
 
-  // Validazione (come prima)
+  // Validazione
   const validateCurrentSection = (): boolean => {
     const errors: Record<string, string> = {};
-
 
     currentSection.questions.forEach((question) => {
       const answer = answers[question.questionId] || '';
       
-      // Valida con Zod schema invece di logica manuale
       try {
-        questionSchema.parse(question); // Valida struttura domanda
+        questionSchema.parse(question);
         
-        // Controllo required più robusto
         if (question.required && (!answer || answer.trim() === '')) {
           errors[question.questionId] = 'Questa domanda è obbligatoria';
         }     
@@ -144,10 +172,11 @@ const QuestionnairePage: React.FC = () => {
         errors[question.questionId] = 'Errore nella domanda';
       }
     });
+    
     setValidationErrors(errors);
     
     if (Object.keys(errors).length > 0) {
-      announce('Ci sono errrori nelle domande', 'assertive');
+      announce('Ci sono errori nelle domande', 'assertive');
       const firstErrorQuestionId = Object.keys(errors)[0];
       const firstErrorElement = document.querySelector(`[data-question-id="${firstErrorQuestionId}"]`);
       if (firstErrorElement instanceof HTMLElement) {
@@ -158,7 +187,7 @@ const QuestionnairePage: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle answer change (come prima)
+  // Handle answer change
   const handleAnswerChange = (questionId: string, value: string) => {
     setAnswers(prev => ({
       ...prev,
@@ -172,9 +201,94 @@ const QuestionnairePage: React.FC = () => {
         return newErrors;
       });
     }
+    
+    // Clear error when user interacts
+    if (error) {
+      setError('');
+    }
   };
 
-  // Navigation handlers (come prima)
+  // ✅ API CALLS CON GESTIONE ERRORI REALE
+  const saveProgress = async (showLoading = true): Promise<boolean> => {
+    if (!isOnline) {
+      announce('Nessuna connessione. Il salvataggio verrà effettuato quando tornerai online.', 'polite');
+      return false;
+    }
+
+    if (showLoading) setSaving(true);
+    setError('');
+    announce('Salvataggio in corso...', 'polite');
+    
+    try {
+      await submissionApi.saveProgress(submissionId!, {
+        answers: Object.entries(answers).map(([questionId, answerValue]) => ({
+          question_identifier: questionId,
+          answer_value: answerValue
+        })),
+        current_step_identifier: currentSection.sectionId
+      });
+      
+      handleApiSuccess('Progressi salvati');
+      announce('Progressi salvati', 'polite');
+      setRetryCount(0);
+      return true;
+      
+    } catch (err) {
+      console.error('Error saving progress:', err);
+      handleApiError(err, 'il salvataggio');
+      setError('Errore nel salvataggio. Riprovare.');
+      announce('Errore nel salvataggio. Riprovare.', 'assertive');
+      
+      // Retry automatico per errori di rete
+      if (err instanceof TypeError && err.message.includes('fetch') && retryCount < 3) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => saveProgress(false), 2000 * (retryCount + 1));
+      }
+      
+      return false;
+    } finally {
+      if (showLoading) setSaving(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    setLoading(true);
+    setError('');
+    clearErrors();
+    announce('Completamento questionario in corso...', 'polite');
+    
+    try {
+      // Prima salva i progressi correnti
+      const saveSuccess = await saveProgress(false);
+      if (!saveSuccess && isOnline) {
+        throw new Error('Errore nel salvataggio finale');
+      }
+      
+      // Poi completa il questionario
+      await submissionApi.complete(submissionId!, {
+        answers: Object.entries(answers).map(([questionId, answerValue]) => (
+          {
+          question_identifier: questionId,
+          answer_value: answerValue
+        })),
+        current_step_identifier:currentSection.sectionId
+      });
+      
+      handleApiSuccess('Questionario completato con successo!');
+      announce('Questionario completato con successo!', 'polite');
+      navigate(`/complete/${submissionId}`);
+      
+    } catch (error) {
+      console.error('Error completing questionnaire:', error);
+      handleApiError(error, 'il completamento del questionario');
+      setError('Errore nel completamento del questionario');
+      announce('Errore nel completamento del questionario', 'assertive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Navigation handlers
   const handleNext = async () => {
     if (!validateCurrentSection()) {
       return;
@@ -183,8 +297,11 @@ const QuestionnairePage: React.FC = () => {
     if (isLastSection) {
       await handleComplete();
     } else {
-      await saveProgress();
-      setCurrentSectionIndex(prev => prev + 1);
+      const saveSuccess = await saveProgress();
+      if (saveSuccess || !isOnline) {
+        setCurrentSectionIndex(prev => prev + 1);
+        setError(''); // Clear errors when advancing
+      }
     }
   };
 
@@ -192,56 +309,30 @@ const QuestionnairePage: React.FC = () => {
     if (!isFirstSection) {
       await saveProgress();
       setCurrentSectionIndex(prev => prev - 1);
+      setError(''); // Clear errors when going back
     }
   };
 
-  // Skip to navigation (come prima)
+  // Skip to navigation
   const handleSkipToNavigation = () => {
     if (skipToNavRef.current) {
       skipToNavRef.current.focus();
     }
   };
 
-  // API calls (come prima - non modificato)
-  const saveProgress = async () => {
-    setSaving(true);
-    announce('Salvataggio in corso...', 'polite');
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log('Progress saved:', { submissionId, answers, currentStep: currentSectionIndex + 1 });
-      announce('Progressi salvati', 'polite');
-    } catch (error) {
-      console.error('Error saving progress:', error);
-      announce('Errore nel salvataggio. Riprovare.', 'assertive');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleComplete = async () => {
-    setLoading(true);
-    announce('Completamento questionario in corso...', 'polite');
-    
-    try {
-      await saveProgress();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      announce('Questionario completato con successo!', 'polite');
-      navigate(`/complete/${submissionId}`);
-    } catch (error) {
-      console.error('Error completing questionnaire:', error);
-      announce('Errore nel completamento del questionario', 'assertive');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleReportProblem = () => {
     announce('Apertura modulo segnalazione problema', 'polite');
-    alert('Funzionalità "Segnala problema" da implementare');
+    setShowFeedbackForm(true);
   };
 
-  // ➕ MODIFICA: Render question con integrazione TTS
+  // Retry function
+  const handleRetry = () => {
+    setError('');
+    setRetryCount(0);
+    saveProgress();
+  };
+
+  // Render question con integrazione TTS
   const renderQuestion = (question: Question) => {
     const questionText = getLocalizedText(question.text, selectedLanguage);
     const questionValue = answers[question.questionId] || '';
@@ -259,7 +350,7 @@ const QuestionnairePage: React.FC = () => {
       errorMessage
     };
 
-    // ➕ AGGIUNGI: Props TTS per QuestionBlock
+    // Props TTS per QuestionBlock
     const ttsProps = ttsEnabled ? {
       ttsEnabled,
       questionText,
@@ -281,7 +372,7 @@ const QuestionnairePage: React.FC = () => {
           questionId={question.questionId}
           required={question.required}
           {...errorProps}
-          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
+          {...ttsProps}
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <MultipleChoiceQuestion
@@ -304,7 +395,7 @@ const QuestionnairePage: React.FC = () => {
           questionId={question.questionId}
           required={question.required}
           {...errorProps}
-          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
+          {...ttsProps}
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <TextQuestion
@@ -327,7 +418,7 @@ const QuestionnairePage: React.FC = () => {
           questionId={question.questionId}
           required={question.required}
           {...errorProps}
-          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
+          {...ttsProps}
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <DateQuestion
@@ -352,7 +443,7 @@ const QuestionnairePage: React.FC = () => {
           questionId={question.questionId}
           required={question.required}
           {...errorProps}
-          {...ttsProps} // ➕ AGGIUNGI TTS PROPS
+          {...ttsProps}
         >
           <div data-question-id={question.questionId} tabIndex={-1}>
             <StarRating
@@ -370,7 +461,7 @@ const QuestionnairePage: React.FC = () => {
     return null;
   };
 
-  // Loading state (come prima)
+  // Loading state
   if (loading) {
     return (
       <SimpleLayout>
@@ -388,10 +479,9 @@ const QuestionnairePage: React.FC = () => {
 
   return (
     <SimpleLayout>
-      {/* Screen Reader Announcements (come prima) */}
       <ScreenReaderAnnouncements />
       
-      {/* Skip Link (come prima) */}
+      {/* Skip Link */}
       <a 
         href="#navigation" 
         className="skip-link sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded"
@@ -403,19 +493,65 @@ const QuestionnairePage: React.FC = () => {
         Salta al contenuto principale
       </a>
       
-      {/* ➕ AGGIUNGI: TTS Floating Button */}
+      {/* TTS Floating Button */}
       <TTSFloatingButton
         isEnabled={ttsEnabled}
         onToggle={setTtsEnabled}
         currentLanguage={selectedLanguage}
       />
       
-      {/* Main Content (come prima) */}
+      {/* Main Content */}
       <main role="main" aria-label="Compilazione questionario">
         <ProgressBar currentStep={currentSectionIndex + 1} totalSteps={totalSections} />
         
+        {/* Connection Status */}
+        {!isOnline && (
+          <div 
+            role="alert" 
+            aria-live="assertive"
+            className="mb-mobile-md mx-mobile-md p-3 bg-orange-50 border-l-4 border-orange-400 rounded-mobile-sm"
+          >
+            <div className="flex items-center">
+              <WifiOff className="h-5 w-5 text-orange-400 mr-3" aria-hidden="true" />
+              <div>
+                <p className="text-mobile-sm font-medium text-orange-800">
+                  Nessuna connessione
+                </p>
+                <p className="text-mobile-xs text-orange-700 mt-1">
+                  Le modifiche verranno salvate quando tornerai online
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div 
+            role="alert"
+            aria-live="assertive" 
+            className="mb-mobile-md mx-mobile-md p-4 bg-red-50 border-l-4 border-red-400 rounded-mobile-sm"
+          >
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="text-mobile-sm font-medium text-red-800 mb-2">
+                  {error}
+                </p>
+                <button
+                  onClick={handleRetry}
+                  className="text-mobile-xs text-red-700 underline hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                >
+                  Riprova
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="flex-1 pb-24" aria-label="Contenuto sezione corrente">
           <SectionHeader 
+            ref={sectionHeaderRef}
             title={getLocalizedText(currentSection.title, selectedLanguage)}
             description={getLocalizedText(currentSection.description, selectedLanguage)}
             sectionNumber={currentSectionIndex + 1}
@@ -427,7 +563,7 @@ const QuestionnairePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Navigation (come prima) */}
+        {/* Navigation */}
         <nav 
           id="navigation"
           className="bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-mobile-md py-mobile-md"
@@ -436,6 +572,26 @@ const QuestionnairePage: React.FC = () => {
           tabIndex={-1}
         >
           <div className="max-w-sm mx-auto">
+            {/* Save Status Indicator */}
+            <div className="flex items-center justify-center text-mobile-sm text-family-text-body mb-mobile-sm">
+              {saving ? (
+                <div className="flex items-center">
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">Salvataggio...</span>
+                </div>
+              ) : isOnline ? (
+                <div className="flex items-center text-green-600">
+                  <Wifi className="h-4 w-4 mr-1" aria-hidden="true" />
+                  <span>Online</span>
+                </div>
+              ) : (
+                <div className="flex items-center text-orange-600">
+                  <WifiOff className="h-4 w-4 mr-1" aria-hidden="true" />
+                  <span>Offline</span>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-mobile-sm mb-mobile-sm" role="group" aria-label="Controlli navigazione">
               {!isFirstSection && (
                 <Button
@@ -477,6 +633,15 @@ const QuestionnairePage: React.FC = () => {
           </div>
         </nav>
       </main>
+
+      {/* Feedback Form Modal */}
+      <FeedbackForm
+        isOpen={showFeedbackForm}
+        onClose={() => setShowFeedbackForm(false)}
+        submissionId={submissionId}
+        questionId={currentSection.questions.length > 0 ? currentSection.questions[0].questionId : undefined}
+        templateId={templateId}
+      />
     </SimpleLayout>
   );
 };
