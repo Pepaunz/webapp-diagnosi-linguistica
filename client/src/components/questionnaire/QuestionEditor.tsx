@@ -1,6 +1,6 @@
 // src/components/questionnaire/QuestionEditor.tsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Trash2,
   ChevronUp,
@@ -12,6 +12,7 @@ import {
 import { Question, Option } from "@bilinguismo/shared";
 import { Language } from "@bilinguismo/shared";
 
+import { Button } from "../shared/Filters";
 interface QuestionEditorProps {
   question: Question;
   questionIndex: number;
@@ -33,7 +34,14 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
   onMove,
   validateQuestionComplete
 }) => {
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
+
+  useEffect(() => {
+    if(isPreviewMode) {
+     setEditMode(false);
+    }
+   },[isPreviewMode])
+ 
 
   const handleAddOption = () => {
     if (question.options) {
@@ -100,7 +108,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                   {(question.options ?? []).length > 2 && (
                     <button
                       onClick={() => handleDeleteOption(index)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-gray-500 hover:text-red-500"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -116,7 +124,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           {editMode && !isPreviewMode && (
             <button
               onClick={handleAddOption}
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+              className="flex items-center gap-1 text-gray-600 hover:text-gray-800 text-sm hover:bg-gray-200 rounded"
             >
               <Plus size={16} />
               Aggiungi opzione
@@ -179,7 +187,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
       <div className="flex items-start gap-3">
         {!isPreviewMode && (
           <div className="flex flex-col gap-1 mt-1">
-            <GripVertical className="text-gray-400 cursor-move" size={20} />
+            
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -225,7 +233,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               />
             ) : (
               <span className="flex-1">
-                {question.text[selectedLanguage] || "Domanda senza testo"}
+                {question.text[selectedLanguage] || `Domanda ${questionIndex + 1}`}
                 {question.required && (
                   <span className="text-red-500 ml-1">*</span>
                 )}
@@ -248,7 +256,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                         required: e.target.checked,
                       })
                     }
-                    className="w-4 h-4"
+                    className="w-4 h-4 cursor-pointer"
                   />
                   <span className="text-sm">Obbligatoria</span>
                 </label>
@@ -259,7 +267,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-gray-500 hover:text-red-500"
                 >
                   <Trash2 size={20} />
                 </button>
@@ -270,7 +278,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                       setEditMode(false);
                     }
                   }}
-                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-3 py-1 text-sm bg-gray-800 text-white rounded hover:bg-gray-700"
                   >
                     Fatto
                   </button>
@@ -285,7 +293,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="text-gray-400 hover:text-red-500"
+            className="text-gray-500 hover:text-red-500"
           >
             <Trash2 size={20} />
           </button>

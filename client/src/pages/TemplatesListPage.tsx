@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useError } from "../context/ErrorContext";
 import {LoadingSpinner} from "../../../family-client/src/components/ui"
 import { listTemplatesQuerySchema, Template} from "../../../shared/src/schemas";
+import { templateApi } from "../services/templateApi";
 
 
 export default function TemplatesListPage() {
@@ -25,7 +26,7 @@ export default function TemplatesListPage() {
     loadTemplates();
   }, [sortBy, sortOrder]);
 
-  // Mock API call - sostituire con vera API
+
   const loadTemplates = async () => {
     setLoading(true);
     
@@ -43,48 +44,10 @@ export default function TemplatesListPage() {
       const validatedParams = listTemplatesQuerySchema.parse(queryParams);
       console.log("Loading templates with params:", validatedParams);
       
-      // TODO: Sostituire con vera chiamata API
-      // const response = await fetch('/api/v1/templates?' + new URLSearchParams(validatedParams));
-      // const data = await response.json();
+     
+      const response = await templateApi.getTemplates(validatedParams);
+      setTemplates(response.templates);
       
-      // MOCK: Simula caricamento da server
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Mock data con struttura simile al backend
-      const mockTemplates = [
-        {
-          template_id: "uuid-1",
-          name: "Standard Bilinguismo", 
-          description: "Template standard per valutazione bilinguismo",
-          structure_definition: {}, // QuestionnaireData
-          is_active: true,
-          available_languages: ["it", "en"],
-          created_at: new Date("2025-04-20"),
-          updated_at: new Date("2025-04-24")
-        },
-        {
-          template_id: "uuid-2",
-          name: "Follow-up", 
-          description: "Questionario di follow-up",
-          structure_definition: {},
-          is_active: true,
-          available_languages: ["it"],
-          created_at: new Date("2025-04-21"),
-          updated_at: new Date("2025-04-23")
-        },
-        {
-          template_id: "uuid-3",
-          name: "Terzo Form", 
-          description: null,
-          structure_definition: {},
-          is_active: false, // Template disattivato
-          available_languages: ["it", "en", "es"],
-          created_at: new Date("2025-04-19"),
-          updated_at: new Date("2025-04-22")
-        },
-      ];
-      
-      setTemplates(mockTemplates as Template[]);
       
     } catch (error) {
       console.error("Error loading templates:", error);
@@ -94,9 +57,8 @@ export default function TemplatesListPage() {
     }
   };
 
-  // Elimina template con controlli business logic
+  
   const handleDeleteTemplate = async (templateId: string, templateName: string) => {
-    // Conferma eliminazione
     if (!confirm(`Sei sicuro di voler eliminare il template "${templateName}"?\n\nQuesta azione non può essere annullata.`)) {
       return;
     }
@@ -104,25 +66,10 @@ export default function TemplatesListPage() {
     setDeleting(templateId);
     
     try {
-      // TODO: Prima controlla se ha submission associate
-      // const submissionCheck = await fetch(`/api/v1/templates/${templateId}/submissions/count`);
-      // const { count } = await submissionCheck.json();
-      
-      // MOCK: Simula controllo submission (alcuni template hanno submission associate)
-      const hasSubmissions = templateName === "Standard Bilinguismo"; // Mock logic
-      
-      if (hasSubmissions) {
-        showError(`Impossibile eliminare "${templateName}": ha delle compilazioni associate`, 'validation');
-        return;
-      }
-      
+  
       console.log("Deleting template:", templateId);
       
-      // TODO: Vera chiamata API DELETE
-      // await fetch(`/api/v1/templates/${templateId}`, { method: 'DELETE' });
-      
-      // MOCK: Simula eliminazione
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await templateApi.deactivateTemplate(templateId,{is_active:false});
       
       // Rimuovi dalla lista locale
       setTemplates(prev => prev.filter(t => t.template_id !== templateId));
@@ -136,7 +83,7 @@ export default function TemplatesListPage() {
     }
   };
 
-  // Filtra template localmente (in futuro si farà lato server)
+ //filtro locale
   const filteredTemplates = templates.filter(template =>
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (template.description?.toLowerCase() || "").includes(searchTerm.toLowerCase())
@@ -180,11 +127,11 @@ export default function TemplatesListPage() {
             setSortOrder(order as "asc" | "desc");
           }}
         >
-          <option value="updated_at_desc">Ordina: Ultima Modifica</option>
-          <option value="updated_at_asc">Ordina: Prima Modifica</option>
+          <option value="updated_desc">Ordina: Ultima Modifica</option>
+          <option value="updated_asc">Ordina: Prima Modifica</option>
           <option value="name_asc">Nome (A-Z)</option>
           <option value="name_desc">Nome (Z-A)</option>
-          <option value="created_at_desc">Data Creazione (Recente)</option>
+          <option value="created_desc">Data Creazione (Recente)</option>
         </select>
       </div>
 

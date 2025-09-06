@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, List, AlertCircle, Settings } from "lucide-react";
+import { LogoutButton } from "../LogoutButton";
 
 function Sidebar() {
   const location = useLocation(); // to know which page we're on
@@ -40,6 +41,10 @@ function Sidebar() {
             <Settings size={20} />
             <span>Impostazioni</span>
           </Link>
+         
+        </li>
+        <li className= {`px-4 py-2 border-t border-gray-700 flex items-center gap-3 hover:bg-gray-700 mouse:hover bg`} >     
+          <LogoutButton/>
         </li>
       </ul>
     </nav>

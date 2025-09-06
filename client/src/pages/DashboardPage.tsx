@@ -200,11 +200,11 @@ const getLanguageName = (langCode: string): string => {
 const SubmissionRow = ({
   submission,
   onDelete,
-  isDeleting = false, // NUOVO: per loading state
+  isDeleting = false, 
 }: {
   submission: SubmissionDTO;
-  onDelete: (id: number, uuid: string) => void; // ✅ AGGIORNATO per includere UUID
-  isDeleting?: boolean; // NUOVO
+  onDelete: (id: number, uuid: string) => void; 
+  isDeleting?: boolean; 
 }) => (
   <tr key={submission.id} className="hover:bg-gray-50">
     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -241,8 +241,7 @@ const SubmissionRow = ({
           ? 'text-gray-400 cursor-not-allowed' 
           : 'text-red-600 hover:text-red-800'
         } transition-colors flex items-center justify-center`}
-        onClick={() => onDelete(submission.id, submission.uuid)} // ✅ PASSA ANCHE UUID
-        disabled={isDeleting}
+        onClick={() => onDelete(submission.id, submission.uuid)} 
         title="Elimina compilazione"
       >
         {isDeleting ? (
@@ -257,11 +256,11 @@ const SubmissionRow = ({
 const SubmissionsTable = ({
   submissions,
   onDelete,
-  deletingSubmissionId, // NUOVO
+  deletingSubmissionId, 
 }: {
   submissions: SubmissionDTO[];
-  onDelete: (id: number, uuid: string) => void; // ✅ AGGIORNATO
-  deletingSubmissionId?: number | null; // NUOVO
+  onDelete: (id: number, uuid: string) => void; 
+  deletingSubmissionId?: number | null; 
 }) => (
   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
     <div className="overflow-x-auto">

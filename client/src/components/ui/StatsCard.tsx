@@ -1,4 +1,3 @@
-// client/src/components/ui/StatsCard.tsx - NUOVO COMPONENTE
 
 import React from 'react';
 

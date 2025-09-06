@@ -152,7 +152,7 @@ export const StatsCard = ({
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "edit";
   className?: string;
   icon?: React.ReactNode;
 }
@@ -172,6 +172,8 @@ export const Button = ({
         return "bg-gray-100 text-gray-800 hover:bg-gray-200";
       case "danger":
         return "bg-red-600 text-white hover:bg-red-700";
+      case "edit":
+        return "bg-yellow-300 text-gray-800 hover:bg-yellow-400";
       default:
         return "bg-gray-800 text-white hover:bg-gray-700";
     }

@@ -76,9 +76,24 @@ import {
       
       return handleApiResponse(response);
     },
+
+    // PUT /templates/:id - Aggiorna template
+  async updateTemplate(templateId: string, data: UpdateTemplateInput): Promise<Template> {
+    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    return handleApiResponse(response);
+  },
+
   
     // PATCH /templates/:id
-    async updateTemplate(templateId: string, data: UpdateTemplateInput): Promise<Template> {
+    async deactivateTemplate(templateId: string, data: UpdateTemplateInput): Promise<Template> {
       const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
         method: 'PATCH',
         headers: {
@@ -121,62 +136,4 @@ import {
     },
   };
   
-  // ====================================================================
-  // MOCK API CALLS (per sviluppo senza backend)
-  // ====================================================================
   
-  export const mockTemplateApi = {
-    async getTemplates(query?: Partial<ListTemplatesQuery>) {
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simula latenza
-      
-      // Mock data che simula risposta backend
-      const mockTemplates: Template[] = [
-        {
-          template_id: "uuid-1",
-          name: "Standard Bilinguismo",
-          description: "Template standard per valutazione bilinguismo", 
-          structure_definition: {} as any, // Mock
-          is_active: true,
-          available_languages: ["it", "en"],
-          created_at: new Date("2025-04-20"),
-          updated_at: new Date("2025-04-24")
-        },
-        // Altri mock templates...
-      ];
-  
-      return { templates: mockTemplates, total: mockTemplates.length };
-    },
-  
-    async deleteTemplate(templateId: string) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock business logic: alcuni template non possono essere eliminati
-      if (templateId === "uuid-1") {
-        const error = new Error("Cannot delete template with associated submissions. Found 5 linked submissions.");
-        (error as any).status = 400;
-        (error as any).response = { 
-          data: { 
-            message: "Cannot delete template with associated submissions. Found 5 linked submissions.",
-            status_code: 400 
-          } 
-        };
-        throw error;
-      }
-      
-      // Successo
-      return;
-    },
-  
-    async getSubmissionCount(templateId: string) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Mock logic
-      const mockCounts: Record<string, number> = {
-        "uuid-1": 5,  // Ha submission
-        "uuid-2": 0,  // Nessuna submission 
-        "uuid-3": 2   // Ha submission
-      };
-      
-      return { count: mockCounts[templateId] || 0 };
-    }
-  };

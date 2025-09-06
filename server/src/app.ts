@@ -46,9 +46,12 @@ app.get("/api/health", (req, res) => {
 import authRoutes from "./api/routes/auth.routes";
 import submissionRoutes from "./api/routes/submission.routes";
 import templateRoutes from "./api/routes/template.routes";
+
+import feedbackRoutes from "./api/routes/feedback.routes";
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/submissions", submissionRoutes);
 app.use("/api/v1/templates", templateRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
 // test err 404
 
 app.use((req, res, next) => {

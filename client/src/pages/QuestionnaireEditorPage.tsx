@@ -1,23 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
-import { Plus, Save, Eye } from "lucide-react";
+import { Plus, Save, Eye, Edit2 } from "lucide-react";
 import { Button } from "../components/shared/Filters";
 import {
   QuestionnaireData,
   Section,
   Question,
+  Template
 } from "@bilinguismo/shared";
 import { Language } from "@bilinguismo/shared";
 import SectionEditor from "../components/questionnaire/SectionEditor";
 import LanguageSelector from "../components/questionnaire/LanguageSelector";
-import { questionnaireTemplates } from "../assets/mock-template";
 import { useError } from "../context/ErrorContext";
 import { useValidation } from "../hooks/useValidation";
 import { structureDefinitionSchema } from "../../../shared/src/schemas";
-import {z, ZodError} from 'zod';
+import {z} from 'zod';
 import { debounce } from "../utils";
 import { sectionSchema,questionSchema } from "../../../shared/src/schemas";
+import { templateApi } from "../services/templateApi";
 
 
 const QuestionnaireEditorPage = () => {
@@ -37,7 +38,7 @@ const QuestionnaireEditorPage = () => {
   const [hasUserAddedSection, setHasUserAddedSection] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const { showError, getFieldError, clearAllErrors } = useError();
+  const { showError, showSuccess, clearAllErrors } = useError();
     const validation = useValidation({ 
     schema: structureDefinitionSchema,
     debounceMs: 300,
@@ -70,6 +71,7 @@ const QuestionnaireEditorPage = () => {
 
   useEffect(() => {
     if (id) {
+      setIsPreviewMode(true); 
       loadQuestionnaire();
     }
   }, [id]);
@@ -77,16 +79,10 @@ const QuestionnaireEditorPage = () => {
   const loadQuestionnaire = async () => {
     setLoading(true);
     try {
-      const templateName = decodeURIComponent(id || "");
-      const template = questionnaireTemplates[templateName];
-    
-      if (template) {
-        setQuestionnaire(template);
-        clearAllErrors(); // Pulisci errori quando carichi con successo
-      } else {
-        console.log("Template non trovato:", templateName);
-        showError("Template non trovato", 'server');
-      }
+      const templateId = decodeURIComponent(id || "");
+      const response = await templateApi.getTemplateById(templateId);
+      setQuestionnaire(response.structure_definition);
+
     } catch (error) {
       handleLoadError(error);
     } finally {
@@ -144,12 +140,16 @@ const QuestionnaireEditorPage = () => {
     clearAllErrors();
     validation.clearAllErrors();
 
+    if (!questionnaire.questionnaireTitle[selectedLanguage]?.trim()) {
+      showError(`Il titolo in ${selectedLanguage.toUpperCase()} è obbligatorio`, 'validation');
+      return; // BLOCCA QUI
+    }
 
-    const hasAtLeastOneLanguage = Object.values(questionnaire.questionnaireTitle).some(title => title?.trim());
-if (!hasAtLeastOneLanguage) {
-  showError("Il questionario deve avere un titolo in almeno una lingua", 'validation');
-  return;
-}
+//     const hasAtLeastOneLanguage = Object.values(questionnaire.questionnaireTitle).some(title => title?.trim());
+// if (!hasAtLeastOneLanguage) {
+//   showError("Il questionario deve avere un titolo in almeno una lingua", 'validation');
+//   return;
+// }
 
 // Controlla che ogni sezione abbia almeno una domanda
 const emptySections = questionnaire.sections.filter(section => section.questions.length === 0);
@@ -172,6 +172,7 @@ if (invalidQuestions.length > 0) {
   
     // Validazione completa prima del submit
     if (!validation.validateForm(questionnaire)) {
+      console.log("errore validzione form");
       showError("Correggi gli errori nel questionario prima di salvare", 'validation');
       return;
     }
@@ -182,23 +183,39 @@ if (invalidQuestions.length > 0) {
       return;
     }
   
-    if (questionnaire.sections.length === 0) {
-      showError("Il questionario deve contenere almeno una sezione", 'validation');
-      return;
-    }
+    // if (questionnaire.sections.length === 0) {
+    //   showError("Il questionario deve contenere almeno una sezione", 'validation');
+    //   return;
+    // }
   
     setLoading(true);
     
     try {
       console.log("Saving questionnaire:", questionnaire);
+
+      const templateData = {
+        name: questionnaire.questionnaireTitle.it || '',
+        description: questionnaire.description.it || null,
+        structure_definition: questionnaire,
+        available_languages: getAvailableLanguages(),
+        is_active: true,
+      };
       
-      // TODO: Sostituisci con chiamata API reale
-      // const response = await api.saveQuestionnaire(id || 'new', questionnaire);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
-  
-  
-      if (!id) {
-        navigate("/templates");
+      let result;
+      
+      if (id) {
+        // CASO UPDATE: abbiamo un ID dal parametro URL
+        console.log("Updating existing template with ID:", id);
+        result = await templateApi.updateTemplate(id, templateData);
+        showSuccess("Template aggiornato con successo!");
+      } else {
+        // CASO CREATE: nessun ID, creazione nuovo template  
+        console.log("Creating new template");
+        result = await templateApi.createTemplate(templateData);
+        showSuccess("Template creato con successo!");
+        
+        // Naviga alla pagina di edit del nuovo template
+        navigate(`/templates/editor/${result.template_id}`);
       }
     } catch (error) {
       console.error("Error saving questionnaire:", error);
@@ -316,11 +333,13 @@ const handleDescriptionChange = (value: string) => {
 const handleLanguageChange = (newLanguage: Language) => {
   setSelectedLanguage(newLanguage);
   
-  // Valida che ci sia contenuto nella nuova lingua
-  if (!questionnaire.questionnaireTitle[newLanguage]?.trim()) {
-    showError(`Manca il titolo in ${newLanguage.toUpperCase()}`, 'validation');
-  }
-};
+//   // Valida che ci sia contenuto nella nuova lingua
+//   if (!questionnaire.questionnaireTitle[newLanguage]?.trim()) {
+//     showError(`Manca il titolo in ${newLanguage.toUpperCase()}`, 'validation');
+//   }
+const titleValue = questionnaire.questionnaireTitle[newLanguage] || "";
+  validateTitleDebounced(titleValue, setFieldErrors);
+ };
 
   const handlePreview = () => {
     setIsPreviewMode(!isPreviewMode);
@@ -365,8 +384,8 @@ const handleLanguageChange = (newLanguage: Language) => {
           <div className="flex gap-2">
             <Button
               onClick={handlePreview}
-              variant="secondary"
-              icon={<Eye size={16} />}
+              variant={isPreviewMode ? "edit" : "secondary"}
+              icon={isPreviewMode ? <Edit2 size={16} /> : <Eye size={16} />}
             >
               {isPreviewMode ? "Modifica" : "Anteprima"}
             </Button>

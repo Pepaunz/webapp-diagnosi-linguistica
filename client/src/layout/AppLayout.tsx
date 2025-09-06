@@ -1,5 +1,4 @@
 import React from "react";
-import { LogOut } from "lucide-react";
 import Sidebar from "../components/ui/Sidebar";
 import logo from "../assets/logo-negativo.png";
 
@@ -12,12 +11,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <h1 className="text-3xl font-bold">WebApp</h1>
         </div>
         <Sidebar />
-        <div className="p-4 border-t border-gray-700">
-          <button className="flex items-center gap-2 hover:text-gray-300">
-            <LogOut size={20} />
-            <span>Log Out</span>
-          </button>
-        </div>
       </aside>
       <div className="flex-1 flex flex-col">
         <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">

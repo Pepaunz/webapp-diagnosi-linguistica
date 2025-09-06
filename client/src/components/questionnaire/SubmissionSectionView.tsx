@@ -1,5 +1,3 @@
-// src/components/questionnaire/SubmissionSectionView.tsx
-
 import React from "react";
 import { Section,Language, AnswerDTO as Answer, OperatorNoteDTO as Note } from "@bilinguismo/shared";
 import SubmissionQuestionView from "./SubmissionQuestionView";
@@ -8,7 +6,7 @@ interface SubmissionSectionViewProps {
   section: Section;
   sectionIndex: number;
   selectedLanguage: Language;
-  startingQuestionNumber: number; // Nuovo prop
+  startingQuestionNumber: number; 
   answers: Answer[];
   notes: Note[];
   onAddNote: (questionId: string, noteText: string) => void;

@@ -17,7 +17,7 @@ interface SectionEditorProps {
   sectionIndex: number;
   selectedLanguage: Language;
   isPreviewMode: boolean;
-  startingQuestionNumber: number; // Nuovo prop
+  startingQuestionNumber: number;
   validateSectionComplete: (section: Section) => boolean; // Funzione di validazione
   validateQuestionComplete: (question: Question) => boolean; // Funzione di validazione
   onUpdate: (section: Section) => void;
@@ -37,9 +37,15 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
 }) => {
   const [showQuestionTypeSelector, setShowQuestionTypeSelector] =
     useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const questionsEndRef = useRef<HTMLDivElement>(null);
   const [hasUserAddedQuestion, setHasUserAddedQuestion] = useState(false);
+
+  useEffect(() => {
+   if(isPreviewMode) {
+    setEditMode(false);
+   }
+  },[isPreviewMode])
 
   // Scroll intelligente per mantenere la nuova domanda al centro della viewport
   useEffect(() => {
@@ -111,13 +117,11 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
   };
 
   const handleDeleteQuestion = (index: number) => {
-    if (confirm("Sei sicuro di voler eliminare questa domanda?")) {
       const updatedQuestions = section.questions.filter((_, i) => i !== index);
       onUpdate({
         ...section,
         questions: updatedQuestions,
       });
-    }
   };
 
   const handleMoveQuestion = (index: number, direction: "up" | "down") => {
@@ -146,9 +150,6 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
       >
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-2">
-            {!isPreviewMode && (
-              <GripVertical className="text-gray-400" size={20} />
-            )}
             <h3 className="text-lg font-semibold">
               Sezione {sectionIndex + 1}
             </h3>

@@ -32,7 +32,7 @@ export const structureDefinitionSchema = z.object({
   description: localizedTextSchema,
   version: z.string(),
   defaultLanguage: z.string(),
-  sections: z.array(sectionSchema).min(1, "Questionnaire must have at least one section"),
+  sections: z.array(sectionSchema).min(1, "Il questionario deve avere almeno una sezione"),
 });
 
 // Tipi inferiti

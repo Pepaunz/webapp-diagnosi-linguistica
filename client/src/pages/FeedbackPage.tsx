@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useError } from "../context";
 import { LoadingSpinner } from "../../../family-client/src/components/ui";
 import { Loader2 } from "lucide-react";
+import { feedbackApi } from "../services/feedbackApi"
 
 import {
   SearchBar,
@@ -187,12 +188,12 @@ const FeedbackRow = ({
   feedback,
   onUpdateStatus,
   onViewFullFeedback,
-  isUpdating = false, // NUOVO: per loading state
+  isUpdating = false, 
 }: {
   feedback: Feedback;
   onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
   onViewFullFeedback: (feedback: Feedback) => void;
-  isUpdating?: boolean; // NUOVO
+  isUpdating?: boolean; 
 }) => (
   <tr className="hover:bg-gray-50">
     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -259,12 +260,12 @@ const FeedbackTable = ({
   feedbacks,
   onUpdateStatus,
   onViewFullFeedback,
-  updatingFeedbackId, // NUOVO
+  updatingFeedbackId, 
 }: {
   feedbacks: Feedback[];
   onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
   onViewFullFeedback: (feedback: Feedback) => void;
-  updatingFeedbackId?: number | null; // NUOVO
+  updatingFeedbackId?: number | null; 
 }) => (
   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
     <div className="overflow-x-auto">
@@ -278,7 +279,7 @@ const FeedbackTable = ({
                 feedback={feedback}
                 onUpdateStatus={onUpdateStatus}
                 onViewFullFeedback={onViewFullFeedback}
-                isUpdating={updatingFeedbackId === feedback.id} // NUOVO
+                isUpdating={updatingFeedbackId === feedback.id} 
               />
             ))
           ) : (
@@ -292,66 +293,7 @@ const FeedbackTable = ({
 
 function FeedbackPage() {
   // Sample data
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([
-    {
-      id: 1,
-      uuid: "fb-uuid-1",
-      template_name: "Standard Bilinguismo",
-      question_identifier: "s1_q1",
-      feedback_text:
-        "The options for language preference should include more regional dialects. It would be beneficial to add options for variations like Sicilian, Venetian, Calabrian, etc. Many users have expressed interest in more granular language options rather than just standard Italian. This would help us collect more specific data about language preferences across different regions of Italy.",
-      status: "New",
-      submitted_at: "2025-04-22T14:30:00",
-    },
-    {
-      id: 2,
-      uuid: "fb-uuid-2",
-      template_name: "Follow-up",
-      question_identifier: "s1_q3",
-      feedback_text:
-        "The satisfaction scale is confusing. Is 1 the best or 5 the best?",
-      status: "Investigating",
-      submitted_at: "2025-04-23T09:15:00",
-    },
-    {
-      id: 3,
-      uuid: "fb-uuid-3",
-      template_name: "Standard Bilinguismo",
-      feedback_text: "Overall, the questionnaire is too long and repetitive.",
-      status: "Resolved",
-      submitted_at: "2025-04-21T11:20:00",
-    },
-    {
-      id: 4,
-      uuid: "fb-uuid-4",
-      template_name: "Follow-up",
-      question_identifier: "s2_q10",
-      feedback_text:
-        "The text field for additional comments is too small and doesn't allow enough characters. When trying to give detailed feedback about multiple aspects of the service, I hit the character limit very quickly. Please consider expanding this to at least 500 characters to allow for more comprehensive responses.",
-      status: "New",
-      submitted_at: "2025-04-24T16:45:00",
-    },
-    {
-      id: 5,
-      uuid: "fb-uuid-5",
-      template_name: "Standard Bilinguismo",
-      question_identifier: "s4_q2",
-      feedback_text:
-        "There should be an option for vocational training in the education level question.",
-      status: "New",
-      submitted_at: "2025-04-25T10:30:00",
-    },
-    {
-      id: 6,
-      uuid: "fb-uuid-6",
-      template_name: "Standard Bilinguismo",
-      question_identifier: "s4_q2",
-      feedback_text:
-        "There should be an option for vocational training in the education level question.",
-      status: "New",
-      submitted_at: "2025-04-25T10:30:00",
-    },
-  ]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
   // Filter states in a single object
   const [filters, setFilters] = useState<FilterState>({
@@ -366,7 +308,7 @@ function FeedbackPage() {
 
   useEffect(() => {
     loadFeedbacks();
-  }, []); // Ricarica quando cambiano i filtri
+  }, []); 
   
   const loadFeedbacks = async () => {
     setLoading(true);
@@ -385,15 +327,9 @@ function FeedbackPage() {
       const validatedParams = listFeedbackQuerySchema.parse(queryParams);
       console.log("Loading feedbacks with params:", validatedParams);
       
-      // TODO: Sostituire con vera chiamata API
-      // const response = await feedbackApi.getFeedbacks(validatedParams);
-      // setFeedbacks(response.feedbacks);
-      
-      // MOCK: Simula caricamento con possibili errori
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Mock data già esistente nel componente...
-      // setFeedbacks rimane uguale per ora
+      const response = await feedbackApi.getFeedbacks(validatedParams);
+      setFeedbacks(response.feedbacks);
+    
       
     } catch (error) {
       console.error("Error loading feedbacks:", error);
@@ -484,10 +420,8 @@ function FeedbackPage() {
       console.log("Updating feedback status:", feedbackUuid, newStatus);
       
       // TODO: Sostituire con vera chiamata API
-      // await feedbackApi.updateStatus(feedbackUuid, { status: newStatus });
-      
-      // MOCK: Simula aggiornamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
+       await feedbackApi.updateStatus(feedbackUuid, { status: newStatus });
+     
       
       // Aggiorna stato locale
       setFeedbacks(feedbacks.map(feedback =>
