@@ -1,13 +1,13 @@
 // src/pages/FeedbackPage.tsx
 
-import { AlertCircle, Search as SearchIcon, CheckCircle } from "lucide-react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { AlertCircle, Search as SearchIcon, CheckCircle, Loader2 } from "lucide-react";
+import { z } from "zod";
+
 import AppLayout from "../layout/AppLayout";
-import { useState, useEffect } from "react";
 import { useError } from "../context";
 import { LoadingSpinner } from "../../../family-client/src/components/ui";
-import { Loader2 } from "lucide-react";
-import { feedbackApi } from "../services/feedbackApi"
-
+import { feedbackApi } from "../services/feedbackApi";
 import {
   SearchBar,
   SelectFilter,
@@ -15,10 +15,12 @@ import {
   StatsCard,
   Button,
 } from "../components/shared/Filters";
+import { FeedbackDTO as Feedback } from "@bilinguismo/shared";
+import { listFeedbackQuerySchema, updateFeedbackBodySchema } from "../../../shared/src/schemas";
 
-import {FeedbackDTO as Feedback} from "@bilinguismo/shared";
-import { listFeedbackQuerySchema,updateFeedbackBodySchema } from "../../../shared/src/schemas";
-import { z } from "zod";
+// ============================================================================
+// TYPES & CONSTANTS
+// ============================================================================
 
 interface FilterState {
   search: string;
@@ -26,46 +28,141 @@ interface FilterState {
   template: string;
 }
 
-const FilterBar = ({
-  filters,
-  setFilters,
-  clearFilters,
-}: {
+const INITIAL_FILTERS: FilterState = {
+  search: "",
+  status: "All",
+  template: "All Templates",
+};
+
+const STATUS_OPTIONS = [
+  { value: "All", label: "All Status" },
+  { value: "New", label: "Nuovi" },
+  { value: "Investigating", label: "In esame" },
+  { value: "Resolved", label: "Risolti" },
+];
+
+const TEMPLATE_OPTIONS = [
+  { value: "All Templates", label: "All Templates" },
+  { value: "Standard Bilinguismo", label: "Standard Bilinguismo" },
+  { value: "Follow-up", label: "Follow-up" },
+];
+
+const STATUS_CONFIG = {
+  New: {
+    label: "Nuovo",
+    className: "bg-blue-100 text-blue-800",
+    icon: AlertCircle,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50"
+  },
+  Investigating: {
+    label: "In esame",
+    className: "bg-yellow-100 text-yellow-800",
+    icon: SearchIcon,
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50"
+  },
+  Resolved: {
+    label: "Risolto",
+    className: "bg-green-100 text-green-800",
+    icon: CheckCircle,
+    color: "text-green-600",
+    bgColor: "bg-green-50"
+  }
+} as const;
+
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  New: ["Investigating", "Resolved"],
+  Investigating: ["Resolved", "New"],
+  Resolved: []
+};
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+const calculateStats = (feedbacks: Feedback[]) => {
+  return feedbacks.reduce(
+    (acc, feedback) => {
+      if (feedback.status === "New") acc.newCount++;
+      else if (feedback.status === "Investigating") acc.investigatingCount++;
+      else if (feedback.status === "Resolved") acc.resolvedCount++;
+      return acc;
+    },
+    { newCount: 0, investigatingCount: 0, resolvedCount: 0 }
+  );
+};
+
+const filterFeedbacks = (feedbacks: Feedback[], filters: FilterState) => {
+  return feedbacks.filter((feedback) => {
+    const matchesSearch = filters.search === "" || 
+      (feedback.question_identifier?.toLowerCase().includes(filters.search.toLowerCase()) ?? false);
+    
+    const matchesStatus = filters.status === "All" || feedback.status === filters.status;
+    
+    const matchesTemplate = filters.template === "All Templates" || 
+      feedback.template_name === filters.template;
+
+    return matchesSearch && matchesStatus && matchesTemplate;
+  });
+};
+
+const isValidStatusTransition = (currentStatus: string, newStatus: string): boolean => {
+  return STATUS_TRANSITIONS[currentStatus]?.includes(newStatus) ?? false;
+};
+
+const truncateText = (text: string, maxLength: number = 50): string => {
+  return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+};
+
+// ============================================================================
+// SUB-COMPONENTS
+// ============================================================================
+
+const StatusBadge: React.FC<{ status: Feedback["status"] }> = ({ status }) => {
+  const config = STATUS_CONFIG[status];
+  if (!config) {
+    return (
+      <span className="px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+        Sconosciuto
+      </span>
+    );
+  }
+
+  const Icon = config.icon;
+  return (
+    <span className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${config.className}`}>
+      <Icon size={14} className="mr-1" />
+      {config.label}
+    </span>
+  );
+};
+
+const FilterBar: React.FC<{
   filters: FilterState;
-  setFilters: (key: keyof FilterState, value: string) => void;
-  clearFilters: () => void;
-}) => (
+  onFilterChange: (key: keyof FilterState, value: string) => void;
+  onClearFilters: () => void;
+}> = ({ filters, onFilterChange, onClearFilters }) => (
   <div className="bg-white p-4 shadow-sm rounded-lg mb-6">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-      {/* Search */}
       <SearchBar
         value={filters.search}
-        onChange={(value) => setFilters("search", value)}
+        onChange={(value) => onFilterChange("search", value)}
         placeholder="Cerca per ID domanda..."
       />
 
-      {/* Filters */}
       <div className="flex gap-2">
         <SelectFilter
           value={filters.status}
-          onChange={(value) => setFilters("status", value)}
-          options={[
-            { value: "All", label: "All Status" },
-            { value: "New", label: "Nuovi" },
-            { value: "Investigating", label: "In esame" },
-            { value: "Resolved", label: "Risolti" },
-          ]}
+          onChange={(value) => onFilterChange("status", value)}
+          options={STATUS_OPTIONS}
           placeholder="Stato: tutti"
         />
 
         <SelectFilter
           value={filters.template}
-          onChange={(value) => setFilters("template", value)}
-          options={[
-            { value: "All Templates", label: "All Templates" },
-            { value: "Standard Bilinguismo", label: "Standard Bilinguismo" },
-            { value: "Follow-up", label: "Follow-up" },
-          ]}
+          onChange={(value) => onFilterChange("template", value)}
+          options={TEMPLATE_OPTIONS}
           placeholder="Template: tutti"
         />
       </div>
@@ -76,125 +173,41 @@ const FilterBar = ({
     </div>
 
     <div className="flex justify-between">
-      <div>
-        <Button onClick={clearFilters} variant="secondary">
-          Cancella Filtri
-        </Button>
-      </div>
+      <Button onClick={onClearFilters} variant="secondary">
+        Cancella Filtri
+      </Button>
     </div>
   </div>
 );
 
-const StatusBadge = ({ status }: { status: Feedback["status"] }) => {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "New":
-        return "bg-blue-100 text-blue-800";
-      case "Investigating":
-        return "bg-yellow-100 text-yellow-800";
-      case "Resolved":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "New":
-        return <AlertCircle size={14} className="mr-1" />;
-      case "Investigating":
-        return <SearchIcon size={14} className="mr-1" />;
-      case "Resolved":
-        return <CheckCircle size={14} className="mr-1" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <span
-      className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-        status
-      )}`}
-    >
-      {getStatusIcon(status)}
-      {(() => {
-        switch (status) {
-          case "New":
-            return "Nuovo";
-          case "Investigating":
-            return "In esame";
-          case "Resolved":
-            return "Risolto";
-          default:
-            return "Sconosciuto";
-        }
-      })()}
-    </span>
-  );
-};
-
-const TableHeader = () => (
-  <thead className="bg-gray-50">
-    <tr>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        ID
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        Template
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        ID Domanda
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        Feedback
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        Stato
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        Inviato
-      </th>
-      <th
-        scope="col"
-        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-      >
-        Azioni
-      </th>
-    </tr>
-  </thead>
+const StatsSection: React.FC<{ stats: ReturnType<typeof calculateStats> }> = ({ stats }) => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    {[
+      { key: 'newCount', title: "Nuovi Feedback", status: 'New' },
+      { key: 'investigatingCount', title: "In esame", status: 'Investigating' },
+      { key: 'resolvedCount', title: "Risolti", status: 'Resolved' }
+    ].map(({ key, title, status }) => {
+      const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+      const Icon = config.icon;
+      return (
+        <StatsCard
+          key={key}
+          title={title}
+          count={stats[key as keyof typeof stats]}
+          icon={<Icon size={24} className={config.color} />}
+          color={config.bgColor}
+        />
+      );
+    })}
+  </div>
 );
 
-const FeedbackRow = ({
-  feedback,
-  onUpdateStatus,
-  onViewFullFeedback,
-  isUpdating = false, 
-}: {
+const FeedbackRow: React.FC<{
   feedback: Feedback;
-  onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
-  onViewFullFeedback: (feedback: Feedback) => void;
-  isUpdating?: boolean; 
-}) => (
+  onUpdateStatus: (id: number, uuid: string, status: Feedback["status"]) => void;
+  onViewFull: (feedback: Feedback) => void;
+  isUpdating: boolean;
+}> = ({ feedback, onUpdateStatus, onViewFull, isUpdating }) => (
   <tr className="hover:bg-gray-50">
     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
       #{feedback.id}
@@ -207,12 +220,10 @@ const FeedbackRow = ({
     </td>
     <td className="px-6 py-4 text-sm text-gray-700 max-w-xs">
       <div className="truncate">
-        {feedback.feedback_text.length > 50
-          ? `${feedback.feedback_text.substring(0, 50)}...`
-          : feedback.feedback_text}
+        {truncateText(feedback.feedback_text)}
       </div>
       <button
-        onClick={() => onViewFullFeedback(feedback)}
+        onClick={() => onViewFull(feedback)}
         className="text-blue-600 hover:text-blue-800 text-xs mt-1"
       >
         Visualizza completo
@@ -231,46 +242,43 @@ const FeedbackRow = ({
             isUpdating ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           value={feedback.status}
-          onChange={(e) =>
-            onUpdateStatus(feedback.id,feedback.uuid, e.target.value as Feedback["status"])
-          }
+          onChange={(e) => onUpdateStatus(feedback.id, feedback.uuid, e.target.value as Feedback["status"])}
           disabled={isUpdating}
         >
           <option value="New">Nuovo</option>
           <option value="Investigating">In esame</option>
           <option value="Resolved">Risolto</option>
         </select>
-        {isUpdating && (
-          <Loader2 size={14} className="animate-spin text-gray-400" />
-        )}
+        {isUpdating && <Loader2 size={14} className="animate-spin text-gray-400" />}
       </div>
     </td>
   </tr>
 );
 
-const EmptyFeedbackState = () => (
-  <tr>
-    <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-      Nessuna segnalazione trovata
-    </td>
-  </tr>
-);
-
-const FeedbackTable = ({
-  feedbacks,
-  onUpdateStatus,
-  onViewFullFeedback,
-  updatingFeedbackId, 
-}: {
+const FeedbackTable: React.FC<{
   feedbacks: Feedback[];
-  onUpdateStatus: (id: number, uuid:string, status: Feedback["status"]) => void;
-  onViewFullFeedback: (feedback: Feedback) => void;
-  updatingFeedbackId?: number | null; 
-}) => (
+  onUpdateStatus: (id: number, uuid: string, status: Feedback["status"]) => void;
+  onViewFull: (feedback: Feedback) => void;
+  updatingId: number | null;
+}> = ({ feedbacks, onUpdateStatus, onViewFull, updatingId }) => (
   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
-        <TableHeader />
+        <thead className="bg-gray-50">
+          <tr>
+            {["ID", "Template", "ID Domanda", "Feedback", "Stato", "Inviato", "Azioni"].map((header) => (
+              <th
+                key={header}
+                scope="col"
+                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                  header === "Azioni" ? "text-center" : ""
+                }`}
+              >
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {feedbacks.length > 0 ? (
             feedbacks.map((feedback) => (
@@ -278,12 +286,16 @@ const FeedbackTable = ({
                 key={feedback.id}
                 feedback={feedback}
                 onUpdateStatus={onUpdateStatus}
-                onViewFullFeedback={onViewFullFeedback}
-                isUpdating={updatingFeedbackId === feedback.id} 
+                onViewFull={onViewFull}
+                isUpdating={updatingId === feedback.id}
               />
             ))
           ) : (
-            <EmptyFeedbackState />
+            <tr>
+              <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                Nessuna segnalazione trovata
+              </td>
+            </tr>
           )}
         </tbody>
       </table>
@@ -291,56 +303,98 @@ const FeedbackTable = ({
   </div>
 );
 
-function FeedbackPage() {
-  // Sample data
+const FeedbackModal: React.FC<{
+  feedback: Feedback | null;
+  onClose: () => void;
+}> = ({ feedback, onClose }) => {
+  if (!feedback) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-lg font-medium">Dettagli Feedback</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            &times;
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          <dl className="grid grid-cols-1 gap-y-4">
+            {[
+              { label: "Template", value: feedback.template_name },
+              { label: "ID domanda", value: feedback.question_identifier || "-" },
+              { label: "Stato", value: <StatusBadge status={feedback.status} /> },
+              { label: "Inviato il", value: new Date(feedback.submitted_at).toLocaleString() },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <dt className="text-sm font-medium text-gray-500">{label}</dt>
+                <dd className="mt-1 text-sm text-gray-900">{value}</dd>
+              </div>
+            ))}
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Testo Feedback</dt>
+              <dd className="mt-1 text-sm text-gray-900 p-3 bg-gray-50 rounded">
+                {feedback.feedback_text}
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+          <Button onClick={onClose} variant="secondary">Chiudi</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+const FeedbackPage: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-
-  // Filter states in a single object
-  const [filters, setFilters] = useState<FilterState>({
-    search: "",
-    status: "All",
-    template: "All Templates",
-  });
-
+  const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<number | null>(null); // feedback id being updated
+  const [updating, setUpdating] = useState<number | null>(null);
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
+  //pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 20;
+
+  
   const { showError, showSuccess } = useError();
 
-  useEffect(() => {
-    loadFeedbacks();
-  }, []); 
-  
-  const loadFeedbacks = async () => {
+  ///calculations
+  const filteredFeedbacks = useMemo(() => filterFeedbacks(feedbacks, filters), [feedbacks, filters]);
+  const stats = useMemo(() => calculateStats(feedbacks), [feedbacks]);
+
+  // Load feedbacks
+  const loadFeedbacks = useCallback(async (page: number=1) => {
+    const offset = (page-1) *itemsPerPage;
     setLoading(true);
-    
     try {
-      // Valida parametri query usando schema Zod
       const queryParams = {
-        status: filters.status !== "All" ? filters.status : undefined,
-        limit: 50,
-        offset: 0,
+        limit: itemsPerPage,
+        offset: offset,
         sort_by: "submitted_at",
         sort_order: "desc" as const
       };
       
-      // Validazione parametri
       const validatedParams = listFeedbackQuerySchema.parse(queryParams);
-      console.log("Loading feedbacks with params:", validatedParams);
-      
       const response = await feedbackApi.getFeedbacks(validatedParams);
-      setFeedbacks(response.feedbacks);
-    
-      
+      setFeedbacks(response.feedback);
+      setTotalItems(response.total);
     } catch (error) {
       console.error("Error loading feedbacks:", error);
       showError("Errore nel caricamento delle segnalazioni", 'server');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
-    // Validazione solo per status, NON per search
+  // Filter change handler
+  const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
     if (key === 'status' && value !== 'All') {
       const validStatuses = ['New', 'Investigating', 'Resolved'];
       if (!validStatuses.includes(value)) {
@@ -348,126 +402,91 @@ function FeedbackPage() {
         return;
       }
     }
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, [showError]);
 
-  // Handler to clear all filters
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "All",
-      template: "All Templates",
-    });
-  };
+  // Clear filters
+  const clearFilters = useCallback(() => {
+    setFilters(INITIAL_FILTERS);
+  }, []);
 
-  // Filter feedbacks based on filter state
-  const filteredFeedbacks = feedbacks.filter((feedback) => {
-    const matchesSearch = feedback.question_identifier
-      ? feedback.question_identifier
-          .toLowerCase()
-          .includes(filters.search.toLowerCase())
-      : filters.search === ""; // Only match null question_ids when search is empty
-    const matchesStatus =
-      filters.status === "All" || feedback.status === filters.status;
-    const matchesTemplate =
-      filters.template === "All Templates" ||
-      feedback.template_name === filters.template;
-
-    return matchesSearch && matchesStatus && matchesTemplate;
-  });
-
-  // Handler for updating a feedback status
-  const handleUpdateStatus = async (feedbackId: number,feedbackUuid: string, newStatus: Feedback["status"]) => {
-    // Trova il feedback corrente
+  // Update status handler
+  const handleUpdateStatus = useCallback(async (
+    feedbackId: number, 
+    feedbackUuid: string, 
+    newStatus: Feedback["status"]
+  ) => {
     const currentFeedback = feedbacks.find(f => f.id === feedbackId);
     if (!currentFeedback) {
       showError("Feedback non trovato", 'validation');
       return;
     }
-  
-    // Evita update inutili
-    if (currentFeedback.status === newStatus) {
-      return;
-    }
-  
-    // Validazione usando schema Zod
+
+    if (currentFeedback.status === newStatus) return;
+
+    // Validate with Zod schema
     try {
       updateFeedbackBodySchema.parse({ status: newStatus });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessage = error.issues[0].message;
-        showError(`Stato non valido: ${errorMessage}`, 'validation');
+        showError(`Stato non valido: ${error.issues[0].message}`, 'validation');
         return;
       }
     }
-    const validTransitions: Record<string, string[]> = {
-      "New": ["Investigating", "Resolved"],
-      "Investigating": ["Resolved", "New"],
-      "Resolved": ["Investigating"] // Può riaprire se necessario
-    };
-  
-    const currentStatus = currentFeedback.status;
-    const allowedTransitions = validTransitions[currentStatus] || [];
-    
-    if (!allowedTransitions.includes(newStatus)) {
-      showError(`Non è possibile cambiare da "${currentStatus}" a "${newStatus}"`, 'validation');
+
+    // Validate transitions
+    if (!isValidStatusTransition(currentFeedback.status, newStatus)) {
+      showError(`Non è possibile cambiare da "${currentFeedback.status}" a "${newStatus}"`, 'validation');
       return;
     }
-  
+
     setUpdating(feedbackId);
     
     try {
-      console.log("Updating feedback status:", feedbackUuid, newStatus);
+      await feedbackApi.updateStatus(feedbackUuid, { status: newStatus });
       
-      // TODO: Sostituire con vera chiamata API
-       await feedbackApi.updateStatus(feedbackUuid, { status: newStatus });
-     
-      
-      // Aggiorna stato locale
-      setFeedbacks(feedbacks.map(feedback =>
-        feedback.id === feedbackId 
-          ? { ...feedback, status: newStatus }
-          : feedback
-      ));
+      setFeedbacks(prev => 
+        prev.map(feedback =>
+          feedback.id === feedbackId 
+            ? { ...feedback, status: newStatus }
+            : feedback
+        )
+      );
       
       showSuccess(`Stato aggiornato a "${newStatus}"`);
-      
     } catch (error) {
       console.error("Error updating feedback status:", error);
       showError("Errore nell'aggiornamento dello stato", 'server');
     } finally {
       setUpdating(null);
     }
-  };
-  
-  // Calculate stats
-  const newCount = feedbacks.filter((f) => f.status === "New").length;
-  const investigatingCount = feedbacks.filter(
-    (f) => f.status === "Investigating"
-  ).length;
-  const resolvedCount = feedbacks.filter((f) => f.status === "Resolved").length;
+  }, [feedbacks, showError, showSuccess]);
 
-  // State for feedback detail modal
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
-    null
-  );
-
-  // Handler for viewing full feedback
-  const handleViewFullFeedback = (feedback: Feedback) => {
+  // Modal handlers
+  const handleViewFullFeedback = useCallback((feedback: Feedback) => {
     setSelectedFeedback(feedback);
-  };
+  }, []);
 
-  // Handler for closing modal
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedFeedback(null);
-  };
+  }, []);
 
-  const handleRefreshFeedbacks = async () => {
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    loadFeedbacks(page);
+  }, [loadFeedbacks]);
+
+
+  // Refresh handler
+  const handleRefreshFeedbacks = useCallback(async () => {
     await loadFeedbacks();
     showSuccess("Segnalazioni aggiornate");
-  };
+  }, [loadFeedbacks, showSuccess]);
 
-  
+  // Load data on mount
+  useEffect(() => {
+    loadFeedbacks();
+  }, [loadFeedbacks]);
 
   if (loading) {
     return (
@@ -481,6 +500,7 @@ function FeedbackPage() {
 
   return (
     <AppLayout>
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Segnalazioni sui questionari</h2>
         <button
@@ -491,113 +511,37 @@ function FeedbackPage() {
           Aggiorna Dati
         </button>
       </div>
-      
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatsCard
-          title="Nuovi Feedback"
-          count={newCount}
-          icon={<AlertCircle size={24} className="text-blue-600" />}
-          color="bg-blue-50"
-        />
-        <StatsCard
-          title="In esame"
-          count={investigatingCount}
-          icon={<SearchIcon size={24} className="text-yellow-600" />}
-          color="bg-yellow-50"
-        />
-        <StatsCard
-          title="Risolti"
-          count={resolvedCount}
-          icon={<CheckCircle size={24} className="text-green-600" />}
-          color="bg-green-50"
-        />
-      </div>
+      {/* Stats */}
+      <StatsSection stats={stats} />
 
-      {/* Filter component */}
+      {/* Filters */}
       <FilterBar
         filters={filters}
-        setFilters={handleFilterChange}
-        clearFilters={clearFilters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
       />
 
-      {/* Table component */}
+      {/* Table */}
       <FeedbackTable
         feedbacks={filteredFeedbacks}
         onUpdateStatus={handleUpdateStatus}
-        onViewFullFeedback={handleViewFullFeedback}
-        updatingFeedbackId={updating}
+        onViewFull={handleViewFullFeedback}
+        updatingId={updating}
       />
 
-      {/* Pagination component */}
-      <Pagination total={filteredFeedbacks.length} />
+      {/* Pagination */}
+      <Pagination total={totalItems} 
+      currentPage={currentPage} 
+      onPageChange={handlePageChange} />
 
-      {/* Feedback Detail Modal */}
-      {selectedFeedback && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium">Dettagli Feedback</h3>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <dl className="grid grid-cols-1 gap-y-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Template
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {selectedFeedback.template_name}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    ID domanda
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {selectedFeedback.question_identifier || "-"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Stato</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    <StatusBadge status={selectedFeedback.status} />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Inviao il
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(selectedFeedback.submitted_at).toLocaleString()}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">
-                    Testo Feedback
-                  </dt>
-                  <dd className="mt-1 text-sm text-gray-900 p-3 bg-gray-50 rounded">
-                    {selectedFeedback.feedback_text}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-              <Button onClick={handleCloseModal} variant="secondary">
-                Chiudi
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal */}
+      <FeedbackModal
+        feedback={selectedFeedback}
+        onClose={handleCloseModal}
+      />
     </AppLayout>
   );
-}
+};
 
 export default FeedbackPage;

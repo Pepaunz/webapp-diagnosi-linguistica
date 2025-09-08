@@ -4,7 +4,7 @@ import { AddNoteRequest, UpdateNoteRequest, NoteParams } from "@bilinguismo/shar
 import { UuidParam } from "@bilinguismo/shared";
 import * as notesService from "../../core/services/notes.service";
 
-// Extend Request interface per includere operator info
+
 interface AuthenticatedRequest<TParams = {}, TBody = {}> extends Request<TParams, any, TBody> {
   operator?: {
     operator_id: string;

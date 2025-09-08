@@ -1,11 +1,12 @@
 // src/types/api.types.ts
-import { Answer, Template } from "@prisma/client";
+import { Template } from "@prisma/client";
+import { AnswerDTO } from "@bilinguismo/shared";
 
 export interface StartOrResumeResponse {
   submission_id: string;
   status: "InProgress";
   current_step_identifier: string | null;
-  answers: Answer[];
+  answers: AnswerDTO[];
   questionnaire_template: Template;
   isNew: boolean;
 }

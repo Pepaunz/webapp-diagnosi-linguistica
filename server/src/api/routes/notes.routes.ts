@@ -20,7 +20,7 @@ const noteRouteParamsSchema = uuidParamSchema.extend({
 
 // GET /submissions/:id/notes - Lista note per submission
 router.get(
-  "/submissions/:id/notes",
+  "/:id/notes",
   authMiddleware,
   validate(uuidParamSchema, "params"),
   notesController.getNotesBySubmissionId
@@ -28,7 +28,7 @@ router.get(
 
 // POST /submissions/:id/notes - Crea nuova nota
 router.post(
-  "/submissions/:id/notes",
+  "/:id/notes",
   authMiddleware,
   validate(uuidParamSchema, "params"),
   validate(addNoteRequestSchema, "body"),
@@ -37,7 +37,7 @@ router.post(
 
 // PUT /submissions/:submissionId/notes/:noteId - Aggiorna nota (solo proprietario o admin)
 router.put(
-  "/submissions/:submissionId/notes/:noteId",
+  "/:submissionId/notes/:noteId",
   authMiddleware,
   validate(updateNoteRequestSchema, "body"),
   notesController.updateNote
@@ -45,7 +45,7 @@ router.put(
 
 // DELETE /submissions/:submissionId/notes/:noteId - Elimina nota (solo proprietario o admin)
 router.delete(
-  "/submissions/:submissionId/notes/:noteId",
+  "/:submissionId/notes/:noteId",
   authMiddleware,
   notesController.deleteNote
 );

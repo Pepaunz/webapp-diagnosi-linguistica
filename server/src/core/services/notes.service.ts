@@ -10,7 +10,7 @@ type OperatorNoteWithOperator = {
   note_id: string;
   submission_id: string;
   question_identifier: string | null;
-  operator_id: string;
+  //operator_id: string;
   operator_full_name: string | null;
   note_text: string;
   created_at: Date;
@@ -22,7 +22,7 @@ const mapToResponseFormat = (note: any): OperatorNoteWithOperator => ({
   note_id: note.note_id,
   submission_id: note.submission_id,
   question_identifier: note.question_identifier,
-  operator_id: note.operator_id,
+  //operator_id: note.operator_id,
   operator_full_name: note.operator?.full_name || null,
   note_text: note.note_text,
   created_at: note.created_at,

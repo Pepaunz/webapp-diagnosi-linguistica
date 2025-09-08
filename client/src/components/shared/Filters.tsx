@@ -1,4 +1,3 @@
-// src/components/shared/Filters.tsx
 
 import { Search, ChevronDown } from "lucide-react";
 
@@ -57,54 +56,67 @@ export const SearchBar = ({
   </div>
 );
 
-// src/components/shared/Table.tsx
 
-// Reusable Pagination component
+
 export const Pagination = ({
   total,
   currentPage = 1,
+  itemsPerPage = 20, 
   onPageChange = () => {},
 }: {
   total: number;
   currentPage?: number;
+  itemsPerPage?: number; 
   onPageChange?: (page: number) => void;
-}) => (
-  <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
-    <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-      <div>
-        <p className="text-sm text-gray-700">
-          Showing <span className="font-medium">1</span> to{" "}
-          <span className="font-medium">{total}</span> of{" "}
-          <span className="font-medium">{total}</span> results
-        </p>
-      </div>
-      <div>
-        <nav
-          className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-          aria-label="Pagination"
-        >
-          <button
-            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <button className="bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-            {currentPage}
-          </button>
-          <button
-            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            onClick={() => onPageChange(currentPage + 1)}
-          >
-            Next
-          </button>
-        </nav>
+}) => {
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, total);
+  const totalPages = Math.ceil(total / itemsPerPage);
+  
+  return (
+    <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm text-gray-700">
+            Showing <span className="font-medium">{startItem}</span> to{" "}
+            <span className="font-medium">{endItem}</span> of{" "}
+            <span className="font-medium">{total}</span> results
+          </p>
+        </div>
+        <div>
+          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            <button
+              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                currentPage === 1 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <button className="bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+              {currentPage}
+            </button>
+            <button
+              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                currentPage >= totalPages 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}  
+            >
+              Next
+            </button>
+          </nav>
+        </div>
       </div>
     </div>
-  </div>
-);
-
+  );
+};
 // Reusable EmptyState component
 export const EmptyState = ({
   message,
@@ -122,8 +134,6 @@ export const EmptyState = ({
     </td>
   </tr>
 );
-
-// src/components/shared/UI.tsx
 
 // Reusable StatsCard component
 export const StatsCard = ({

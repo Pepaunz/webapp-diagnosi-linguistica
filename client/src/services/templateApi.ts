@@ -1,25 +1,13 @@
-// client/src/services/templateApi.ts - SERVIZIO API PER TEMPLATE
+
 import { 
     Template, 
     CreateTemplateInput, 
     UpdateTemplateInput, 
     ListTemplatesQuery 
   } from "@bilinguismo/shared";
+  import { handleApiResponse } from "./utilsApi";
   
-  // Configurazione base API
   const API_BASE_URL = "/api/v1";
-  
-  // Utility per gestione errori fetch
-  const handleApiResponse = async (response: Response) => {
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.message || `HTTP ${response.status}`);
-      (error as any).status = response.status;
-      (error as any).response = { data: errorData };
-      throw error;
-    }
-    return response.json();
-  };
   
   // ====================================================================
   // TEMPLATE API CALLS
@@ -114,26 +102,9 @@ import {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error = new Error(errorData.message || `HTTP ${response.status}`);
-        (error as any).status = response.status;
-        (error as any).response = { data: errorData };
-        throw error;
-      }
+      return handleApiResponse(response)
     },
-  
-    // GET /templates/:id/submissions/count - Controlla se template ha submission
-    async getSubmissionCount(templateId: string): Promise<{ count: number }> {
-      const response = await fetch(`${API_BASE_URL}/templates/${templateId}/submissions/count`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      
-      return handleApiResponse(response);
-    },
+
   };
   
   

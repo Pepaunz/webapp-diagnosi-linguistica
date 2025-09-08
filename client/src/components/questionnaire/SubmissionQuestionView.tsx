@@ -33,6 +33,7 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
   .min(1, "La nota non può essere vuota")
   .max(2000, "La nota è troppo lunga (max 2000 caratteri)");
 
+  const hasAnswer = answer && answer.answer_value !== null && answer.answer_value !== undefined;
 
   const handleAddNote = () => {
     // Reset errore precedente
@@ -56,22 +57,21 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
   };
 
   const renderAnswer = () => {
-    if (!answer) {
-      return <p className="text-gray-500 italic">Nessuna risposta fornita</p>;
-    }
+  
+    const value = answer?.answer_value;
 
     if (question.type === "multiple-choice" && question.options) {
       return (
         <div className="ml-4 space-y-2">
           {question.options.map((option) => {
-            const isSelected = option.value === answer.answer_value.value;
+            const isSelected = option.value === value;
             return (
               <div
                 key={option.value}
-                className={`flex items-center gap-2 p-2 rounded ${
+                className={`flex items-center gap-2 p-2 rounded transition-colors ${
                   isSelected
                     ? "bg-blue-50 border border-blue-200"
-                    : "opacity-50"
+                    :  hasAnswer ? "opacity-50" : ""
                 }`}
               >
                 <input
@@ -92,63 +92,72 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
           })}
         </div>
       );
-    } else if (question.type === "text") {
-      return (
-        <div className="ml-4">
-          <p className="text-gray-700 bg-gray-50 p-3 rounded">
-            {answer.answer_value.value}
-          </p>
-        </div>
-      );
-    } else if (question.type === "rating") {
-      const maxValue = 10;
-      const selectedValue = parseInt(answer.answer_value.value) || 0;
+    } 
+
+    if (question.type === "rating") {
+      const maxValue =  question.maxValue || 10;
+      const selectedValue = hasAnswer && typeof value === 'string' ? parseInt(value, 10) : 0;
       const stars = Array.from({ length: maxValue }, (_, i) => i + 1);
 
       return (
         <div className="ml-4">
-          <div className="flex gap-1 items-center">
-            {stars.map((value) => (
+          <div className={`flex gap-1 items-center ${!hasAnswer ? 'opacity-50' : ''}`}>
+            {stars.map((starValue) => (
               <Star
-                key={value}
+                key={starValue}
                 size={24}
                 className={
-                  value <= selectedValue ? "text-yellow-500" : "text-gray-300"
+                  starValue <= selectedValue ? "text-yellow-500" : "text-gray-300"
                 }
-                fill={value <= selectedValue ? "currentColor" : "none"}
+                fill={starValue <= selectedValue ? "currentColor" : "none"}
               />
             ))}
-            <span className="ml-2 text-gray-600">
-              ({selectedValue}/{maxValue})
-            </span>
+          {hasAnswer && (
+              <span className="ml-2 text-gray-600">
+                ({selectedValue}/{maxValue})
+              </span>
+            )}
           </div>
         </div>
       );
-    } else if (question.type === "date") {
+    } 
+    if (!hasAnswer) {
+      return <p className="text-gray-500 italic ml-4">Nessuna risposta fornita</p>;
+    }
+
+    if (question.type === "text") {
+      return (
+        <div className="ml-4">
+          <p className="text-gray-700 bg-gray-50 p-3 rounded">{String(value)}</p>
+        </div>
+      );
+    }
+    
+    if (question.type === "date") {
       return (
         <div className="ml-4">
           <p className="text-gray-700 bg-gray-50 p-3 rounded">
-            {new Date(answer.answer_value.value).toLocaleDateString("it-IT", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
+            {new Date(String(value)).toLocaleDateString("it-IT", {
+              year: "numeric", month: "long", day: "numeric", timeZone: 'UTC'
             })}
           </p>
         </div>
       );
     }
+     
     return null;
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-gray-50">
+    <div className={`border rounded-lg p-4 mt-4 transition-colors ${
+      hasAnswer ? 'bg-blue-50/50 border-blue-200/50' : 'bg-orange-100/50'
+    }`}>
       <div className="mb-3">
         <p className="font-medium text-gray-800">
           {questionIndex + 1}. {question.text[selectedLanguage]}
           {question.required && <span className="text-red-500 ml-1">*</span>}
         </p>
       </div>
-
       {renderAnswer()}
 
       {/* Notes Section */}

@@ -5,7 +5,7 @@ import { completeSubmissionBodySchema, startOrResumeRequestSchema,saveProgressRe
 import { uuidParamSchema } from "@bilinguismo/shared";
 import { } from "@bilinguismo/shared";
 import * as submissionController from "../controllers/submission.controller";
-
+import noteRoutes from "./notes.routes";
 const router = Router();
 //;=====================================================================
 // ROTTE PUBBLICHE
@@ -58,5 +58,9 @@ router.delete(
   submissionController.deleteSubmission
 );
 
+
+
+// ROTTE NOTES 
+router.use("/", noteRoutes);
 
 export default router;

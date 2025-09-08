@@ -84,12 +84,15 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
 
     setErrors(prev => [...prev, appError]);
 
-    // Auto-remove dopo 10 secondi per errori non critici
-    if (type !== 'validation') {
-      setTimeout(() => {
-        clearError(errorId);
-      }, 10000);
-    }
+   // Auto-remove con tempistiche differenti per tipo
+    const autoRemoveDelay = appError.type === 'validation' ? 8000 :  // 8s per validation
+          appError.type === 'network' ? 6000 :     // 6s per network  
+          appError.type === 'server' ? 10000 :     // 10s per server
+          7000;                                     // 7s per generic
+
+    setTimeout(() => {
+      clearError(errorId);
+    }, autoRemoveDelay);
   }, []);
 
   const clearError = useCallback((errorId: string) => {
@@ -118,17 +121,17 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
     const errorId = `success_${Date.now()}_${Math.random()}`;
     const successMessage: AppError = {
       id: errorId,
-      type: 'generic', // Usiamo generic ma lo gestiamo come success
+      type: 'generic',
       message,
       timestamp: new Date(),
     };
 
     setErrors(prev => [...prev, successMessage]);
 
-    // Auto-remove dopo 5 secondi per successi
+  
     setTimeout(() => {
       clearError(errorId);
-    }, 5000);
+    }, 4000);
   }, []);
 
   return {

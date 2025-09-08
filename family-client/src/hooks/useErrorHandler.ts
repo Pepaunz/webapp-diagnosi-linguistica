@@ -183,7 +183,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
 
     setErrors(prev => [...prev, successMessage]);
 
-    // Auto-remove dopo 4 secondi per successi (più veloce su mobile)
+    
     setTimeout(() => {
       clearError(errorId);
     }, 4000);

@@ -4,15 +4,75 @@ import * as operatorNotesRepo from "../repositories/notes.repository";
 import { Language, QuestionnaireData, StartOrResumeRequest, SubmissionStatus } from "@bilinguismo/shared";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
-import { Prisma, Submission as PrismaSubmission, Answer } from "@prisma/client";
+import { Prisma, Submission as PrismaSubmission, Answer, Template} from "@prisma/client";
 import { SaveProgressRequest } from "@bilinguismo/shared";
 import { ListSubmissionsQuery, CompleteSubmissionBody } from "@bilinguismo/shared";
 import { SubmissionDTO } from "@bilinguismo/shared";
-import { SubmissionDetailDTO, AnswerDTO, OperatorNoteDTO, TemplateDTO } from "@bilinguismo/shared";
+import { SubmissionDetailDTO, AnswerDTO, OperatorNoteDTO, TemplateDTO, Question } from "@bilinguismo/shared";
+import { questionSchema } from "@../../../shared/src/schemas/questionnaire.schemas";
 
 // ====================================================================
 // HELPER FUNCTIONS
 // ====================================================================
+
+const validateAnswersAgainstTemplate = (template: Template, answers: SaveProgressRequest['answers']) => {
+  // Estraiamo la struttura. Usiamo il tipo 'any' per navigare il JSON in modo flessibile.
+  const structure = template.structure_definition as any;
+  if (!structure || !Array.isArray(structure.sections)) {
+    throw new ApiError(500, 'Invalid template structure: sections are missing.');
+  }
+
+  // Creiamo una mappa di tutte le domande valide per un accesso O(1)
+  const validQuestionsMap = new Map<string, Question>();
+  structure.sections.forEach((section: any) => {
+    if (Array.isArray(section.questions)) {
+      section.questions.forEach((question: any) => {
+        const parsedQuestion = questionSchema.safeParse(question);
+        if (parsedQuestion.success) {
+          validQuestionsMap.set(parsedQuestion.data.questionId, parsedQuestion.data);
+        }
+      });
+    }
+  });
+  // Iteriamo su ogni risposta inviata dal client e la validiamo
+  for (const answer of answers) {
+    const questionDefinition = validQuestionsMap.get(answer.question_identifier);
+
+    // Controlla se l'ID della domanda è valido
+    if (!questionDefinition) {
+      throw new ApiError(400, `Validation Error: Question with ID "${answer.question_identifier}" does not exist in this template.`);
+    }
+
+    // Controlla la coerenza del valore della risposta con il tipo di domanda
+    const { type, options,required } = questionDefinition;
+    const { answer_value } = answer;
+
+    if (required) {
+      // Controlliamo se answer_value è nullo, indefinito o una stringa vuota
+      if (answer_value === null || answer_value === undefined || (typeof answer_value === 'string' && answer_value.trim() === '')) {
+        throw new ApiError(400, `Validation Error: Answer for required question "${answer.question_identifier}" cannot be empty.`);
+      }
+    }
+    
+    // Se la risposta è fornita, controlliamo la coerenza del tipo
+    if (answer_value !== null && answer_value !== undefined) {
+        if (type === 'multiple-choice' || type === 'rating') {
+            const validOptionValues = options?.map(opt => opt.value) || [];
+            if (typeof answer_value !== 'string' || !validOptionValues.includes(answer_value)) {
+                throw new ApiError(400, `Validation Error: Invalid option "${answer_value}" for question "${answer.question_identifier}".`);
+            }
+        } else if (type === 'date') {
+            if (typeof answer_value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(answer_value) || isNaN(Date.parse(answer_value))) {
+                throw new ApiError(400, `Validation Error: Invalid date format for question "${answer.question_identifier}".`);
+            }
+        } else if (type === 'text') {
+            if (typeof answer_value !== 'string') {
+                throw new ApiError(400, `Validation Error: Answer for question "${answer.question_identifier}" must be a string.`);
+            }
+        }
+    }
+  }
+};
 
 const calculateProgress = (
   currentStepIdentifier: string | null,
@@ -27,17 +87,21 @@ const calculateProgress = (
     (    section: { sectionId: string; }) => section.sectionId === currentStepIdentifier
   ) + 1;
   
-  // Se non trova il sectionId (caso edge), assume step 0
+  // Se non trova il sectionId, assume step 0
   if (currentStepNumber === 0) return `0/${totalSteps}`;
   
   return `${currentStepNumber}/${totalSteps}`;
 };
 
+// ====================================================================
+// SERVICES
+// ====================================================================
+
 //POST /submissions/start_or_resume.
 export const startOrResume = async (
   input: StartOrResumeRequest
 ): Promise<StartOrResumeResponse> => {
-  // 1. Verifica che il template esista e sia attivo
+  //Verifica che il template esista e sia attivo
   const template = await templateRepo.findActiveTemplateById(
     input.questionnaire_template_id
   );
@@ -48,14 +112,14 @@ export const startOrResume = async (
     );
   }
 
-  // 2. Cerca una submission in corso
+  //Cerca una submission in corso
   let submission = await submissionRepo.findLatestInProgress(
     input.fiscal_code,
     input.questionnaire_template_id
   );
   let isNew = false;
 
-  // 3. Se non esiste, creane una nuova
+  //Se non esiste, creane una nuova
   if (!submission) {
     submission = await submissionRepo.createSubmission({
       fiscal_code: input.fiscal_code,
@@ -65,17 +129,28 @@ export const startOrResume = async (
     isNew = true;
   }
 
-  // 4. Recupera le risposte già salvate (sarà un array vuoto se la submission è nuova)
-  const answers = await submissionRepo.findAnswersBySubmissionId(
+  //Recupera le risposte già salvate (sarà un array vuoto se la submission è nuova)
+  const answersFromDb = await submissionRepo.findAnswersBySubmissionId(
     submission.submission_id
   );
 
-  // 5. Costruisci e restituisci la risposta standard
+  const answersDTO: AnswerDTO[] = answersFromDb.map(answer => {
+    const extractedValue = (answer.answer_value as any)?.value ?? null;
+
+    return {
+      answer_id: answer.answer_id, 
+      question_identifier: answer.question_identifier,
+      saved_at: answer.saved_at.toISOString(),
+      answer_value: extractedValue,
+    };
+  });
+
+  //Costruisci e restituisci la risposta standard
   return {
     submission_id: submission.submission_id,
     status: submission.status as "InProgress", // Sappiamo che è InProgress
     current_step_identifier: submission.current_step_identifier,
-    answers: answers,
+    answers: answersDTO,
     questionnaire_template: template, // Restituiamo il template per il rendering
     isNew: isNew, // Campo extra per far sapere al frontend se è una ripresa o un nuovo avvio
   };
@@ -88,14 +163,14 @@ export const saveProgress = async (
 ): Promise<{ last_updated_at: Date }> => {
   const { answers, current_step_identifier } = body;
 
-  // 1. Verifica che la submission esista e sia ancora in corso
-  const submission = await submissionRepo.findInProgressSubmissionById(
+  // Verifica che la submission esista e sia ancora in corso
+  const submission = await submissionRepo.findInProgressSubmissionByIdWithTemplate(
     submission_id
   );
-  if (!submission) {
+  if (!submission || !submission.template) {
     throw new ApiError(
       404,
-      "Submission not found or has already been completed"
+      "Submission not found or has already been completed or not associated template"
     );
   }
 
@@ -104,13 +179,14 @@ export const saveProgress = async (
       // Aggiungiamo il submission_id, che conosciamo dal parametro dell'URL
       submission_id: submission_id,
       question_identifier: answer.question_identifier,
-      answer_value: answer.answer_value as Prisma.InputJsonValue,
-      // `saved_at` verrà gestito dal DB con `default(now())` in creazione
-      // e lo impostiamo esplicitamente nell'update nel repository.
+      answer_value: {value: answer.answer_value}
+
     })
   );
 
-  // 3. Chiama il repository per eseguire l'operazione transazionale
+  validateAnswersAgainstTemplate(submission.template,answers);
+
+  // Chiama il repository per eseguire l'operazione transazionale
   await submissionRepo.upsertAnswersAndUpdateSubmission(
     submission_id,
     answersToUpsert,
@@ -127,23 +203,24 @@ export const complete = async (
 ): Promise<PrismaSubmission> => {
   const { answers, current_step_identifier } = body;
 
-  // 1. Verifica che la submission esista e sia ancora in corso
-  const submission = await submissionRepo.findInProgressSubmissionById(submission_id);
+  // Verifica che la submission esista e sia ancora in corso
+  const submission = await submissionRepo.findInProgressSubmissionByIdWithTemplate(submission_id);
   if (!submission) {
-    throw new ApiError(404, 'Submission not found or has already been completed');
+    throw new ApiError(404, 'Submission not found or has already been completed or it is not associated to a template');
   }
 
-  // 2. Prepara le risposte per il repository, se presenti
+  //  Prepara le risposte per il repository, se presenti
   let answersToUpsert: Prisma.AnswerCreateManyInput[] | undefined = undefined;
   if (answers && answers.length > 0) {
+    validateAnswersAgainstTemplate(submission.template,answers);
     answersToUpsert = answers.map(answer => ({
       submission_id: submission_id,
       question_identifier: answer.question_identifier,
-      answer_value: answer.answer_value as Prisma.InputJsonValue,
+      answer_value: {value: answer.answer_value},
     }));
   }
 
-  // 3. Chiama il repository per eseguire la transazione e restituire la submission completata
+  // Chiama il repository per eseguire la transazione e restituire la submission completata
   const completedSubmissionFromPrisma: PrismaSubmission = await submissionRepo.saveAndCompleteSubmission(
     submission_id,
     answersToUpsert,
@@ -171,7 +248,7 @@ export const getSubmissions = async (
 
   // Calcola se ci sono più pagine disponibili
   const hasMore = query.offset + query.limit < total;
-   // 2. Trasformazione in DTO per frontend
+   // Trasformazione in DTO per frontend
    const submissionsDTO: SubmissionDTO[] = rawSubmissions.map((submission, index) => {
     
     // Calcola ID incrementale basato su paginazione
@@ -211,22 +288,22 @@ export const getSubmissions = async (
 export const getSubmissionById = async (
   submission_id: string
 ): Promise<SubmissionDetailDTO> => {
-  // 1. Verifica che la submission esista
+  // Verifica che la submission esista
   const submission = await submissionRepo.findSubmissionById(submission_id);
   if (!submission) {
     throw new ApiError(404, "Submission not found");
   }
 
-  // 2. Recupera le risposte associate
+  // Recupera le risposte associate
   const answers = await submissionRepo.findAnswersBySubmissionId(submission_id);
 
-  // 3. Recupera i dettagli del template
+  // Recupera i dettagli del template
   const template = await templateRepo.findTemplateById(submission.template_id);
   if (!template) {
     throw new ApiError(500, "Associated template not found");
   }
 
-  // 4. Recupera eventuali note degli operatori (opzionale per questa fase)
+  // Recupera eventuali note degli operatori (opzionale per questa fase)
    const notes = await operatorNotesRepo.findNotesBySubmissionId(submission_id);
 
    const submissionDTO: SubmissionDTO = {
@@ -244,7 +321,7 @@ export const getSubmissionById = async (
     language: submission.language_used as Language,
   };
 
-  // 2. Trasforma template in DTO (converti date in string)
+  //  Trasforma template in DTO (converti date in string)
   const templateDTO: TemplateDTO = {
     ...template, 
     // Safe cast: structure_definition è validato con structureDefinitionSchema durante la creazione
@@ -253,14 +330,21 @@ export const getSubmissionById = async (
     updated_at: template.updated_at.toISOString(),
    
   };
+  const answersDTO: AnswerDTO[] = answers.map(answer => {
+    // Estraiamo il valore dall'oggetto JSONB
+    let extractedValue: any = null;
+    if (answer.answer_value && typeof answer.answer_value === 'object' && 'value' in answer.answer_value) {
+        extractedValue = (answer.answer_value as { value: any }).value;
+    }
+    return {
+      answer_id: answer.answer_id,
+      question_identifier: answer.question_identifier,
+      saved_at: answer.saved_at.toISOString(),
+      answer_value: extractedValue,
+    };
+  });
 
-  // 3. Trasforma answers in DTO (gestisci JsonValue)
-  const answersDTO: AnswerDTO[] = answers.map(answer => ({
-    ...answer, 
-    saved_at: answer.saved_at.toISOString(),
-  }));
-
-  // 4. Trasforma notes in DTO (gestisci null values e aggiungi operator info)
+  // Trasforma notes in DTO (gestisci null values e aggiungi operator info)
   const notesDTO: OperatorNoteDTO[] = notes.map(note => ({
     note_id: note.note_id,
     submission_id: note.submission_id,
@@ -271,7 +355,7 @@ export const getSubmissionById = async (
     updated_at: note.updated_at.toISOString(),
   }));
 
-  // 5. Costruisci il DTO finale
+  // Costruisci il DTO finale
   const submissionDetail: SubmissionDetailDTO = {
     submission: submissionDTO,
     template: templateDTO,
@@ -286,7 +370,7 @@ export const getSubmissionById = async (
 export const deleteSubmission = async (
   submission_id: string
 ): Promise<void> => {
-  // 1. Verifica che la submission esista
+  // Verifica che la submission esista
   const submission = await submissionRepo.findSubmissionById(submission_id);
   if (!submission) {
     throw new ApiError(404, "Submission not found");

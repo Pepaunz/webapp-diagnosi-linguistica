@@ -1,4 +1,4 @@
-// client/src/services/feedbackApi.ts - SERVIZIO API PER FEEDBACK
+import { handleApiResponse } from "./utilsApi";
 import { 
     ListFeedbackQuery, 
     UpdateFeedbackInput, 
@@ -7,18 +7,6 @@ import {
   
   const API_BASE_URL = "/api/v1";
   
-  // Utility per gestione errori
-  const handleApiResponse = async (response: Response) => {
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.message || `HTTP ${response.status}`);
-      (error as any).status = response.status;
-      (error as any).response = { data: errorData };
-      throw error;
-    }
-    return response.json();
-  };
-  
   // ====================================================================
   // FEEDBACK API CALLS
   // ====================================================================
@@ -26,7 +14,7 @@ import {
   export const feedbackApi = {
     // GET /feedback
     async getFeedbacks(query?: Partial<ListFeedbackQuery>): Promise<{ 
-      feedbacks: Feedback[], 
+      feedback: Feedback[], 
       total: number 
     }> {
       const searchParams = new URLSearchParams();

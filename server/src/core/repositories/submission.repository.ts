@@ -42,11 +42,13 @@ export const findAnswersBySubmissionId = async (
   });
 };
 
-export const findInProgressSubmissionById = async (
-  id: string
-): Promise<Submission | null> => {
+
+export const findInProgressSubmissionByIdWithTemplate = async (id: string) => {
   return prisma.submission.findUnique({
-    where: { submission_id: id, status: "InProgress" },
+    where: { submission_id: id, status: 'InProgress' },
+    include: {
+      template: true, 
+    },
   });
 };
 
