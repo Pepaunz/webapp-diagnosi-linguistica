@@ -1,5 +1,5 @@
 // Metti questa funzione in un file di utility condiviso (es. src/utils/localization.ts)
-import { Language, LocalizedText } from "@bilinguismo/shared";
+import { Language, LocalizedText } from "../schemas/";
 const DEFAULT_LANGUAGE: Language = 'it';
 
 

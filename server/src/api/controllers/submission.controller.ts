@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import * as submissionService from "../../core/services/submission.service";
 import { UuidParam } from "@bilinguismo/shared";
 import { SaveProgressRequest , CompleteSubmissionBody,StartOrResumeRequest, ListSubmissionsQuery } from "@bilinguismo/shared";
+import * as exportService from '../../core/services/export.service';
+import * as submissionRepo from '../../core/repositories/submission.repository';
+import { ApiError } from "../middlewares/errorHandler.middleware";
 
 // POST /submissions/start_or_resume
 export const startOrResume = async (
@@ -102,6 +105,35 @@ export const deleteSubmission = async (
   try {
     await submissionService.deleteSubmission(req.params.id);
     res.status(204).send(); // No content on successful deletion
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportSubmission = async (
+  req: Request<UuidParam>, // 
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Recupera i dati completi
+    const submission = await submissionRepo.findSubmissionWithDetailsById(id);
+    if (!submission) {
+      throw new ApiError(404, 'Submission not found');
+    }
+
+    // 2. Genera il file Excel in un buffer
+    const excelBuffer = await exportService.generateSubmissionExcel(submission);
+
+    // 3. Imposta gli header HTTP corretti per forzare il download
+    const fileName = `submission_${submission.fiscal_code}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+
+    // 4. Invia il buffer come risposta
+    res.send(excelBuffer);
   } catch (error) {
     next(error);
   }

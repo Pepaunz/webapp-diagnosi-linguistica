@@ -3,7 +3,6 @@ import {
     SubmissionDTO,
     SubmissionDetailDTO,
     ListSubmissionsQuery,
-    ModifyAnswerRequest
   } from "@bilinguismo/shared";
   
   const API_BASE_URL = "/api/v1";
@@ -67,6 +66,26 @@ import {
       
     return handleApiResponse(response)
     },
+
+
+    async exportSubmissionById(submissionId: string): Promise<Blob> {
+      const response = await fetch(`${API_BASE_URL}/submissions/${submissionId}/export`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+     
+      if (!response.ok) {
+          // Se c'è un errore, il corpo sarà probabilmente JSON
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+      }
+      
+      // Restituisce i dati del file come un Blob
+      return response.blob();
+    },
   };
+
+  
   
  

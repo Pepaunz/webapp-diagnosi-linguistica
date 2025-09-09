@@ -58,6 +58,12 @@ router.delete(
   submissionController.deleteSubmission
 );
 
+router.get(
+  '/:id/export',
+  authMiddleware, // L'esportazione è un'azione protetta
+  validate(uuidParamSchema, 'params'),
+  submissionController.exportSubmission
+);
 
 
 // ROTTE NOTES 

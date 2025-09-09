@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { Button } from "../components/shared/Filters";
 import { Section } from "@bilinguismo/shared";
 import SubmissionSectionView from "../components/questionnaire/SubmissionSectionView";
@@ -13,7 +13,6 @@ import {useError} from "../context/ErrorContext";
 import { LoadingSpinner } from "../../../family-client/src/components/ui";
 import { submissionApi } from "../services/submissionApi";
 import { notesApi } from "../services/notesApi";
-import {z} from "zod";
 
 
 const SubmissionViewPage = () => {
@@ -22,6 +21,7 @@ const SubmissionViewPage = () => {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingNote, setAddingNote] = useState<string | null>(null); // questionId being noted
+  const [isExporting, setIsExporting] = useState(false); 
   const { showError, showSuccess } = useError();
 
 
@@ -87,6 +87,33 @@ const SubmissionViewPage = () => {
       showError("Errore nell'aggiunta della nota", 'server');
     } finally {
       setAddingNote(null);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!id) return;
+    
+    setIsExporting(true);
+    showSuccess('Preparazione del file in corso...'); // Feedback immediato
+    
+    try {
+        
+        const blob = await submissionApi.exportSubmissionById(id);       
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const fileName = `submission_${submission?.submission.fiscalCode}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = fileName; 
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+
+    } catch (error: any) {
+        console.error("Error exporting submission:", error);
+        showError(error.message || "Errore durante l'esportazione.", 'server');
+    } finally {
+        setIsExporting(false);
     }
   };
 
@@ -156,15 +183,14 @@ const SubmissionViewPage = () => {
             </button>
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                /* Export logic */
-              }}
-              variant="secondary"
-              icon={<FileText size={16} />}
-            >
-              Esporta
-            </Button>
+          <Button
+            onClick={handleExport}
+            variant="primary"
+            icon={isExporting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+            disabled={isExporting}
+          >
+            {isExporting ? 'Esportando...' : 'Esporta'}
+    </Button>
           </div>
         </div>
 

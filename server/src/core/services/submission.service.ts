@@ -1,42 +1,38 @@
 import * as submissionRepo from "../repositories/submission.repository";
 import * as templateRepo from "../repositories/template.repository";
 import * as operatorNotesRepo from "../repositories/notes.repository";
-import { Language, QuestionnaireData, StartOrResumeRequest, SubmissionStatus } from "@bilinguismo/shared";
+import { Language, QuestionnaireData, StartOrResumeRequest, SubmissionStatus, Question } from "@bilinguismo/shared";
 import { ApiError } from "../../api/middlewares/errorHandler.middleware";
 import { StartOrResumeResponse } from "../../types/api.types"; // Ipotetico file per i tipi di risposta
 import { Prisma, Submission as PrismaSubmission, Answer, Template} from "@prisma/client";
 import { SaveProgressRequest } from "@bilinguismo/shared";
 import { ListSubmissionsQuery, CompleteSubmissionBody } from "@bilinguismo/shared";
 import { SubmissionDTO } from "@bilinguismo/shared";
-import { SubmissionDetailDTO, AnswerDTO, OperatorNoteDTO, TemplateDTO, Question } from "@bilinguismo/shared";
+import { SubmissionDetailDTO, AnswerDTO, OperatorNoteDTO, TemplateDTO } from "@bilinguismo/shared";
 import { questionSchema } from "@../../../shared/src/schemas/questionnaire.schemas";
 
 // ====================================================================
 // HELPER FUNCTIONS
 // ====================================================================
 
-const validateAnswersAgainstTemplate = (template: Template, answers: SaveProgressRequest['answers']) => {
-  // Estraiamo la struttura. Usiamo il tipo 'any' per navigare il JSON in modo flessibile.
-  const structure = template.structure_definition as any;
-  if (!structure || !Array.isArray(structure.sections)) {
-    throw new ApiError(500, 'Invalid template structure: sections are missing.');
-  }
+const validateSectionAnswers = (sectionQuestions: Question[], answers: SaveProgressRequest['answers']) => {
 
-  // Creiamo una mappa di tutte le domande valide per un accesso O(1)
-  const validQuestionsMap = new Map<string, Question>();
-  structure.sections.forEach((section: any) => {
-    if (Array.isArray(section.questions)) {
-      section.questions.forEach((question: any) => {
-        const parsedQuestion = questionSchema.safeParse(question);
-        if (parsedQuestion.success) {
-          validQuestionsMap.set(parsedQuestion.data.questionId, parsedQuestion.data);
+    const answersMap = new Map(answers.map(a => [a.question_identifier, a.answer_value]));
+
+    // Controlla che tutte le domande obbligatorie della sezione abbiano una risposta
+    for (const question of sectionQuestions) {
+      if (question.required) {
+        const answerValue = answersMap.get(question.questionId);
+        if (answerValue === undefined || answerValue === null || (typeof answerValue === 'string' && answerValue.trim() === '')) {
+          throw new ApiError(400, `Validation Error: Answer for required question "${question.questionId}" in this section is missing.`);
         }
-      });
+      }
     }
-  });
+  
+  const validQuestionMap = new Map(sectionQuestions.map(q => [q.questionId, q]));
   // Iteriamo su ogni risposta inviata dal client e la validiamo
   for (const answer of answers) {
-    const questionDefinition = validQuestionsMap.get(answer.question_identifier);
+    const questionDefinition = validQuestionMap.get(answer.question_identifier);
 
     // Controlla se l'ID della domanda è valido
     if (!questionDefinition) {
@@ -174,6 +170,17 @@ export const saveProgress = async (
     );
   }
 
+  // **NUOVA LOGICA DI VALIDAZIONE**
+  const structure = submission.template.structure_definition as any;
+  const currentSection = structure.sections.find((s: any) => s.sectionId === current_step_identifier);
+
+  if (!currentSection) {
+    throw new ApiError(400, `Validation Error: Step identifier "${current_step_identifier}" is not a valid section in this template.`);
+  }
+
+  // Valida le risposte SOLO per la sezione che si sta salvando
+  validateSectionAnswers(currentSection.questions, answers);
+
   const answersToUpsert: Prisma.AnswerCreateManyInput[] = answers.map(
     (answer) => ({
       // Aggiungiamo il submission_id, che conosciamo dal parametro dell'URL
@@ -183,8 +190,6 @@ export const saveProgress = async (
 
     })
   );
-
-  validateAnswersAgainstTemplate(submission.template,answers);
 
   // Chiama il repository per eseguire l'operazione transazionale
   await submissionRepo.upsertAnswersAndUpdateSubmission(
@@ -205,14 +210,43 @@ export const complete = async (
 
   // Verifica che la submission esista e sia ancora in corso
   const submission = await submissionRepo.findInProgressSubmissionByIdWithTemplate(submission_id);
-  if (!submission) {
+  if (!submission || !submission.template) {
     throw new ApiError(404, 'Submission not found or has already been completed or it is not associated to a template');
   }
+
+  // Recupera tutte le risposte già salvate nel DB per questa submission
+  const allSavedAnswers = await submissionRepo.findAllAnswersForSubmission(submission_id);
+  const allAnswersMap = new Map(allSavedAnswers.map(a => [a.question_identifier, a.answer_value]));
+
+  //Unisci le risposte finali (dall'ultimo step) a quelle già salvate
+  if (answers && answers.length > 0) {
+    answers.forEach(a => allAnswersMap.set(a.question_identifier, a.answer_value));
+  }
+
+  //Itera su TUTTE le domande di TUTTE le sezioni del template
+  const structure = submission.template.structure_definition as any;
+  for (const section of structure.sections) {
+    for (const question of section.questions) {
+      // Verifica che ogni domanda obbligatoria abbia una risposta nella nostra mappa aggregata
+      if (question.required) {
+        const answerValue = allAnswersMap.get(question.questionId);
+        // estrae il valore reale dall'oggetto { value: ... }
+        const finalValue = (answerValue as any)?.value;
+
+        if (finalValue === undefined || finalValue === null || (typeof finalValue === 'string' && finalValue.trim() === '')) {
+          throw new ApiError(400, `Cannot complete: Answer for required question "${question.questionId}" in section "${section.sectionId}" is missing.`);
+        }
+      }
+    }
+  }
+
+
+
 
   //  Prepara le risposte per il repository, se presenti
   let answersToUpsert: Prisma.AnswerCreateManyInput[] | undefined = undefined;
   if (answers && answers.length > 0) {
-    validateAnswersAgainstTemplate(submission.template,answers);
+  
     answersToUpsert = answers.map(answer => ({
       submission_id: submission_id,
       question_identifier: answer.question_identifier,

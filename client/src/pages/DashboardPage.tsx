@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ConfirmationModal } from "../components/shared/ConfirmationModal"
 import { 
-  Filter, 
   Loader2, 
   Trash2, 
   FileText, 
@@ -460,10 +459,6 @@ const QuestionnaireDashboard: React.FC = () => {
     showSuccess("Compilazioni aggiornate");
   }, [loadSubmissions, currentPage, showSuccess]);
 
-  // Export handler (placeholder)
-  const handleExport = useCallback(() => {
-    showError("Funzione export in arrivo", 'generic');
-  }, [showError]);
 
   // Load data on mount
   useEffect(() => {
@@ -493,12 +488,7 @@ const QuestionnaireDashboard: React.FC = () => {
           >
             Aggiorna Dati
           </button>
-          <button
-            onClick={handleExport}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Esporta CSV
-          </button>
+          
         </div>
       </div>
 

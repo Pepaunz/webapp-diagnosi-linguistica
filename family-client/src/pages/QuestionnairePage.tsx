@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
 import { Button, LoadingSpinner } from '../components/ui';
 import { Question, Section, Language } from '@bilinguismo/shared';
-import { getLocalizedText } from '../utils/localization';
+import { getLocalizedText } from '@bilinguismo/shared';
 import { z } from 'zod';
 import { questionSchema } from '../../../shared/src/schemas/questionnaire.schemas';
 import { 

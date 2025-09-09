@@ -255,3 +255,28 @@ export const deleteSubmission = async (id: string): Promise<void> => {
     where: { submission_id: id },
   });
 };
+
+export const findAllAnswersForSubmission = async (submission_id: string) => {
+  return prisma.answer.findMany({
+    where: { submission_id },
+  });
+};
+
+
+
+export const findSubmissionWithDetailsById = async (id: string) => {
+  return prisma.submission.findUnique({
+    where: { submission_id: id },
+    include: {
+      template: true,
+      answers: true,
+      notes: {
+        include: {
+          operator: {
+            select: { full_name: true }, // Carichiamo solo il nome dell'operatore
+          },
+        },
+      },
+    },
+  });
+};
