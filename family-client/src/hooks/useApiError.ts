@@ -9,10 +9,7 @@ interface UseApiErrorReturn {
   clearErrors: () => void;
 }
 
-/**
- * Hook semplificato per gestire errori API nel family-client
- * Fornisce metodi standard per gestire errori server, rete e validazione
- */
+
 export const useApiError = (): UseApiErrorReturn => {
   const { showError, showSuccess, clearAllErrors } = useError();
 

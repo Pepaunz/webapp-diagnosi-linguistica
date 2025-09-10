@@ -115,8 +115,22 @@ export const startOrResume = async (
   );
   let isNew = false;
 
-  //Se non esiste, creane una nuova
-  if (!submission) {
+  if (submission) {
+   
+    if (submission.language_used !== input.language_used) {
+      throw new ApiError(
+        409, 
+        `Hai già iniziato questo questionario in ${submission.language_used.toUpperCase()}. Per favore, seleziona la lingua corretta per continuare.`,
+        true,
+        [{ 
+          code: 'language_mismatch', 
+          savedLanguage: submission.language_used 
+        }]
+      );
+    }
+   
+  } else {
+    // Se non esiste, creane una nuova
     submission = await submissionRepo.createSubmission({
       fiscal_code: input.fiscal_code,
       template_id: input.questionnaire_template_id,
@@ -124,7 +138,6 @@ export const startOrResume = async (
     });
     isNew = true;
   }
-
   //Recupera le risposte già salvate (sarà un array vuoto se la submission è nuova)
   const answersFromDb = await submissionRepo.findAnswersBySubmissionId(
     submission.submission_id
@@ -141,7 +154,7 @@ export const startOrResume = async (
     };
   });
 
-  //Costruisci e restituisci la risposta standard
+  //Costruisce e restituisce la risposta standard
   return {
     submission_id: submission.submission_id,
     status: submission.status as "InProgress", // Sappiamo che è InProgress
@@ -170,7 +183,6 @@ export const saveProgress = async (
     );
   }
 
-  // **NUOVA LOGICA DI VALIDAZIONE**
   const structure = submission.template.structure_definition as any;
   const currentSection = structure.sections.find((s: any) => s.sectionId === current_step_identifier);
 
@@ -206,7 +218,7 @@ export const complete = async (
   submission_id: string,
   body: CompleteSubmissionBody
 ): Promise<PrismaSubmission> => {
-  const { answers, current_step_identifier } = body;
+  const { answers: finalAnswersFromClient, current_step_identifier } = body;
 
   // Verifica che la submission esista e sia ancora in corso
   const submission = await submissionRepo.findInProgressSubmissionByIdWithTemplate(submission_id);
@@ -216,11 +228,18 @@ export const complete = async (
 
   // Recupera tutte le risposte già salvate nel DB per questa submission
   const allSavedAnswers = await submissionRepo.findAllAnswersForSubmission(submission_id);
-  const allAnswersMap = new Map(allSavedAnswers.map(a => [a.question_identifier, a.answer_value]));
+  const allAnswersMap = new Map<string, string | number | boolean | null>();
+  allSavedAnswers.forEach(answer => {
+    const extractedValue = (answer.answer_value as any)?.value ?? null;
+    allAnswersMap.set(answer.question_identifier, extractedValue);
+  });
+
 
   //Unisci le risposte finali (dall'ultimo step) a quelle già salvate
-  if (answers && answers.length > 0) {
-    answers.forEach(a => allAnswersMap.set(a.question_identifier, a.answer_value));
+  if (finalAnswersFromClient && finalAnswersFromClient.length > 0) {
+    finalAnswersFromClient.forEach(answer => {
+      allAnswersMap.set(answer.question_identifier, answer.answer_value);
+    });
   }
 
   //Itera su TUTTE le domande di TUTTE le sezioni del template
@@ -229,10 +248,7 @@ export const complete = async (
     for (const question of section.questions) {
       // Verifica che ogni domanda obbligatoria abbia una risposta nella nostra mappa aggregata
       if (question.required) {
-        const answerValue = allAnswersMap.get(question.questionId);
-        // estrae il valore reale dall'oggetto { value: ... }
-        const finalValue = (answerValue as any)?.value;
-
+        const finalValue = allAnswersMap.get(question.questionId);
         if (finalValue === undefined || finalValue === null || (typeof finalValue === 'string' && finalValue.trim() === '')) {
           throw new ApiError(400, `Cannot complete: Answer for required question "${question.questionId}" in section "${section.sectionId}" is missing.`);
         }
@@ -245,9 +261,9 @@ export const complete = async (
 
   //  Prepara le risposte per il repository, se presenti
   let answersToUpsert: Prisma.AnswerCreateManyInput[] | undefined = undefined;
-  if (answers && answers.length > 0) {
+  if (finalAnswersFromClient && finalAnswersFromClient.length > 0) {
   
-    answersToUpsert = answers.map(answer => ({
+    answersToUpsert = finalAnswersFromClient.map(answer => ({
       submission_id: submission_id,
       question_identifier: answer.question_identifier,
       answer_value: {value: answer.answer_value},

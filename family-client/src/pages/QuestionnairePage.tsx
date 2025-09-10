@@ -1,10 +1,10 @@
 // src/pages/QuestionnairePage.tsx - Con API reali e gestione errori
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
 import { Button, LoadingSpinner } from '../components/ui';
-import { Question, Section, Language } from '@bilinguismo/shared';
-import { getLocalizedText } from '@bilinguismo/shared';
+import { Question, Section, Language, QuestionnaireData, Template } from '@bilinguismo/shared';
+import { getLocalizedText } from  '../../../shared/src/utils';
 import { z } from 'zod';
 import { questionSchema } from '../../../shared/src/schemas/questionnaire.schemas';
 import { 
@@ -25,14 +25,12 @@ import { submissionApi } from '../services/apiService';
 import { useApiError } from '../hooks/useApiError';
 import FeedbackForm from "../components/questionnaire/FeedbackForm"
 
-const questionnaireData = bilingualismQuestionnaireData as {
-  sections: Section[];
-};
 
 const QuestionnairePage: React.FC = () => {
-  const { templateId, submissionId } = useParams();
+  const { templateId, submissionId,fiscalCode } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
   
   // Focus management refs
   const sectionHeaderRef = useRef<HTMLHeadingElement>(null);
@@ -41,24 +39,22 @@ const QuestionnairePage: React.FC = () => {
   // Hooks
   const { announce } = useScreenReaderAnnouncements();
   const { handleApiError, handleApiSuccess, clearErrors } = useApiError();
+
+   // State management - Inizializza con dati dal navigation state se disponibili
+
   
   // TTS State
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [currentSpeakingQuestionId, setCurrentSpeakingQuestionId] = useState<string | null>(null);
   const { speak, stop, status } = useTextToSpeech(location.state?.language || 'it');
   
-  // State management - Inizializza con dati dal navigation state se disponibili
+ 
+  const [template, setTemplate] = useState<Template | null>(location.state?.questionnaire_template || null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>(
-    location.state?.answers ? 
-    location.state.answers.reduce((acc: Record<string, string>, answer: any) => {
-      acc[answer.question_id] = answer.answer_value;
-      return acc;
-    }, {}) : {}
-  );
-  const [loading, setLoading] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false);
   const [selectedLanguage] = useState<Language>(location.state?.language || 'it');
+  const [loading, setLoading] = useState(true); 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   // Network & Error states
@@ -67,12 +63,175 @@ const QuestionnairePage: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   
-  // Dati questionario
-  const currentSection = questionnaireData.sections[currentSectionIndex];
-  const totalSections = questionnaireData.sections.length;
-  const isLastSection = currentSectionIndex === totalSections - 1;
-  const isFirstSection = currentSectionIndex === 0;
+ 
 
+  useEffect(() => {
+    
+    const initializePage = async () => {
+      // Dati iniziali 
+      let initialTemplate = location.state?.questionnaire_template || null;
+      let initialAnswers = location.state?.answers || [];
+      let lastSavedStepId = location.state?.current_step_identifier || null;
+
+      // --- Logica di Fallback (Refresh Pagina) ---
+      // Se non abbiamo un template dallo stato di navigazione, facciamo la chiamata API.
+      if (!initialTemplate) {
+        console.log("No initial data from navigation state, fetching from API...");
+
+        if (!submissionId || !templateId || !fiscalCode) {
+          navigate('/');
+          return;
+        }
+
+        try {
+          const response = await submissionApi.startOrResume({
+            fiscal_code: fiscalCode,
+            questionnaire_template_id: templateId,
+            language_used: selectedLanguage,
+          });
+
+          initialTemplate = response.questionnaire_template;
+          initialAnswers = response.answers;
+          lastSavedStepId = response.current_step_identifier;
+
+        } catch (err) {
+          handleApiError(err, "il caricamento del questionario");
+          navigate('/'); // Reindirizza in caso di errore
+          return;
+        } finally {
+          setLoading(false);
+        }
+      }
+      // A questo punto, abbiamo i dati necessari, o da `location.state` o dall'API.
+      if (initialTemplate) {
+        // Imposta il template
+        setTemplate(initialTemplate);
+
+        const answersMap: Record<string, string> = {};
+        initialAnswers.forEach((answer: any) => {
+          if (answer.question_identifier && answer.answer_value !== null) {
+            answersMap[answer.question_identifier] = String(answer.answer_value);
+          }
+        });
+        setAnswers(answersMap);
+        const structure = initialTemplate.structure_definition as QuestionnaireData;
+        let sectionIndexToShow = 0; 
+
+        if (lastSavedStepId && structure.sections) {
+          // Trova l'indice dell'ultima sezione salvata
+          const lastSavedIndex = structure.sections.findIndex(s => s.sectionId === lastSavedStepId);
+
+          if (lastSavedIndex !== -1 && lastSavedIndex < structure.sections.length - 1) {
+            
+            sectionIndexToShow = lastSavedIndex + 1;
+          } else if (lastSavedIndex !== -1) {
+            sectionIndexToShow = lastSavedIndex;
+          }
+        }
+        setCurrentSectionIndex(sectionIndexToShow);
+      } else {
+        navigate('/');
+      }
+      setLoading(false); 
+    };
+
+    initializePage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { 
+    structure, 
+    questionnaireSections, 
+    currentSection, 
+    totalSections, 
+    isLastSection, 
+    isFirstSection 
+  } = useMemo(() => {
+    if (!template) {
+      // Se il template non c'è, restituisci valori di default per evitare crash
+      return { 
+        structure: null, 
+        questionnaireSections: [], 
+        currentSection: null, 
+        totalSections: 0, 
+        isLastSection: false, 
+        isFirstSection: true 
+      };
+    }
+    const struct = template.structure_definition as QuestionnaireData;
+    const sections = struct?.sections || [];
+    const total = sections.length;
+    const currentIdx = Math.min(currentSectionIndex, total - 1); // Prevenzione errori
+    
+    return {
+      structure: struct,
+      questionnaireSections: sections,
+      currentSection: sections[currentIdx] || null,
+      totalSections: total,
+      isLastSection: currentIdx === total - 1,
+      isFirstSection: currentIdx === 0,
+    };
+  }, [template, currentSectionIndex]);
+
+/*
+  useEffect(() => {
+    // Se i dati del questionario non sono stati passati tramite lo stato della navigazione,
+    // significa che l'utente ha ricaricato la pagina. Dobbiamo recuperarli.
+    const loadInitialData = async () => {
+      if (!template && submissionId && templateId && fiscalCode) {
+        console.log("No initial data found, fetching from API...");
+        setLoading(true);
+        try {
+          // La chiamata startOrResume ci ridarà tutto ciò di cui abbiamo bisogno
+          const response = await submissionApi.startOrResume({
+            fiscal_code: fiscalCode, 
+            questionnaire_template_id: templateId,
+            language_used: selectedLanguage,
+          });
+
+          setTemplate(response.questionnaire_template);
+          
+          // Ricostruisci la mappa delle risposte
+          const answersMap: Record<string, string> = {};
+          response.answers.forEach((answer: any) => {
+            if (answer.question_identifier && answer.answer_value !== null) {
+              answersMap[answer.question_identifier] = String(answer.answer_value);
+            }
+          });
+          setAnswers(answersMap);
+          
+        } catch (err) {
+          handleApiError(err, "il caricamento del questionario");
+          // Potresti voler reindirizzare l'utente se il caricamento fallisce
+          navigate('/'); 
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadInitialData();
+  }, [ submissionId, templateId, navigate, handleApiError, selectedLanguage]);
+
+  useEffect(() => {
+    // Questo effetto si attiva solo quando il template è finalmente disponibile.
+    if (template) {
+ 
+      const stepIdentifier = location.state?.current_step_identifier || null;
+
+      if (stepIdentifier) {
+        const structure = template.structure_definition as QuestionnaireData;
+        const foundIndex = structure.sections.findIndex(s => s.sectionId === stepIdentifier);
+        
+        if (foundIndex > 0) { 
+          setCurrentSectionIndex(foundIndex);
+        }
+      }
+    }
+  }, [template, location]); */
+
+
+ 
   // Network monitoring
   useEffect(() => {
     const handleOnline = () => {
@@ -137,6 +296,7 @@ const QuestionnairePage: React.FC = () => {
 
   // Focus management quando cambia sezione
   useEffect(() => {
+    if(!currentSection) return; 
     if (sectionHeaderRef.current) {
       sectionHeaderRef.current.focus();
       const sectionTitle = getLocalizedText(currentSection.title, selectedLanguage);
@@ -150,7 +310,9 @@ const QuestionnairePage: React.FC = () => {
   // Validazione
   const validateCurrentSection = (): boolean => {
     const errors: Record<string, string> = {};
-
+    if (!currentSection) {
+      return false;
+    }
     currentSection.questions.forEach((question) => {
       const answer = answers[question.questionId] || '';
       
@@ -161,10 +323,13 @@ const QuestionnairePage: React.FC = () => {
           errors[question.questionId] = 'Questa domanda è obbligatoria';
         }     
         if (answer && question.type === 'date') {
-          const dateSchema = z.string().datetime();
+          const dateSchema = z.string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Il formato della data deve essere AAAA-MM-GG" })
+          .refine((date) => !isNaN(Date.parse(date)), { message: "Data non valida" });
+          
           const result = dateSchema.safeParse(answer);
           if (!result.success) {
-            errors[question.questionId] = 'Data non valida';
+            errors[question.questionId] = result.error.issues[0].message; // Usa il messaggio di errore di Zod
           }
         }
         
@@ -208,8 +373,9 @@ const QuestionnairePage: React.FC = () => {
     }
   };
 
-  // ✅ API CALLS CON GESTIONE ERRORI REALE
+
   const saveProgress = async (showLoading = true): Promise<boolean> => {
+    if(!currentSection || !submissionId) return false
     if (!isOnline) {
       announce('Nessuna connessione. Il salvataggio verrà effettuato quando tornerai online.', 'polite');
       return false;
@@ -220,13 +386,23 @@ const QuestionnairePage: React.FC = () => {
     announce('Salvataggio in corso...', 'polite');
     
     try {
-      await submissionApi.saveProgress(submissionId!, {
-        answers: Object.entries(answers).map(([questionId, answerValue]) => ({
+      const currentSectionQuestionIds = new Set(currentSection.questions.map(q => q.questionId));
+
+      const answersForCurrentSection = Object.entries(answers)
+        .filter(([questionId, _]) => currentSectionQuestionIds.has(questionId))
+        .map(([questionId, answerValue]) => ({
           question_identifier: questionId,
-          answer_value: answerValue
-        })),
-        current_step_identifier: currentSection.sectionId
-      });
+          answer_value: answerValue,
+        }));
+      
+        if (answersForCurrentSection.length === 0) {
+          if (showLoading) setSaving(false);
+          return true; 
+        }
+        await submissionApi.saveProgress(submissionId, {
+          answers: answersForCurrentSection,
+          current_step_identifier: currentSection.sectionId
+        });
       
       handleApiSuccess('Progressi salvati');
       announce('Progressi salvati', 'polite');
@@ -252,26 +428,26 @@ const QuestionnairePage: React.FC = () => {
   };
 
   const handleComplete = async () => {
+    if(!currentSection || !submissionId) return;
     setLoading(true);
     setError('');
     clearErrors();
     announce('Completamento questionario in corso...', 'polite');
     
     try {
-      // Prima salva i progressi correnti
-      const saveSuccess = await saveProgress(false);
-      if (!saveSuccess && isOnline) {
-        throw new Error('Errore nel salvataggio finale');
-      }
-      
-      // Poi completa il questionario
-      await submissionApi.complete(submissionId!, {
-        answers: Object.entries(answers).map(([questionId, answerValue]) => (
-          {
+
+      const currentSectionQuestionIds = new Set(currentSection.questions.map(q => q.questionId));
+      const finalAnswers = Object.entries(answers)
+        .filter(([questionId, _]) => currentSectionQuestionIds.has(questionId))
+        .map(([questionId, answerValue]) => ({
           question_identifier: questionId,
           answer_value: answerValue
-        })),
-        current_step_identifier:currentSection.sectionId
+        }));
+
+     
+      await submissionApi.complete(submissionId, {
+        answers: finalAnswers,
+        current_step_identifier: currentSection.sectionId
       });
       
       handleApiSuccess('Questionario completato con successo!');
@@ -461,6 +637,15 @@ const QuestionnairePage: React.FC = () => {
     return null;
   };
 
+  if (loading || !template || !currentSection) {
+    return (
+      <SimpleLayout>
+        <div className="text-center py-mobile-xl">
+          <LoadingSpinner size="lg" text="Caricamento questionario..." />
+        </div>
+      </SimpleLayout>
+    );
+  }
   // Loading state
   if (loading) {
     return (

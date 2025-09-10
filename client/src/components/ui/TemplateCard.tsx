@@ -2,7 +2,7 @@ import { Edit, Share2, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Template } from "@bilinguismo/shared";
-import qrCodeImage from "../../assets/Rickrolling_QR_code.png"
+import  {QRCodeSVG}  from "qrcode.react";
 import { useError } from "../../context";
 
 interface TemplateCardProps {
@@ -11,19 +11,22 @@ interface TemplateCardProps {
   isDeleting?: boolean;
 }
 
-// 2. SOSTITUISCI la funzione TemplateCard con questa:
+
 export function TemplateCard({ template, onDelete, isDeleting = false }: TemplateCardProps) {
   const [showQrModal, setShowQrModal] = useState(false);
   const { showError, showSuccess } = useError(); 
 
   // Formatta data per display
   const formatDate = (date: Date | string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('it-IT');
+    const d = new Date(String(date));
+    return d.toLocaleDateString("it-IT", {
+      year: "numeric", month: "long", day: "numeric"
+      });
   };
 
-  // URL per questionario famiglia
-  const shareUrl = `https://miolink.com/questionario/${template.template_id}`;
+  
+  const familyClientBaseUrl = import.meta.env.VITE_FAMILY_CLIENT_BASE_URL || '';
+  const shareUrl = `${familyClientBaseUrl}/questionnaire/${template.template_id}`;
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Evita navigazione se è dentro un Link
@@ -108,10 +111,11 @@ export function TemplateCard({ template, onDelete, isDeleting = false }: Templat
 
             <div className="flex flex-col items-center">
               <div className="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg mb-4">
-                <img 
-                  src={qrCodeImage} 
-                  alt={`QR Code per ${template.name}`}
-                  className="w-full h-full object-contain"
+                 <QRCodeSVG
+                  value={shareUrl} // L'URL da codificare
+                  size={240}       // Dimensione in pixel
+                  level={"H"}      // Livello di correzione errore (H è il più alto)
+                  className="w-full h-full"
                 />
               </div>
               

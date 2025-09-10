@@ -20,7 +20,7 @@ function App() {
               <Route path="/questionnaire/:templateId" element={<CFLoginPage />} />
               
               {/* Pagina questionario attivo */}
-              <Route path="/questionnaire/:templateId/:submissionId" element={<QuestionnairePage />} />
+              <Route path="/questionnaire/:templateId/:fiscalCode/:submissionId" element={<QuestionnairePage />} />
               
               {/* Pagina completamento */}
               <Route 
@@ -43,13 +43,6 @@ function App() {
                         Grazie per aver completato il questionario. Le tue risposte sono state salvate con successo.
                       </p>
                       
-                      {/* Button to close or go home */}
-                      <button
-                        onClick={() => window.close()}
-                        className="w-full bg-family-primary text-white py-mobile-sm px-mobile-md rounded-mobile-sm font-medium hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-family-primary focus:ring-offset-2 transition-colors min-h-touch-md"
-                      >
-                        Chiudi
-                      </button>
                     </div>
                   </div>
                 } 

@@ -248,14 +248,20 @@ const SubmissionViewPage = () => {
             <div>
               <p className="text-sm text-gray-500">Ultimo aggiornamento</p>
               <p className="font-medium">
-                {new Date(submission.submission.lastUpdated).toLocaleString()}
+                {new Date(submission.submission.lastUpdated).toLocaleDateString("it-IT", {
+              year: "numeric", month: "long", day: "numeric", timeZone: 'UTC'
+              })}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Completato il</p>
               <p className="font-medium">
                 {submission.submission.completedOn
-                  ? new Date(submission.submission.completedOn).toLocaleString()
+                  ? new Date(submission.submission.completedOn).toLocaleDateString(
+                    "it-IT", {
+              year: "numeric", month: "long", day: "numeric", timeZone: 'UTC'
+              }
+                  )
                   : "-"}
               </p>
             </div>

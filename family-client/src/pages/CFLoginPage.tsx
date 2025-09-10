@@ -1,4 +1,3 @@
-// src/pages/CFLoginPage.tsx - versione semplificata con useApiError
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SimpleLayout from '../components/layout/SimpleLayout';
@@ -8,8 +7,9 @@ import { Info } from 'lucide-react';
 import { ScreenReaderAnnouncements, useScreenReaderAnnouncements } from '../components/accessibility/ScreenReaderAnnouncements';
 import { z } from 'zod';
 import { fiscalCodeSchema } from '../../../shared/src/schemas/common.schemas';
-import { submissionApi } from '../services/apiService';
+import { ApiError, submissionApi } from '../services/apiService';
 import { useApiError } from '../hooks/useApiError';
+import { Language } from '@bilinguismo/shared';
 
 const CFLoginPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -96,21 +96,38 @@ const CFLoginPage: React.FC = () => {
       const result = await submissionApi.startOrResume({
         fiscal_code: fiscalCode.toUpperCase(),
         questionnaire_template_id: templateId,
-        language_used: selectedLanguage as 'it' | 'en' | 'es' | 'ar'
+        language_used: selectedLanguage as Language
       });
 
       handleApiSuccess('Accesso effettuato con successo');
       announce('Accesso effettuato con successo', 'polite');
       
-      navigate(`/questionnaire/${templateId}/${result.submission_id}`, {
+      navigate(`/questionnaire/${templateId}/${fiscalCode.toUpperCase()}/${result.submission_id}`, {
         state: { 
           language: selectedLanguage,
           questionnaire: result.questionnaire_template,
-          answers: result.answers 
+          answers: result.answers,
+          current_step_identifier: result.current_step_identifier
         }
       });
       
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        const errorMessage = err.message;
+        setError(errorMessage);
+        announce(errorMessage, 'assertive');
+
+      //Logica per auto-correggere la lingua nell'UI
+        const details = err.response?.details;
+        if (Array.isArray(details) && details[0]?.code === 'language_mismatch') {
+          const savedLanguage = details[0].savedLanguage;
+          setSelectedLanguage(savedLanguage); 
+          announce(`La lingua è stata impostata su ${savedLanguage.toUpperCase()} per continuare.`, 'polite');
+        }
+      
+      }
+
+      else{ 
       handleApiError(err, 'l\'accesso');
       
       // Mantieni anche l'errore locale per l'UI inline
@@ -121,7 +138,7 @@ const CFLoginPage: React.FC = () => {
       }
       
       announce('Errore durante l\'accesso', 'assertive');
-      
+    }
       if (fiscalCodeInputRef.current) {
         fiscalCodeInputRef.current.focus();
       }

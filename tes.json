@@ -1,0 +1,674 @@
+{
+  "version": "1.0",
+  "sections": [
+    {
+      "title": {
+        "ar": "",
+        "en": "General Information",
+        "es": "Información General",
+        "it": "Informazioni Generali"
+      },
+      "questions": [
+        {
+          "text": {
+            "ar": "",
+            "en": "When was your child born?",
+            "es": "¿Cuándo nació tu hijo/a?",
+            "it": "Quando è nato il tuo bambinoz????"
+          },
+          "type": "date",
+          "required": true,
+          "questionId": "s1_q1"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Where was the child born?",
+            "es": "¿Dónde nació el niño/a?",
+            "it": "Dove è nato il bambino?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "Italy",
+                "es": "Italia",
+                "it": "Italia"
+              },
+              "value": "italia"
+            },
+            {
+              "text": { "ar": "", "en": "Peru", "es": "Perú", "it": "Perù" },
+              "value": "peru"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Morocco",
+                "es": "Marruecos",
+                "it": "Marocco"
+              },
+              "value": "marocco"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Nigeria",
+                "es": "Nigeria",
+                "it": "Nigeria"
+              },
+              "value": "nigeria"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Egypt",
+                "es": "Egipto",
+                "it": "Egitto"
+              },
+              "value": "egitto"
+            }
+          ],
+          "required": true,
+          "questionId": "s1_q2"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "When did the child arrive in Italy?",
+            "es": "¿Cuándo llegó el niño/a a Italia?",
+            "it": "Quando è arrivato il bambino in Italia?"
+          },
+          "type": "text",
+          "required": false,
+          "questionId": "s1_q3"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Indicate the name of the place where the child was born",
+            "es": "Indica el nombre del lugar donde nació el niño/a",
+            "it": "Indica il nome del luogo in cui è nato il bambino"
+          },
+          "type": "text",
+          "required": true,
+          "questionId": "s1_q4"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Do you have other children?",
+            "es": "¿Tienen otros hijos?",
+            "it": "Avete altri figli?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s1_q5"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "How many languages are spoken in the family?",
+            "es": "¿Cuántos idiomas se hablan en la familia?",
+            "it": "Quante lingue si parlano in famiglia?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "One", "es": "Uno", "it": "Una" },
+              "value": "1"
+            },
+            {
+              "text": { "ar": "", "en": "Two", "es": "Dos", "it": "Due" },
+              "value": "2"
+            },
+            {
+              "text": { "ar": "", "en": "Three", "es": "Tres", "it": "Tre" },
+              "value": "3"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "More than three",
+                "es": "Más de tres",
+                "it": "Più di tre"
+              },
+              "value": "4+"
+            }
+          ],
+          "required": true,
+          "questionId": "s1_q6"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Which ones?",
+            "es": "¿Cuáles?",
+            "it": "Quali?"
+          },
+          "type": "text",
+          "required": true,
+          "questionId": "s1_q7"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Does anyone in your family attend an Italian language course?",
+            "es": "¿Alguien de ustedes asiste a un curso de italiano?",
+            "it": "Qualcuno di voi frequenta un corso di lingua italiana?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s1_q8"
+        }
+      ],
+      "sectionId": "s1",
+      "description": {
+        "ar": "",
+        "en": "Basic information about the child and family",
+        "es": "Información básica sobre el niño y la familia",
+        "it": "Informazioni di base sul bambino e la famiglia"
+      }
+    },
+    {
+      "title": {
+        "ar": "",
+        "en": "Development and Language Skills",
+        "es": "Desarrollo y Competencias Lingüísticas",
+        "it": "Sviluppo e Competenze Linguistiche"
+      },
+      "questions": [
+        {
+          "text": {
+            "ar": "",
+            "en": "When did your child start saying the first words?",
+            "es": "¿Cuándo empezó tu hijo/a a decir las primeras palabras?",
+            "it": "Il tuo bambino quando ha cominciato a dire le prime parole?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "10-12 months",
+                "es": "10-12 meses",
+                "it": "10-12 mesi"
+              },
+              "value": "10-12"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "12-18 months",
+                "es": "12-18 meses",
+                "it": "12-18 mesi"
+              },
+              "value": "12-18"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "18-24 months",
+                "es": "18-24 meses",
+                "it": "18-24 mesi"
+              },
+              "value": "18-24"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "After 24 months",
+                "es": "Después de 24 meses",
+                "it": "Dopo i 24 mesi"
+              },
+              "value": "dopo24"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q2"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "When did your child start walking?",
+            "es": "¿Cuándo empezó a caminar tu hijo/a?",
+            "it": "Il tuo bambino quando ha cominciato a camminare?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "9-12 months",
+                "es": "9-12 meses",
+                "it": "9-12 mesi"
+              },
+              "value": "9-12"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "12-15 months",
+                "es": "12-15 meses",
+                "it": "12-15 mesi"
+              },
+              "value": "12-15"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "15-18 months",
+                "es": "15-18 meses",
+                "it": "15-18 mesi"
+              },
+              "value": "15-18"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "After 18 months",
+                "es": "Después de 18 meses",
+                "it": "Dopo i 18 mesi"
+              },
+              "value": "dopo18"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q1"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Think about other children of the same age as your child. How does your child speak?",
+            "es": "Pensando en otros niños de la misma edad que tu hijo/a. ¿Cómo habla tu hijo/a?",
+            "it": "Pensate ad altri bambini della stessa età di vostro figlio. Come parla il tuo bambino?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "Better than others",
+                "es": "Mejor que otros",
+                "it": "Meglio degli altri"
+              },
+              "value": "meglio"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Same as others",
+                "es": "Igual que otros",
+                "it": "Come gli altri"
+              },
+              "value": "uguale"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "A little less than others",
+                "es": "Un poco menos que otros",
+                "it": "Un po' meno degli altri"
+              },
+              "value": "poco_meno"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Much less than others",
+                "es": "Mucho menos que otros",
+                "it": "Molto meno degli altri"
+              },
+              "value": "molto_meno"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q3"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Can your child speak clearly with your relatives and friends?",
+            "es": "¿Tu hijo/a puede hablar claramente con sus parientes y amigos?",
+            "it": "Il vostro bambino riesce a parlare in modo chiaro con i vostri parenti e amici?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "Always",
+                "es": "Siempre",
+                "it": "Sempre"
+              },
+              "value": "sempre"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Often",
+                "es": "A menudo",
+                "it": "Spesso"
+              },
+              "value": "spesso"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Sometimes",
+                "es": "A veces",
+                "it": "Qualche volta"
+              },
+              "value": "qualche_volta"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Rarely",
+                "es": "Raramente",
+                "it": "Raramente"
+              },
+              "value": "raramente"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q4"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "In your families, is there anyone who has had difficulties speaking?",
+            "es": "¿En sus familias, hay alguien que haya tenido dificultades para hablar?",
+            "it": "Nelle vostre famiglie, c'è qualcuno che ha avuto difficoltà nel parlare?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q5"
+        },
+        {
+          "text": { "ar": "", "en": "Who?", "es": "¿Quién?", "it": "Chi?" },
+          "type": "text",
+          "required": false,
+          "questionId": "s2_q6"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Does your child like reading books or listening to someone reading them?",
+            "es": "¿A tu hijo/a le gusta leer libros o escuchar a alguien que los lee?",
+            "it": "Al vostro bambino piace leggere libri o ascoltare qualcuno che li legge?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q7"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "How much does he/she like it?",
+            "es": "¿Cuánto le gusta?",
+            "it": "Quanto gli piace?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "A lot", "es": "Mucho", "it": "Molto" },
+              "value": "molto"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Quite a bit",
+                "es": "Bastante",
+                "it": "Abbastanza"
+              },
+              "value": "abbastanza"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "A little",
+                "es": "Poco",
+                "it": "Poco"
+              },
+              "value": "poco"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "Not at all",
+                "es": "Nada",
+                "it": "Per niente"
+              },
+              "value": "per_niente"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q8"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "What does your child like to do when at home?",
+            "es": "¿Qué le gusta hacer a tu hijo/a cuando está en casa?",
+            "it": "Cosa piace fare al vostro bambino quando è a casa?"
+          },
+          "type": "text",
+          "required": true,
+          "questionId": "s2_q9"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Are you afraid that your child will forget the language spoken at home?",
+            "es": "¿Tienen miedo de que su hijo/a olvide el idioma que se habla en casa?",
+            "it": "Avete paura che vostro figlio si dimentichi la lingua che si parla a casa?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q10"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Did he/she attend nursery school?",
+            "es": "¿Ha asistido a la guardería?",
+            "it": "Ha frequentato il nido?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q11"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "From what age?",
+            "es": "¿Desde qué edad?",
+            "it": "Da che età?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": {
+                "ar": "",
+                "en": "0-6 months",
+                "es": "0-6 meses",
+                "it": "0-6 mesi"
+              },
+              "value": "0-6"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "6-12 months",
+                "es": "6-12 meses",
+                "it": "6-12 mesi"
+              },
+              "value": "6-12"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "12-24 months",
+                "es": "12-24 meses",
+                "it": "12-24 mesi"
+              },
+              "value": "12-24"
+            },
+            {
+              "text": {
+                "ar": "",
+                "en": "After 24 months",
+                "es": "Después de 24 meses",
+                "it": "Dopo i 24 mesi"
+              },
+              "value": "dopo24"
+            }
+          ],
+          "required": false,
+          "questionId": "s2_q12"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Does he/she attend kindergarten?",
+            "es": "¿Asiste al jardín de infancia?",
+            "it": "Frequenta la scuola dell'infanzia?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q13"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "Since when?",
+            "es": "¿Desde cuándo?",
+            "it": "Da quando?"
+          },
+          "type": "text",
+          "required": false,
+          "questionId": "s2_q14"
+        },
+        {
+          "text": {
+            "ar": "",
+            "en": "During the week, does your child do any activities with people who speak Italian? For example sports, play center, playground etc?",
+            "es": "¿Durante la semana, tu hijo/a hace alguna actividad con personas que hablan italiano? Por ejemplo deportes, ludoteca, parque infantil, etc?",
+            "it": "Durante la settimana, il vostro bambino fa qualche attività anche con persone che parlano italiano? Ad esempio Sport, ludoteca, parco giochi etc?"
+          },
+          "type": "multiple-choice",
+          "options": [
+            {
+              "text": { "ar": "", "en": "Yes", "es": "Sí", "it": "Sì" },
+              "value": "si"
+            },
+            {
+              "text": { "ar": "", "en": "No", "es": "No", "it": "No" },
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "questionId": "s2_q15"
+        },
+        {
+          "text": { "ar": "", "en": "", "es": "", "it": "" },
+          "type": "text",
+          "required": false,
+          "questionId": "s2_q16"
+        }
+      ],
+      "sectionId": "s2",
+      "description": {
+        "ar": "",
+        "en": "Information about the child's linguistic and motor development",
+        "es": "Información sobre el desarrollo lingüístico y motor del niño",
+        "it": "Informazioni sullo sviluppo linguistico e motorio del bambino"
+      }
+    }
+  ],
+  "description": {
+    "ar": "",
+    "en": "Questionnaire for assessing language development in bilingual childrens",
+    "es": "Cuestionario para evaluar el desarrollo del lenguaje en niños bilingües",
+    "it": "Questionario per la valutazione dello sviluppo linguistico nei bambini bilinguis"
+  },
+  "defaultLanguage": "it",
+  "questionnaireTitle": {
+    "ar": "",
+    "en": "Bilingualism Questionnaire",
+    "es": "Cuestionario de Bilingüismo",
+    "it": "Questionario Bilinguismo"
+  }
+}

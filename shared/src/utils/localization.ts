@@ -1,14 +1,9 @@
-// Metti questa funzione in un file di utility condiviso (es. src/utils/localization.ts)
+
 import { Language, LocalizedText } from "../schemas/";
 const DEFAULT_LANGUAGE: Language = 'it';
 
 
-/**
- * Estrae il testo localizzato da un oggetto LocalizedText con fallback sicuri.
- * @param textObject L'oggetto che contiene le traduzioni.
- * @param selectedLanguage La lingua preferita.
- * @returns La stringa tradotta o una stringa di fallback.
- */
+
 export const getLocalizedText = (
   textObject: LocalizedText | undefined,
   selectedLanguage: Language

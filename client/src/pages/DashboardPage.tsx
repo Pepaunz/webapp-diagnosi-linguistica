@@ -271,9 +271,11 @@ const SubmissionRow: React.FC<{
     </td>
     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
       <div className="flex flex-col">
-        <span>{new Date(submission.lastUpdated).toLocaleDateString()}</span>
+        <span>{new Date(String(submission.lastUpdated)).toLocaleString("it-IT", {
+              year: "numeric", month: "long", day: "numeric"
+              })}</span>
         <span className="text-xs text-gray-500">
-          {new Date(submission.lastUpdated).toLocaleTimeString()}
+          {new Date(submission.lastUpdated).toLocaleTimeString("it-IT")}
         </span>
       </div>
     </td>

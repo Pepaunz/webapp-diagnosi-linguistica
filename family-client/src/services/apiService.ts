@@ -3,7 +3,10 @@ import {
     StartOrResumeRequest, 
     SaveProgressRequest, 
     CompleteSubmissionBody,
-    SubmitFeedbackInput
+    SubmitFeedbackInput,
+    QuestionnaireData,
+    AnswerDTO,
+    Template
   } from '@bilinguismo/shared';
   
   const API_BASE_URL = '/api/v1';
@@ -58,8 +61,8 @@ import {
       submission_id: string;
       status: 'InProgress';
       current_step_identifier: string | null;
-      answers: any[];
-      questionnaire_template: any;
+      answers: AnswerDTO[];
+      questionnaire_template: Template;
     }> {
       const response = await fetch(`${API_BASE_URL}/submissions/start_or_resume`, {
         method: 'POST',

@@ -174,7 +174,9 @@ const SubmissionQuestionView: React.FC<SubmissionQuestionViewProps> = ({
                   <p className="text-sm text-gray-800">{note.note_text}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     {note.operator_full_name} -{" "}
-                    {new Date(note.created_at).toLocaleString()}
+                    {new Date(String(note.created_at)).toLocaleDateString("it-IT", {
+              year: "numeric", month: "long", day: "numeric"
+              })}
                   </p>
                 </div>
               </div>

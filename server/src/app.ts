@@ -30,7 +30,7 @@ const limiter = rateLimit({
     timestamp: new Date().toISOString(),
   },
 });
-app.use(limiter);
+//app.use(limiter);
 
 app.use(express.json());
 
