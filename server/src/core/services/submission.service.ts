@@ -109,13 +109,22 @@ export const startOrResume = async (
   }
 
   //Cerca una submission in corso
-  let submission = await submissionRepo.findLatestInProgress(
+  let submission = await submissionRepo.findLatestSubmissionByCFAndTemplate(
     input.fiscal_code,
     input.questionnaire_template_id
   );
   let isNew = false;
+  let answersDTO: AnswerDTO[] =[];
 
   if (submission) {
+    if(submission.status === 'Completed') {
+      throw new ApiError(
+        409,
+        'Questo questionario è già stato completato e non può essere modificato.',
+        true,
+        [{ code: 'already_completed', submissionId: submission.submission_id }]
+      );
+    }
    
     if (submission.language_used !== input.language_used) {
       throw new ApiError(
@@ -128,6 +137,22 @@ export const startOrResume = async (
         }]
       );
     }
+    //Recupera le risposte già salvate (sarà un array vuoto se la submission è nuova)
+  const answersFromDb = await submissionRepo.findAnswersBySubmissionId(
+    submission.submission_id
+  );
+
+  answersDTO = answersFromDb.map(answer => {
+    const extractedValue = (answer.answer_value as any)?.value ?? null;
+
+    return {
+      answer_id: answer.answer_id, 
+      question_identifier: answer.question_identifier,
+      saved_at: answer.saved_at.toISOString(),
+      answer_value: extractedValue,
+      
+    };
+  });
    
   } else {
     // Se non esiste, creane una nuova
@@ -138,23 +163,7 @@ export const startOrResume = async (
     });
     isNew = true;
   }
-  //Recupera le risposte già salvate (sarà un array vuoto se la submission è nuova)
-  const answersFromDb = await submissionRepo.findAnswersBySubmissionId(
-    submission.submission_id
-  );
-
-  const answersDTO: AnswerDTO[] = answersFromDb.map(answer => {
-    const extractedValue = (answer.answer_value as any)?.value ?? null;
-
-    return {
-      answer_id: answer.answer_id, 
-      question_identifier: answer.question_identifier,
-      saved_at: answer.saved_at.toISOString(),
-      answer_value: extractedValue,
-    };
-  });
-
-  //Costruisce e restituisce la risposta standard
+    //Costruisce e restituisce la risposta standard
   return {
     submission_id: submission.submission_id,
     status: submission.status as "InProgress", // Sappiamo che è InProgress
@@ -163,7 +172,10 @@ export const startOrResume = async (
     questionnaire_template: template, // Restituiamo il template per il rendering
     isNew: isNew, // Campo extra per far sapere al frontend se è una ripresa o un nuovo avvio
   };
-};
+}
+  
+
+  
 
 //PUT /submissions/{id}/save_progress
 export const saveProgress = async (

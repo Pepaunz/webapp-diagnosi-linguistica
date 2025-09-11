@@ -18,6 +18,16 @@ export const findLatestInProgress = async (
     orderBy: { last_updated_at: "desc" },
   });
 };
+export const findLatestSubmissionByCFAndTemplate = async (
+  fiscal_code: string,
+  template_id: string
+): Promise<Submission | null> => {
+  return prisma.submission.findFirst({
+   
+    where: { fiscal_code, template_id }, 
+    orderBy: { created_at: 'desc' }, 
+  });
+};
 
 export const createSubmission = async (data: {
   fiscal_code: string;

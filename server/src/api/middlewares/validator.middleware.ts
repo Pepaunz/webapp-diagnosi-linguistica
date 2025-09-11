@@ -8,18 +8,12 @@ import { ApiError } from "./errorHandler.middleware";
  * @param source La parte della richiesta da validare ('body', 'query', o 'params').
  * @returns Un middleware Express.
  */
-// Usiamo z.Schema che è il tipo base per tutti gli schemi Zod (oggetti, stringhe, numeri, ecc.)
+
 export const validate =
   (schema: z.Schema, source: "body" | "query" | "params") =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Esegue la validazione sulla parte specificata della richiesta.
-      // Esempio: se source è 'body', valida req.body.
-      // La sovrascrittura con il risultato di .parse() è una buona pratica
-      // per ottenere dati "puliti" con eventuali trasformazioni o valori di default.
-      req[source] = schema.parse(req[source]);
-
-      // Se la validazione ha successo, passa al prossimo middleware.
+     req[source] = schema.parse(req[source]);
       next();
     } catch (error) {
       if (error instanceof ZodError) {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import TTSQuestionControls from '../accessibility/TTSQuestionControls';
 import { TTSStatus } from '../../hooks/useTextToSpeech';
 // ===== SECTION HEADER =====
@@ -80,17 +81,19 @@ interface QuestionBlockProps {
   required?: boolean;
   hasError?: boolean;
   errorMessage?: string;
+  onReportProblem: (questionId: string) => void; 
   
-  // ➕ AGGIUNGI: Props TTS opzionali
+ 
   ttsEnabled?: boolean;
   questionText?: string;
   onQuestionSpeak?: (text: string, questionId: string) => void;
   currentSpeakingId?: string | null;
   ttsStatus?: TTSStatus;
   questionOptions?: string[]; // Per multiple choice
+
 }
 
-// ➕ MODIFICA: QuestionBlock component
+// QuestionBlock component
 export const QuestionBlock: React.FC<QuestionBlockProps> = ({ 
   question, 
   children, 
@@ -99,8 +102,9 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
   required = false,
   hasError=false,
   errorMessage,
+  onReportProblem,
   
-  // ➕ AGGIUNGI: TTS props con default
+  // TTS props con default
   ttsEnabled = false,
   questionText,
   onQuestionSpeak,
@@ -110,7 +114,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
 }) => {
   const legendId = `question-${questionId}`;
   
-  // ➕ AGGIUNGI: Gestione click TTS
+  //  Gestione click TTS
   const handleTTSClick = () => {
     if (onQuestionSpeak && questionText) {
       onQuestionSpeak(questionText, questionId);
@@ -145,8 +149,18 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
               </span>
             )}
           </span>
-          
-          {/* ➕ AGGIUNGI: TTS Controls per domanda */}
+          <div className="flex items-center flex-shrink-0 gap-3">
+          <button
+              type="button"
+              onClick={() => onReportProblem(questionId)}
+              className="text-white/70 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-full"
+              aria-label={`Segnala un problema con questa domanda`}
+              title="Segnala un problema con questa domanda"
+            >
+           
+              <AlertTriangle size={18} /> 
+            </button>
+          {/* TTS Controls per domanda */}
           {ttsEnabled && onQuestionSpeak && (
             <div className="ml-3 flex-shrink-0">
               <TTSQuestionControls
@@ -160,6 +174,7 @@ export const QuestionBlock: React.FC<QuestionBlockProps> = ({
               />
             </div>
           )}
+          </div>
         </div>
       </legend>
       
