@@ -1,4 +1,3 @@
-// src/components/questionnaire/LanguageSelector.tsx
 
 import React from "react";
 import { Language } from "@bilinguismo/shared";
@@ -6,8 +5,8 @@ import { Language } from "@bilinguismo/shared";
 interface LanguageSelectorProps {
   selectedLanguage: Language;
   onLanguageChange: (language: Language) => void;
-  availableLanguages?: Language[]; // Lingue già presenti nel questionario
-  isEditMode?: boolean; // Se true, permette di aggiungere nuove lingue
+  availableLanguages?: Language[]; 
+  isEditMode?: boolean; 
 }
 
 const languages = [

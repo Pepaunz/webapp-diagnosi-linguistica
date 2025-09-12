@@ -1,5 +1,4 @@
-// client/src/hooks/useValidation.ts
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { ZodSchema } from 'zod';
 import { validateField, validateSingleField, debounce } from '../utils/validation';
 import { useError } from '../context/ErrorContext';

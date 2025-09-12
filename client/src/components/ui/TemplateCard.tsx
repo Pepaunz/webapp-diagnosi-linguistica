@@ -95,7 +95,7 @@ export function TemplateCard({ template, onDelete, isDeleting = false }: Templat
         </button>
       </div>
 
-      {/* QR Code Modal - aggiornato con dati reali */}
+     
       {showQrModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
@@ -112,9 +112,9 @@ export function TemplateCard({ template, onDelete, isDeleting = false }: Templat
             <div className="flex flex-col items-center">
               <div className="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg mb-4">
                  <QRCodeSVG
-                  value={shareUrl} // L'URL da codificare
-                  size={240}       // Dimensione in pixel
-                  level={"H"}      // Livello di correzione errore (H è il più alto)
+                  value={shareUrl} 
+                  size={240}       
+                  level={"H"}      
                   className="w-full h-full"
                 />
               </div>

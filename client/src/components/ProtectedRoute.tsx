@@ -1,4 +1,4 @@
-// client/src/components/ProtectedRoute.tsx
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  // Mostra loading mentre verifica l'autenticazione
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -20,7 +20,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Se non autenticato, reindirizza al login mantenendo la pagina di destinazione
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

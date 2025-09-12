@@ -1,4 +1,3 @@
-// client/src/pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +15,6 @@ const LoginPage: React.FC = () => {
   const { showError, showSuccess } = useError();
   const location = useLocation();
 
-  // Se già autenticato, reindirizza alla pagina di destinazione o alla dashboard
   if (isAuthenticated) {
     const from = (location.state as any)?.from?.pathname || '/';
     return <Navigate to={from} replace />;

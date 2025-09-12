@@ -5,9 +5,9 @@ import {
     UpdateTemplateInput, 
     ListTemplatesQuery 
   } from "@bilinguismo/shared";
-  import { handleApiResponse } from "./utilsApi";
+  import { apiFetch } from "./utilsApi";
   
-  const API_BASE_URL = "/api/v1";
+
   
   // ====================================================================
   // TEMPLATE API CALLS
@@ -29,80 +29,51 @@ import {
         });
       }
       
-      const url = `${API_BASE_URL}/templates${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+      const url = `/templates${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
       
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // TODO: gestire auth
-        },
-      });
-      
-      return handleApiResponse(response);
+      return apiFetch(url);
     },
   
     // GET /templates/:id
     async getTemplateById(templateId: string): Promise<Template> {
-      const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      
-      return handleApiResponse(response);
+      const url = `/templates/${templateId}`;
+      return apiFetch(url);
     },
   
     // POST /templates
     async createTemplate(data: CreateTemplateInput): Promise<Template> {
-      const response = await fetch(`${API_BASE_URL}/templates`, {
+     const url =  `/templates`;
+     return apiFetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
         body: JSON.stringify(data),
       });
-      
-      return handleApiResponse(response);
     },
 
     // PUT /templates/:id - Aggiorna template
   async updateTemplate(templateId: string, data: UpdateTemplateInput): Promise<Template> {
-    const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-      },
-      body: JSON.stringify(data),
-    });
-    
-    return handleApiResponse(response);
+   const url = `/templates/${templateId}`;
+    return apiFetch(url, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
   },
 
   
     // PATCH /templates/:id
     async deactivateTemplate(templateId: string, data: UpdateTemplateInput): Promise<Template> {
-      const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
+    const url = `$/templates/${templateId}`;
+    return apiFetch(url, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
         body: JSON.stringify(data),
-      });
-      
-      return handleApiResponse(response);
+    });
     },
   
     // DELETE /templates/:id
     async deleteTemplate(templateId: string): Promise<void> {
-      const response = await fetch(`${API_BASE_URL}/templates/${templateId}`, {
+     const url = `/templates/${templateId}`;
+     return apiFetch(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
       });
-      return handleApiResponse(response)
     },
 
   };

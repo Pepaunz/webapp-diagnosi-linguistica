@@ -1,4 +1,3 @@
-// client/src/utils/validation.ts
 import { ZodSchema, ZodError } from 'zod';
 
 interface ValidationResult {

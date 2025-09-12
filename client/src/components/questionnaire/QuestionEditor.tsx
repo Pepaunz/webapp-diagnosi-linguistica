@@ -5,14 +5,13 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
-  GripVertical,
   Plus,
   Star,
 } from "lucide-react";
 import { Question, Option } from "@bilinguismo/shared";
 import { Language } from "@bilinguismo/shared";
 
-import { Button } from "../shared/Filters";
+
 interface QuestionEditorProps {
   question: Question;
   questionIndex: number;
@@ -85,7 +84,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
             <div key={index} className="flex items-center gap-2">
               <input
                 type="radio"
-                disabled={true} // Sempre disabilitato nell'editor
+                disabled={true} 
                 className="w-4 h-4"
               />
               {editMode && !isPreviewMode ? (
@@ -137,7 +136,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
         <div className="mt-4">
           <input
             type="text"
-            disabled={true} // Sempre disabilitato nell'editor
+            disabled={true} 
             className="w-full px-3 py-2 border rounded-lg"
             placeholder="Risposta breve"
           />
@@ -154,7 +153,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               <button
                 key={value}
                 type="button"
-                disabled={true} // Sempre disabilitato nell'editor
+                disabled={true} 
                 className="transition-colors cursor-default"
               >
                 <Star size={28} className="text-gray-300" fill="currentColor" />

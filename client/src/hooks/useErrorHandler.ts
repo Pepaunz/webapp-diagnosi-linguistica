@@ -73,7 +73,6 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
         timestamp: new Date(),
       };
     } else {
-      // Fallback per errori sconosciuti
       appError = {
         id: errorId,
         type: 'generic',
@@ -84,7 +83,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
 
     setErrors(prev => [...prev, appError]);
 
-   // Auto-remove con tempistiche differenti per tipo
+   
     const autoRemoveDelay = appError.type === 'validation' ? 8000 :  // 8s per validation
           appError.type === 'network' ? 6000 :     // 6s per network  
           appError.type === 'server' ? 10000 :     // 10s per server

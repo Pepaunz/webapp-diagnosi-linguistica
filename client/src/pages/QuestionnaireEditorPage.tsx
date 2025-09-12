@@ -110,7 +110,7 @@ const QuestionnaireEditorPage = () => {
       sections: [...questionnaire.sections, newSection],
     });
 
-    // Attiva lo scroll
+    
     setHasUserAddedSection(true);
   };
 

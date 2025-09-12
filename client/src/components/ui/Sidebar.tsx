@@ -3,7 +3,7 @@ import { Home, List, AlertCircle, Settings } from "lucide-react";
 import { LogoutButton } from "../LogoutButton";
 
 function Sidebar() {
-  const location = useLocation(); // to know which page we're on
+  const location = useLocation(); 
 
   return (
     <nav className="flex-1 py-4">

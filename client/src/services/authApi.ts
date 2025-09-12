@@ -1,27 +1,22 @@
-import { handleApiResponse } from "./utilsApi";
-import { LoginInput } from "@bilinguismo/shared";
+import { apiFetch } from "./utilsApi";
+import { LoginInput,  } from "@bilinguismo/shared";
 
 const API_BASE_URL = "/api/v1";
 
-
+interface AuthResponse {
+  access_token: string;
+}
 // ====================================================================
 // AUTH API CALLS
 // ====================================================================
 
 export const authApi = {
   // POST /auth/login - Login operatori
-  async login(credentials: LoginInput): Promise<{
-    access_token: string;
-  }> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  async login(credentials: LoginInput): Promise<AuthResponse> {
+    return apiFetch<AuthResponse>('/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(credentials),
     });
-    
-    return handleApiResponse(response);
   },
 
   // Funzioni utility per gestione token localStorage

@@ -1,4 +1,3 @@
-// src/components/questionnaire/SectionEditor.tsx
 
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, GripVertical } from "lucide-react";
@@ -47,7 +46,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({
    }
   },[isPreviewMode])
 
-  // Scroll intelligente per mantenere la nuova domanda al centro della viewport
+
   useEffect(() => {
     if (hasUserAddedQuestion && questionsEndRef.current) {
       setTimeout(() => {

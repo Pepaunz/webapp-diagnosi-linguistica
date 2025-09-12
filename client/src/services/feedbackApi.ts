@@ -1,11 +1,11 @@
-import { handleApiResponse } from "./utilsApi";
+import { apiFetch } from "./utilsApi";
 import { 
     ListFeedbackQuery, 
     UpdateFeedbackInput, 
     FeedbackDTO as Feedback, 
   } from "@bilinguismo/shared";
   
-  const API_BASE_URL = "/api/v1";
+
   
   // ====================================================================
   // FEEDBACK API CALLS
@@ -27,28 +27,17 @@ import {
         });
       }
       
-      const url = `${API_BASE_URL}/feedback${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+      const url = `/feedback${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
       
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      
-      return handleApiResponse(response);
+     return apiFetch(url);
     },
   
     // PUT /feedback/:uuid - Update status 
     async updateStatus(feedbackUuid: string, data: UpdateFeedbackInput): Promise<Feedback> {
-      const response = await fetch(`${API_BASE_URL}/feedback/${feedbackUuid}`, { 
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(data),
-      });
-      
-      return handleApiResponse(response);
+      const url = `/feedback/${feedbackUuid}`;
+      return apiFetch(url, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        }); 
     },
   };

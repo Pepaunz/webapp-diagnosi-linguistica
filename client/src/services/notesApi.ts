@@ -3,8 +3,7 @@ import {
     AddNoteRequest,
     UpdateNoteRequest
   } from "@bilinguismo/shared";
-  import { handleApiResponse } from "./utilsApi";
-  const API_BASE_URL = "/api/v1";
+  import { apiFetch } from "./utilsApi";
 
   export const notesApi = {
     // GET /submissions/:id/notes - Lista note per submission
@@ -12,27 +11,16 @@ import {
       notes: OperatorNoteDTO[];
       total: number;
     }> {
-      const response = await fetch(`${API_BASE_URL}/submissions/${submissionId}/notes`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      
-      return handleApiResponse(response);
+      return apiFetch(`/submissions/${submissionId}/notes`);
     },
   
     // POST /submissions/:id/notes - Crea nuova nota
     async createNote(submissionId: string, data: AddNoteRequest): Promise<OperatorNoteDTO> {
-      const response = await fetch(`${API_BASE_URL}/submissions/${submissionId}/notes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(data),
-      });
-      
-      return handleApiResponse(response);
+     const url = `/submissions/${submissionId}/notes`;
+     return apiFetch(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+     });
     },
   
     // PUT /submissions/:submissionId/notes/:noteId - Aggiorna nota
@@ -41,27 +29,19 @@ import {
       noteId: string, 
       data: UpdateNoteRequest
     ): Promise<OperatorNoteDTO> {
-      const response = await fetch(`${API_BASE_URL}/submissions/${submissionId}/notes/${noteId}`, {
+      const url = `/submissions/${submissionId}/notes/${noteId}`;
+      return apiFetch(url, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data), 
       });
-      
-      return handleApiResponse(response);
 
     },
   
     // DELETE /submissions/:submissionId/notes/:noteId - Elimina nota
     async deleteNote(submissionId: string, noteId: string): Promise<void> {
-      const response = await fetch(`${API_BASE_URL}/submissions/${submissionId}/notes/${noteId}`, {
+      const url = `/submissions/${submissionId}/notes/${noteId}`;
+      return apiFetch(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
       });
-      return handleApiResponse(response);
     },
   };

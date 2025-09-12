@@ -1,5 +1,3 @@
-// src/pages/TemplatesListPage.tsx
-
 import AppLayout from "../layout/AppLayout";
 import { TemplateCard } from "../components/ui/TemplateCard";
 import { Link } from "react-router-dom";
@@ -24,7 +22,7 @@ export default function TemplatesListPage() {
   
   const { showError, showSuccess } = useError();
 
-  // Carica tutti i template una sola volta all'avvio
+
   useEffect(() => {
     loadTemplates();
   }, []);
@@ -33,7 +31,7 @@ export default function TemplatesListPage() {
     setLoading(true);
     
     try {
-      // Carica tutti i template attivi senza ordinamento API
+     
       const queryParams = {
         active_only: true,
         limit: 100, // Limite alto per prendere tutti i template
@@ -76,10 +74,10 @@ export default function TemplatesListPage() {
     setTemplateToDelete({ id: templateId, name: templateName });
   };
 
-  // Applica tutti i filtri localmente
+  
   const filteredTemplates = templates
     .filter(template => {
-      // Filtro per ricerca
+     
       const matchesSearch = searchTerm === "" || 
         template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (template.description?.toLowerCase() || "").includes(searchTerm.toLowerCase());

@@ -268,7 +268,7 @@ const SubmissionViewPage = () => {
           </div>
         </div>
 
-        {/* Questionnaire Content */}
+        
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
           <h3 className="text-xl font-semibold mb-2">
             {submission.template.structure_definition.questionnaireTitle?.[submission.submission.language] || submission.template.name}
@@ -278,7 +278,7 @@ const SubmissionViewPage = () => {
           </p>
         </div>
 
-        {/* Sections with Answers */}
+       
         <div className="space-y-6">
           {submission.template.structure_definition.sections.map((section: Section, index: number) => {
             // Calcola il numero di domande nelle sezioni precedenti

@@ -1,4 +1,3 @@
-// src/components/questionnaire/QuestionTypeSelector.tsx
 
 import React from "react";
 import { Type, List, Star, Calendar } from "lucide-react";

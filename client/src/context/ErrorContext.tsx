@@ -22,7 +22,7 @@ interface ErrorProviderProps {
 export const ErrorProvider: React.FC<ErrorProviderProps> = ({ children }) => {
   const errorHandler = useErrorHandler();
 
-  // Converte gli errori in formato toast
+
   const toasts = errorHandler.errors.map(error => ({
     id: error.id,
     type: error.type === 'validation' ? 'error' as const : 

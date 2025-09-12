@@ -1,7 +1,7 @@
 
 import { Search, ChevronDown } from "lucide-react";
 
-// Reusable SelectFilter component
+
 export const SelectFilter = ({
   value,
   onChange,
@@ -32,7 +32,7 @@ export const SelectFilter = ({
   </div>
 );
 
-// Reusable SearchBar component
+
 export const SearchBar = ({
   value,
   onChange,
